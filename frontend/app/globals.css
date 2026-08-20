@@ -1,1 +1,9 @@
-@import "tailwindcss";
+@import "./reset.css";
+
+:root {
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
