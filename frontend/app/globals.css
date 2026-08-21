@@ -1,9 +1,15 @@
 @import "./reset.css";
+@import "./semantic.css";
 
 :root {
+
+
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-text);
+  background-color: var(--background-color);
+  color: var(--text-foreground-color);
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
 }

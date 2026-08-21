@@ -1,0 +1,43 @@
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--component-gap);
+    max-width: 600px;
+    
+}
+.heroCopy {
+    gap: var(--component-inner-gap);
+}
+
+.heroTitle {
+    font-size: var(--font-size-5xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-white-0);
+}
+
+.heroTitleHighlight {
+    color: var(--color-primary);
+}
+
+.heroDescription {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-white-1);
+}
+
+.heroButtons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: var(--component-inner-gap);
+}
+
+@media (max-width: 425px) {
+    .heroButtons{
+        flex-direction: column;
+    }
+}

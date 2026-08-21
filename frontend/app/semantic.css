@@ -1,0 +1,72 @@
+@import "./primitive.css";
+
+:root {
+
+
+    /* Font Family*/
+    --font-family: var(--font-roboto);
+
+    /* Font Size */
+    --font-size-xs: var(--font-size-1);
+    --font-size-sm: var(--font-size-2);
+    --font-size-md: var(--font-size-3);
+    --font-size-lg: var(--font-size-4);
+    --font-size-xl: var(--font-size-5);
+    --font-size-2xl: var(--font-size-6);
+    --font-size-3xl: var(--font-size-7);
+    --font-size-4xl: var(--font-size-8);
+    --font-size-5xl: var(--font-size-9);
+
+    /* Font Weight */
+   
+     --font-weight-regular: 400;
+     --font-weight-medium: 500;
+     --font-weight-bold: 700;
+     --font-weight-black: 900;
+
+    /* Component Core */
+    --component-radius-md: var(--scale-200);
+    --component-padding-sm: var(--scale-200);
+    --component-padding-md: var(--scale-300);
+    --component-border-md: var(--scale-200);
+
+    --component-gap: var(--scale-400);
+    --component-inner-gap: var(--scale-200);
+    
+
+    /* Button */
+    --button-primary-background: var(--color-white-0);
+    --button-primary-background-hover: var(--color-white-1);
+    --button-primary-color: var(--color-black-0);
+    --button-secondary-background: var(--color-black-4);
+    --button-secondary-background-hover: var(--color-black-3);
+    --button-secondary-color: var(--color-white-0);
+    --button-padding-md-x: var(--component-padding-md);
+    --button-padding-md-y: var(--component-padding-sm);
+
+    --button-padding-lg-x: var(--scale-400);
+    --button-padding-lg-y: var(--scale-200);
+
+    --button-radius-md: var(--component-radius-md);
+    --button-border-md: var(--component-border-md);
+
+    /* Background */
+    --background-color: var(--color-black-2);
+
+    /* Text */
+    --text-foreground-color: var(--color-white-0);
+    --text-paragraph-color: var(--color-white-1);
+
+    /* Colors */
+    --color-primary: var(--color-orange-500);
+
+    /* Breakpoints */
+    --breakpoint-min: var(--breakpoint-1);
+    --breakpoint-cellphone: var(--breakpoint-2);
+    --breakpoint-tablet: var(--breakpoint-3);
+    --breakpoint-desktop: var(--breakpoint-4);
+
+    /* Padding Page */
+    --padding-page-sm: var(--scale-200);
+    --padding-page-lg: var(--scale-400);
+}
