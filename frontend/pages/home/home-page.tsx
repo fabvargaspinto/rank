@@ -1,11 +1,11 @@
-import Button from "@/ui/button/button";
+
 import WrapPage from "@/ui/wrap-page/wrap-page";
-import Hero from "./coponent/hero";
+import LoginForm from "./component/login";
 
 export default function HomePage() {
     return (
         <WrapPage>
-        <Hero />
+        <LoginForm />
         </WrapPage>
     );
 }

@@ -38,8 +38,8 @@
     --button-primary-background: var(--color-white-0);
     --button-primary-background-hover: var(--color-white-1);
     --button-primary-color: var(--color-black-0);
-    --button-secondary-background: var(--color-black-4);
-    --button-secondary-background-hover: var(--color-black-3);
+    --button-secondary-background: var(--color-black-3);
+    --button-secondary-background-hover: var(--color-black-4);
     --button-secondary-color: var(--color-white-0);
     --button-padding-md-x: var(--component-padding-md);
     --button-padding-md-y: var(--component-padding-sm);
@@ -50,8 +50,19 @@
     --button-radius-md: var(--component-radius-md);
     --button-border-md: var(--component-border-md);
 
+    /* Input */
+    --input-background: var(--color-black-1);
+    --input-color: var(--text-paragraph-color);
+    --input-placeholder: var(--color-muted-0);
+    --input-border: var(--color-black-4);
+    --input-border-focus: var(--color-muted-0);
+    --input-padding-x: var(--component-padding-md);
+    --input-padding-y: var(--component-padding-sm);
+    --input-radius: var(--component-radius-md);
+    --input-gap-field: var(--scale-100);
+
     /* Background */
-    --background-color: var(--color-black-2);
+    --background-color: var(--color-black-1);
 
     /* Text */
     --text-foreground-color: var(--color-white-0);

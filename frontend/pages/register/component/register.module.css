@@ -1,0 +1,84 @@
+.register {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-gap);
+    width: 100%;
+    max-width: 400px;
+}
+
+.registerHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: var(--scale-200);
+}
+
+.registerTitle {
+    font-size: var(--font-size-5xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-paragraph-color);
+}
+
+.registerTitleHighlight {
+    color: var(--color-primary);
+}
+
+.registerDescription {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-paragraph-color);
+}
+
+.registerForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-gap);
+}
+
+.registerFeedback {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 8px;
+}
+
+.registerFeedbackText {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-paragraph-color);
+    text-align: center;
+}
+
+.registerFormFooterText {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-muted-0);
+    margin-top: var(--scale-200);
+}
+
+.registerFormFooterTextLink {
+    color: var(--color-white-0);
+    text-decoration: none;
+}
+
+.registerFormFooterTextLink:hover {
+    color: var(--color-muted-0);
+}
+
+.registerDivider {
+    display: flex;
+    align-items: center;
+    gap: var(--component-inner-gap);
+    width: 100%;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--input-border);
+}
+
+.registerDivider::before,
+.registerDivider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--input-border);
+}

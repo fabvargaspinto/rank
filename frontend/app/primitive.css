@@ -4,17 +4,17 @@
 
     /* Black */
     --color-black-0: #000000;
-    --color-black-1:#0f0f0f;
-    --color-black-2:#252525;
-    --color-black-3:#2e2e2e;
-    --color-black-4:#3d3d3d;
+    --color-black-1:#1e1e1e;
+    --color-black-2:#2c2c2c;
+    --color-black-3:#383838;
+    --color-black-4:#444444;
     
     /* White */
     --color-white-0: #ffffff;
-    --color-white-1:#f5f5f5;
-
+    --color-white-1:#e0e0e0;
+    --color-muted-0: #8b8b8b;
     /* Primary */
-    --color-orange-500: #f38208;
+    --color-orange-500: #ee720d;
     
     /* Fonts */
     --font-roboto: 'Roboto', sans-serif;

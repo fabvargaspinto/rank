@@ -1,0 +1,84 @@
+.login {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-gap);
+    width: 100%;
+    max-width: 400px;
+}
+
+.loginHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: var(--scale-200);
+}
+
+.loginTitle {
+    font-size: var(--font-size-5xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-paragraph-color);
+}
+
+.loginTitleHighlight {
+    color: var(--color-primary);
+}
+
+.loginDescription {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-paragraph-color);
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-gap);
+}
+
+.loginFeedback {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 8px;
+}
+
+.loginFeedbackText {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-paragraph-color);
+    text-align: center;
+}
+
+.loginFormFooterText {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-muted-0);
+    margin-top: var(--scale-200);
+}
+
+.loginFormFooterTextLink {
+    color: var(--color-white-0);
+    text-decoration: none;
+}
+
+.loginFormFooterTextLink:hover {
+    color: var(--color-muted-0);
+}
+
+.loginDivider {
+    display: flex;
+    align-items: center;
+    gap: var(--component-inner-gap);
+    width: 100%;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--input-border);
+}
+
+.loginDivider::before,
+.loginDivider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--input-border);
+}

@@ -2,11 +2,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: var(--component-inner-gap);
     cursor: pointer;
     font-weight: var(--font-weight-medium);
     padding: var(--button-padding-md-y) var(--button-padding-md-x);
     border-radius: var(--button-radius-md);
     border: 1px solid transparent;
+    text-decoration: none;
 }
 /* Button Variant */
 
