@@ -32,7 +32,8 @@ RUN uv sync --frozen --no-dev
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Named volume /opt/venv can outlive the image; sync so new lockfile deps land.
+CMD ["sh", "-c", "uv sync --frozen --no-dev && exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload"]
 
 
 # ─────────────────────────────────────────────

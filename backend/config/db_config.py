@@ -1,18 +1,13 @@
 from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
 
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 
 class DBConfig(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=ENV_FILE,
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
-    database_url: str = Field(alias="DATABASE_URL")
-
-   
+    url: str = Field(alias="SUPABASE_URL")
+    secret_key: str = Field(alias="SECRET_AUTH_KEY")
