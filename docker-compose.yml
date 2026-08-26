@@ -1,37 +1,64 @@
 name: ig
 
 services:
+
+  # ───────────────────────────────────────────
+  # Backend
+  # ───────────────────────────────────────────
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: dev
+
     ports:
       - "8000:8000"
+
     env_file:
       - ./backend/.env
+
     environment:
-      ALLOWED_ORIGINS: http://localhost:3000
       URL: http://host.docker.internal:54321/storage/v1/s3
+      WATCHFILES_FORCE_POLLING: "true"
+
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
     volumes:
+      # Código fuente
       - ./backend:/app
+
+      # Entorno virtual
+      - backend_venv:/opt/venv
+
+
+  # ───────────────────────────────────────────
+  # Frontend
+  # ───────────────────────────────────────────
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       target: dev
+
     ports:
       - "3000:3000"
+
     environment:
       WATCHPACK_POLLING: "true"
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+
     volumes:
+      # Código fuente
       - ./frontend:/app
+
+      # Dependencias Node
       - frontend_node_modules:/app/node_modules
 
+
 volumes:
+  backend_venv:
   frontend_node_modules:

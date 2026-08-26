@@ -1,14 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-import os
+
+from config.app_config import AppConfig
+from config.db_config import DBConfig
 
 app = FastAPI()
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS").split(",")
+
+app_config = AppConfig()
+db_config = DBConfig()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=app_config.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,4 +23,4 @@ def read_root():
 
 
 if __name__ == "__main__":
-    main()
+    uvicorn.run(app, host="0.0.0.0", port=8000)

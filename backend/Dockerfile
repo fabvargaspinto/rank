@@ -8,23 +8,43 @@ ENV UV_COMPILE_BYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
 
+
+# ─────────────────────────────────────────────
+# Dependencies
+# ─────────────────────────────────────────────
+
 FROM base AS deps
 
 COPY pyproject.toml uv.lock ./
+
 RUN uv sync --frozen --no-install-project --no-dev
+
+
+# ─────────────────────────────────────────────
+# Development
+# ─────────────────────────────────────────────
 
 FROM deps AS dev
 
 COPY . .
+
 RUN uv sync --frozen --no-dev
 
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+
+# ─────────────────────────────────────────────
+# Production
+# ─────────────────────────────────────────────
 
 FROM deps AS prod
 
 COPY . .
+
 RUN uv sync --frozen --no-dev
 
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
