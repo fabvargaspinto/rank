@@ -1,9 +1,0 @@
-from typing import Protocol
-
-from domain.Auth.auth_email import Email
-
-
-class EmailProtector(Protocol):
-    def encrypt(self, email: Email) -> str: ...
-    def decrypt(self, token: str) -> Email: ...
-    def generate_email_hmac_identifier(self, email: Email) -> str: ...

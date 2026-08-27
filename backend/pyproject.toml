@@ -9,4 +9,5 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "pydantic-settings>=2.14.2",
     "supabase>=2.31.0",
+    "uuid6>=2025.0.1",
 ]
