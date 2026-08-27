@@ -6,6 +6,7 @@ from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_provider import Provider
 from core.auth.domain.auth_last_login import AuthLastLoginAt
 from core.auth.domain.auth_error import InvalidProviderError
+from core.auth.domain.auth_password import AuthPassword
 from core.user.user_id import UserId
 
 
@@ -53,6 +54,10 @@ class Auth:
             provider_id=provider_id,
             created_at=AuthCreatedAt.generate(),
         )
+
+    @classmethod
+    def validate_password(cls, password: str) -> None:
+        AuthPassword.validate(password)
 
     def update_last_login_at(self) -> None:
         self.last_login_at = AuthLastLoginAt.generate()

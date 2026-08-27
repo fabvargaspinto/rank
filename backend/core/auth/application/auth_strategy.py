@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Callable, Protocol
 
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_provider import Provider
@@ -23,7 +23,7 @@ class CredentialsStrategy:
         self,
         user_id: UserId,
         email: str,
-        secret: str | None = None,
+        secret: str 
     ) -> Auth:
         if not secret:
             raise InvalidPasswordError("Password is required")
@@ -51,11 +51,14 @@ class OAuthStrategy:
             raise InvalidProviderError("OAuth provider id is required")
         return Auth.create_from_oauth(user_id, email, self._provider, provider_id)
 
-    def verify(self, auth: Auth, secret: str | None = None) -> bool:
+    def verify(self, auth: Auth) -> bool:
         return auth.provider == self._provider
 
 
-def strategy_for(provider: Provider) -> AuthStrategy:
+def get_strategy(provider: Provider) -> AuthStrategy:
     if provider.is_credentials():
         return CredentialsStrategy()
     return OAuthStrategy(provider)
+
+
+GetStrategy = Callable[[Provider], AuthStrategy]

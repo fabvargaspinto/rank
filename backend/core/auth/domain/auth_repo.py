@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from core.auth.domain.auth import Auth
-from core.auth.domain.auth_email import Email
-from core.auth.domain.auth_password import Password
 
 
 @dataclass(frozen=True)
@@ -15,4 +13,4 @@ class RegisterAuthResult:
 
 
 class AuthRepo(Protocol):
-    def register(self, email: Email, password: Password) -> RegisterAuthResult: ...
+    def register(self, email: str, password: str, provider: str, name: str) -> None: ...

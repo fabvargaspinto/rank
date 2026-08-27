@@ -1,6 +1,6 @@
+drop table if exists sessions;
 drop table if exists auths;
 drop table if exists users;
-drop table if exists sessions;
 
 create table users (
   id           uuid primary key,
@@ -33,7 +33,7 @@ create table sessions (
   user_id          uuid not null references users (id) on delete cascade,
   token            text not null,
   created_at       timestamptz not null,
-  expires_at       timestamptz not null,
+  expires_at       timestamptz not null
 );
 
 create unique index sessions_user_id_uidx
@@ -54,3 +54,9 @@ create unique index auths_provider_email_uidx
 create unique index auths_oauth_provider_uidx
   on auths (provider, provider_id)
   where provider_id is not null;
+
+
+-- Los GRANT van DESPUÉS de crear las tablas
+GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLE public.users, public.auths, public.sessions
+  TO service_role;

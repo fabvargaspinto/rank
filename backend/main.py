@@ -10,11 +10,9 @@ from config.db_config import DBConfig
 from core.user.user import User
 from core.share.infraestructure.crypto.fernet_email_protector import FernetEmailProtector
 from core.share.infraestructure.database.supabase_client import SupabaseClient
-from core.auth.infraestructure.auth_supabase_repo import AuthSupabaseRepo
-from core.auth.application.register_auth import RegisterAuth
-
-from router.auth_router import auth_router
 from router.health_router import health_router
+from router.auth_router import auth_router
+from core.auth.infraestructure.auth_repo import AuthRepo
 
 
 def _serialize_user(user: User) -> dict:
@@ -34,6 +32,7 @@ def create_app(
     crypto_config: CryptoConfig | None = None,
     supabase_client: SupabaseClient | None = None,
     email_protector: FernetEmailProtector | None = None,
+  
 ) -> FastAPI:
     resolved_app_config = app_config or AppConfig()
     resolved_db_config = db_config or DBConfig()
@@ -42,9 +41,6 @@ def create_app(
     resolved_email_protector = email_protector or FernetEmailProtector(
         resolved_crypto_config
     )
-    resolved_register_auth = RegisterAuth(
-        AuthSupabaseRepo(resolved_supabase_client.get_client())
-    )
 
     app = FastAPI()
     app.state.app_config = resolved_app_config
@@ -52,7 +48,7 @@ def create_app(
     app.state.crypto_config = resolved_crypto_config
     app.state.supabase_client = resolved_supabase_client
     app.state.email_protector = resolved_email_protector
-    app.state.register_auth = resolved_register_auth
+    app.state.auth_repo = AuthRepo(supabase_client= resolved_supabase_client)    
 
     app.add_middleware(
         CORSMiddleware,
@@ -62,9 +58,9 @@ def create_app(
         allow_headers=["*"],
     )
 
-    app.include_router(auth_router)
+  
     app.include_router(health_router)
-
+    app.include_router(auth_router)
     @app.get("/")
     def read_root():
         return {"message": "Hello, World!"}

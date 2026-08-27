@@ -5,9 +5,10 @@ from fastapi import Depends, Request
 from config.app_config import AppConfig
 from config.crypto_config import CryptoConfig
 from config.db_config import DBConfig
+from core.auth.application.auth_strategy import GetStrategy
+from core.auth.infraestructure.auth_repo import AuthRepo
 from core.auth.domain.email_protector import EmailProtector
 from core.share.infraestructure.database.supabase_client import SupabaseClient
-from core.auth.application.register_auth import RegisterAuth
 
 
 def get_app_config(request: Request) -> AppConfig:
@@ -30,8 +31,12 @@ def get_email_protector(request: Request) -> EmailProtector:
     return request.app.state.email_protector
 
 
-def get_register_auth(request: Request) -> RegisterAuth:
-    return request.app.state.register_auth
+
+def get_strategy_factory(request: Request) -> GetStrategy:
+    return request.app.state.get_strategy
+
+def get_auth_repo(request: Request) -> AuthRepo:
+    return request.app.state.auth_repo
 
 
 AppConfigDep = Annotated[AppConfig, Depends(get_app_config)]
@@ -39,4 +44,5 @@ DBConfigDep = Annotated[DBConfig, Depends(get_db_config)]
 CryptoConfigDep = Annotated[CryptoConfig, Depends(get_crypto_config)]
 SupabaseClientDep = Annotated[SupabaseClient, Depends(get_supabase_client)]
 EmailProtectorDep = Annotated[EmailProtector, Depends(get_email_protector)]
-RegisterAuthDep = Annotated[RegisterAuth, Depends(get_register_auth)]
+GetStrategyDep = Annotated[GetStrategy, Depends(get_strategy_factory)]
+AuthRepoDep = Annotated[AuthRepo, Depends(get_auth_repo)]
