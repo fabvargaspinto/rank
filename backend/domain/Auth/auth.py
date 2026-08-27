@@ -2,10 +2,9 @@ from dataclasses import dataclass
 
 from domain.Auth.auth_created_at import AuthCreatedAt
 from domain.Auth.auth_email import Email
-from domain.Auth.auth_hash_password import HashPassword
 from domain.Auth.auth_id import AuthId
 from domain.Auth.auth_provider import Provider
-from domain.Auth.auth_updated_at import AuthUpdatedAt
+from domain.Auth.auth_last_login import AuthLastLoginAt
 from domain.error.domain_error import InvalidPasswordError, InvalidProviderError
 from domain.User.user_id import UserId
 
@@ -17,9 +16,9 @@ class Auth:
     email: Email
     provider: Provider
     created_at: AuthCreatedAt
-    updated_at: AuthUpdatedAt
+    last_login_at: AuthLastLoginAt | None = None
     provider_id: str | None = None
-    hashed_password: HashPassword | None = None
+ 
 
     def __post_init__(self) -> None:
         if self.provider.is_credentials() and self.hashed_password is None:
@@ -30,15 +29,14 @@ class Auth:
             raise InvalidProviderError("OAuth provider id is required")
 
     @classmethod
-    def create_with_credentials(cls, user_id: UserId, email: str, password: str) -> "Auth":
+    def create_with_credentials(cls, user_id: UserId, email: str) -> "Auth":
         return cls(
             id=AuthId.generate(),
             user_id=user_id,
             email=Email(email),
             provider=Provider.from_credentials(),
-            hashed_password=HashPassword.from_plain(password),
             created_at=AuthCreatedAt.generate(),
-            updated_at=AuthUpdatedAt.generate(),
+           
         )
 
     @classmethod
@@ -58,13 +56,10 @@ class Auth:
             provider=provider,
             provider_id=provider_id,
             created_at=AuthCreatedAt.generate(),
-            updated_at=AuthUpdatedAt.generate(),
         )
-
-    def verify_password(self, password: str) -> bool:
-        if self.hashed_password is None:
-            return False
-        return self.hashed_password.verify(password)
+    
+    def update_last_login_at(self) -> None:
+        self.last_login_at = AuthLastLoginAt.generate()
 
     def __str__(self) -> str:
         return f"Auth(email={self.email}, provider={self.provider})"
