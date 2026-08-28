@@ -11,6 +11,7 @@ export default function Button({
     size = "md",
     asChild = false,
     disabled = false,
+    type = "button",
 }: {
     children: React.ReactNode,
     onClick?: () => void,
@@ -18,6 +19,7 @@ export default function Button({
     size?: ButtonSize,
     asChild?: boolean,
     disabled?: boolean,
+    type?: "button" | "submit",
 }) {
     const className = styles.button;
 
@@ -37,7 +39,7 @@ export default function Button({
 
     return (
         <button
-            type="button"
+            type={type}
             className={className}
             onClick={onClick}
             disabled={disabled}

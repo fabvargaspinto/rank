@@ -6,6 +6,9 @@ import Carousel from '@/ui/carousel/carousel';
 import styles from './register-form.module.css';
 import Link from 'next/link';
 import Input from '@/ui/input/input';
+import { useActionState } from 'react';
+import { verifyUserName } from '@/action/verify_user_name';
+import { ActionResponse } from '@/action/action-response';
 
 function GoogleIcon() {
     return (
@@ -96,17 +99,22 @@ function RegisterName({
     canContinue: boolean,
     onContinue: () => void,
 }){
-    return (
-        <form
-            className={styles.registerForm}
-            onSubmit={(event) => {
-                event.preventDefault();
-                if (!canContinue) {
-                    return;
-                }
+    const [state, action, pending] = useActionState(
+        async (previousState: ActionResponse<void>, formData: FormData) => {
+            const result = await verifyUserName(previousState, formData);
+            if (!result.isError) {
                 onContinue();
-            }}
-        >
+            }
+            return result;
+        },
+        {
+            message: "",
+            isError: false,
+        },
+    );
+
+    return (
+        <form className={styles.registerForm} action={action}>
         <p id="name-hint" className={styles.nameDescription}>
             El nombre debe ser único, porque es como te pueden encontrar a través de Sello Nomada.
          </p>
@@ -120,7 +128,7 @@ function RegisterName({
                         id="name"
                         value={name}
                         onChange={(event) => onNameChange(event.target.value)}
-                        placeholder="tu nombre"
+                        placeholder="tu-nombre"
                         className={styles.nameValue}
                         aria-label="Nombre"
                         aria-describedby="name-hint"
@@ -132,10 +140,18 @@ function RegisterName({
                     />
                 </label>
             <div className={styles.registerFeedback}>
-            <p className={styles.registerFeedbackText}></p>
+            <p
+                className={styles.registerFeedbackText}
+                data-error={state.isError ? "true" : undefined}
+                aria-live="polite"
+            >
+                {state.isError ? state.message : ""}
+            </p>
             </div>
            
-            <Button variant="primary" size="full" onClick={onContinue} disabled={!canContinue}>Continuar</Button>
+            <Button variant="primary" size="full" type="submit" disabled={!canContinue || pending}>
+                Continuar
+            </Button>
         </form>
     );
 }
