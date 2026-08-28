@@ -1,4 +1,8 @@
+'use client';
+
+import { useState } from 'react';
 import Button from '@/ui/button/button';
+import Carousel from '@/ui/carousel/carousel';
 import styles from './register-form.module.css';
 import Link from 'next/link';
 import Input from '@/ui/input/input';
@@ -15,21 +19,41 @@ function GoogleIcon() {
 }
 
 export default function RegisterForm() {
+    const [step, setStep] = useState(0);
+    const [name, setName] = useState('');
+    const canContinue = name.trim().length > 0;
+
     return (
         <section className={styles.register}>
-            <RegisterName />
+            <div className={styles.registerHeader}>
+                <h1 className={styles.registerTitle}>Sello <span className={styles.registerTitleHighlight}>Nomada</span></h1>
+                <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
+            </div>
+            <Carousel index={step} label="Pasos de registro">
+                <RegisterName
+                    name={name}
+                    onNameChange={setName}
+                    canContinue={canContinue}
+                    onContinue={() => {
+                        if (!canContinue) {
+                            return;
+                        }
+                        setStep(1);
+                    }}
+                />
+                <RegistarData onBack={() => setStep(0)} />
+            </Carousel>
         </section>
     );
 }
 
-function RegistarData(){
+function RegistarData({ onBack }: { onBack: () => void }){
     return (
-        <>
-        <div className={styles.registerHeader}>
-        <h1 className={styles.registerTitle}>Sello <span className={styles.registerTitleHighlight}>Nomada</span></h1>
-        <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
-            </div>
-
+        <div className={styles.registerStep}>
+        <button type="button" className={styles.registerBack} onClick={onBack}>
+            <BackIcon />
+            Volver
+        </button>
         <form className={styles.registerForm}>
             <Input type="email" placeholder="Email" name="email" id="email" />
             <Input type="password" placeholder="Password" name="password" id="password" />
@@ -55,18 +79,32 @@ function RegistarData(){
             </Link>
         </p>
         </div>
-        </>
+        </div>
     );
 }
 
-function RegisterName(){
+function RegisterName({
+    name,
+    onNameChange,
+    canContinue,
+    onContinue,
+}: {
+    name: string,
+    onNameChange: (name: string) => void,
+    canContinue: boolean,
+    onContinue: () => void,
+}){
     return (
-        <>
-        <div className={styles.registerHeader}>
-        <h1 className={styles.registerTitle}>Sello <span className={styles.registerTitleHighlight}>Nomada</span></h1>
-        <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
-        </div>
-        <form className={styles.registerForm}>
+        <form
+            className={styles.registerForm}
+            onSubmit={(event) => {
+                event.preventDefault();
+                if (!canContinue) {
+                    return;
+                }
+                onContinue();
+            }}
+        >
         <p id="name-hint" className={styles.nameDescription}>
             El nombre debe ser único, porque es como te pueden encontrar a través de Sello Nomada.
          </p>
@@ -78,6 +116,8 @@ function RegisterName(){
                         type="text"
                         name="name"
                         id="name"
+                        value={name}
+                        onChange={(event) => onNameChange(event.target.value)}
                         placeholder="tu nombre"
                         className={styles.nameValue}
                         aria-label="Nombre"
@@ -86,14 +126,22 @@ function RegisterName(){
                         autoCapitalize="none"
                         autoCorrect="off"
                         spellCheck={false}
+                        required
                     />
                 </label>
             <div className={styles.registerFeedback}>
             <p className={styles.registerFeedbackText}></p>
             </div>
            
-            <Button variant="primary" size="full">Continuar</Button>
+            <Button variant="primary" size="full" onClick={onContinue} disabled={!canContinue}>Continuar</Button>
         </form>
-        </>
+    );
+}
+
+function BackIcon() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 3.5 5.5 8 10 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
     );
 }

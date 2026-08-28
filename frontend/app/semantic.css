@@ -78,6 +78,6 @@
     --breakpoint-desktop: var(--breakpoint-4);
 
     /* Padding Page */
-    --padding-page-sm: var(--scale-200);
+    --padding-page-sm: var(--scale-300);
     --padding-page-lg: var(--scale-400);
 }

@@ -26,6 +26,7 @@
 
 @media (max-width: 425px) {
   .content {
-    padding: var(--padding-page-sm);
+    padding: var(--padding-page-sm
+    );
   }
 }

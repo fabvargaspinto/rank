@@ -10,12 +10,14 @@ export default function Button({
     variant = "primary",
     size = "md",
     asChild = false,
+    disabled = false,
 }: {
     children: React.ReactNode,
     onClick?: () => void,
     variant?: ButtonVariant,
     size?: ButtonSize,
     asChild?: boolean,
+    disabled?: boolean,
 }) {
     const className = styles.button;
 
@@ -38,6 +40,7 @@ export default function Button({
             type="button"
             className={className}
             onClick={onClick}
+            disabled={disabled}
             data-variant={variant}
             data-size={size}
         >

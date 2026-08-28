@@ -35,6 +35,31 @@
     gap: var(--component-gap);
 }
 
+.registerStep {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-gap);
+    width: 100%;
+}
+
+.registerBack {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--scale-100);
+    align-self: flex-start;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-muted-0);
+}
+
+.registerBack:hover {
+    color: var(--color-white-0);
+}
+
 .registerFeedback {
     display: flex;
     flex-direction: column;
