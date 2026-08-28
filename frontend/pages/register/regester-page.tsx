@@ -1,10 +1,10 @@
 import WrapPage from "@/ui/wrap-page/wrap-page";
-import RegisterForm from "./component/register";
+import RegisterDataForm from "./component/register-form";
 
 export default function RegisterPage() {
     return (
         <WrapPage>
-        <RegisterForm />
+        <RegisterDataForm />
         </WrapPage>
     );
 }

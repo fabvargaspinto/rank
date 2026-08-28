@@ -82,3 +82,51 @@
     height: 1px;
     background-color: var(--input-border);
 }
+
+
+
+.nameDescription {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-paragraph-color);
+    line-height: 1.4;
+}
+
+.nameInput {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: var(--input-background);
+    color: var(--input-color);
+    padding: var(--input-padding-y) var(--input-padding-x);
+    border-radius: var(--input-radius);
+    border: 1px solid var(--input-border);
+    font-size: var(--font-size-md);
+    cursor: text;
+}
+
+.nameInput:focus-within {
+    border-color: var(--input-border-focus);
+}
+
+.namePrefix {
+    flex-shrink: 0;
+    color: var(--input-placeholder);
+    user-select: none;
+}
+
+.nameValue {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--input-color);
+    font-size: inherit;
+}
+
+.nameValue::placeholder {
+    color: var(--input-placeholder);
+}

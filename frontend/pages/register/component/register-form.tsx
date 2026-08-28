@@ -1,5 +1,5 @@
 import Button from '@/ui/button/button';
-import styles from './register.module.css';
+import styles from './register-form.module.css';
 import Link from 'next/link';
 import Input from '@/ui/input/input';
 
@@ -17,6 +17,14 @@ function GoogleIcon() {
 export default function RegisterForm() {
     return (
         <section className={styles.register}>
+            <RegisterName />
+        </section>
+    );
+}
+
+function RegistarData(){
+    return (
+        <>
         <div className={styles.registerHeader}>
         <h1 className={styles.registerTitle}>Sello <span className={styles.registerTitleHighlight}>Nomada</span></h1>
         <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
@@ -47,6 +55,45 @@ export default function RegisterForm() {
             </Link>
         </p>
         </div>
-        </section>
+        </>
+    );
+}
+
+function RegisterName(){
+    return (
+        <>
+        <div className={styles.registerHeader}>
+        <h1 className={styles.registerTitle}>Sello <span className={styles.registerTitleHighlight}>Nomada</span></h1>
+        <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
+        </div>
+        <form className={styles.registerForm}>
+        <p id="name-hint" className={styles.nameDescription}>
+            El nombre debe ser único, porque es como te pueden encontrar a través de Sello Nomada.
+         </p>
+           
+
+                <label htmlFor="name" className={styles.nameInput}>
+                    <span className={styles.namePrefix} aria-hidden="true">sellonamada.cl/&nbsp;</span>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        placeholder="tu nombre"
+                        className={styles.nameValue}
+                        aria-label="Nombre"
+                        aria-describedby="name-hint"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                    />
+                </label>
+            <div className={styles.registerFeedback}>
+            <p className={styles.registerFeedbackText}></p>
+            </div>
+           
+            <Button variant="primary" size="full">Continuar</Button>
+        </form>
+        </>
     );
 }
