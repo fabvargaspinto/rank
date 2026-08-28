@@ -7,7 +7,7 @@ from core.auth.domain.auth_provider import Provider
 from core.auth.domain.auth_last_login import AuthLastLoginAt
 from core.auth.domain.auth_error import InvalidProviderError
 from core.auth.domain.auth_password import AuthPassword
-from core.user.user_id import UserId
+from core.user.domain.user_id import UserId
 
 
 @dataclass(frozen=True)

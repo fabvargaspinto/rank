@@ -1,5 +1,5 @@
 from core.share.domain.string import String
-from core.user.user_error import InvalidUserDescriptionError
+from core.user.domain.user_error import InvalidUserDescriptionError
 
 MAX_DESCRIPTION_LENGTH = 1024
 

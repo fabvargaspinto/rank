@@ -5,7 +5,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from config.crypto_config import CryptoConfig
 from core.auth.domain.auth_email import Email
-from core.share.infraestructure.infra_error import EmailProtectorError
+from core.auth.infraestructure.error_infra import AuthEmailProtectorError
 
 
 class FernetEmailProtector:
@@ -20,7 +20,7 @@ class FernetEmailProtector:
         try:
             plaintext = self._fernet.decrypt(token.encode()).decode()
         except (InvalidToken, ValueError, TypeError) as error:
-            raise EmailProtectorError("Invalid email token") from error
+            raise AuthEmailProtectorError("Invalid email token") from error
         return Email(plaintext)
 
     def generate_email_hmac_identifier(self, email: Email) -> str:

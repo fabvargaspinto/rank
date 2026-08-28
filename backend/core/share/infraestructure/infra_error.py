@@ -4,11 +4,3 @@ class InfraError(Exception):
 
 class DatabaseError(InfraError):
     pass
-
-
-class EmailProtectorError(InfraError):
-    pass
-
-
-class AuthAlreadyExistsError(InfraError):
-    pass

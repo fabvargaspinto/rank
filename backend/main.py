@@ -7,13 +7,14 @@ from config.app_config import AppConfig
 from config.crypto_config import CryptoConfig
 from config.db_config import DBConfig
 
-from core.user.user import User
-from core.share.infraestructure.crypto.fernet_email_protector import FernetEmailProtector
+from core.user.domain.user import User
+from core.auth.infraestructure.crypto.fernet_email_protector import FernetEmailProtector
 from core.share.infraestructure.database.supabase_client import SupabaseClient
 from router.health_router import health_router
 from router.auth_router import auth_router
-from core.auth.infraestructure.auth_repo import AuthRepo
-
+from core.auth.infraestructure.auth_supabase_repo import AuthSupabaseRepo
+from core.user.infraestructure.user_supabase_repo import UserSupabaseRepo
+from router.user_router import user_router
 
 def _serialize_user(user: User) -> dict:
     return {
@@ -48,7 +49,8 @@ def create_app(
     app.state.crypto_config = resolved_crypto_config
     app.state.supabase_client = resolved_supabase_client
     app.state.email_protector = resolved_email_protector
-    app.state.auth_repo = AuthRepo(supabase_client= resolved_supabase_client)    
+    app.state.auth_repo = AuthSupabaseRepo(supabase_client= resolved_supabase_client)    
+    app.state.user_supabase_repo = UserSupabaseRepo(supabase_client= resolved_supabase_client)
 
     app.add_middleware(
         CORSMiddleware,
@@ -61,6 +63,8 @@ def create_app(
   
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(user_router)
+
     @app.get("/")
     def read_root():
         return {"message": "Hello, World!"}

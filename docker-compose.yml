@@ -68,6 +68,7 @@ services:
       WATCHPACK_POLLING: "true"
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      CI: "true"
 
     volumes:
       # Código fuente
@@ -75,6 +76,8 @@ services:
 
       # Dependencias Node
       - frontend_node_modules:/app/node_modules
+
+     
 
 
 volumes:

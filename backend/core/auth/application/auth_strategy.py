@@ -3,7 +3,7 @@ from typing import Callable, Protocol
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_provider import Provider
 from core.auth.domain.auth_error import InvalidPasswordError, InvalidProviderError
-from core.user.user_id import UserId
+from core.user.domain.user_id import UserId
 
 
 class AuthStrategy(Protocol):

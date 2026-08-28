@@ -4,10 +4,11 @@ from core.share.infraestructure.database.supabase_client import SupabaseClient
 from core.share.infraestructure.infra_error import DatabaseError
 
 
-class AuthRepo:
+class AuthSupabaseRepo:
 
     def __init__(self, supabase_client: SupabaseClient):
         self._client = supabase_client.get_client()
+        self.table = "auth"
 
     def register(
         self,
@@ -28,7 +29,7 @@ class AuthRepo:
         now = datetime.now().isoformat()
 
         try:
-            self._client.table("users").insert({
+            self._client.table(self.table).insert({
                 "id": "01a044e1-6fe4-7294-af6e-0085309d753a",
                 "name": name,
                 "created_at": now,
