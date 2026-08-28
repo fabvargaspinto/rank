@@ -23,6 +23,8 @@ export default function RegisterForm() {
     const [name, setName] = useState('');
     const canContinue = name.trim().length > 0;
 
+    
+
     return (
         <section className={styles.register}>
             <div className={styles.registerHeader}>
