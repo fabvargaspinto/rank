@@ -2,7 +2,7 @@ import { Children, cloneElement, isValidElement } from 'react';
 import styles from './button.module.css';
 
 type ButtonVariant = "primary" | "secondary";
-type ButtonSize = "full" | "md";
+type ButtonSize = "full" | "md" | "sm";
 
 export default function Button({
     children,

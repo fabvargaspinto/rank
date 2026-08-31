@@ -1,0 +1,128 @@
+.chart {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+    width: 100%;
+    margin: 0;
+}
+
+.title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-foreground-color);
+}
+
+.frame {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-100);
+    width: 100%;
+}
+
+.plot {
+    position: relative;
+    width: 100%;
+    height: var(--chart-height);
+}
+
+.svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.line {
+    fill: none;
+    stroke: var(--chart-line-color);
+    stroke-width: var(--chart-line-width);
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.area {
+    fill: var(--chart-area-color);
+    stroke: none;
+}
+
+.dot {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--chart-dot-hit);
+    height: var(--chart-dot-hit);
+    transform: translate(-50%, -50%);
+    cursor: default;
+    z-index: 1;
+}
+
+.dot::after {
+    content: "";
+    width: var(--chart-dot-size);
+    height: var(--chart-dot-size);
+    border-radius: 50%;
+    background-color: var(--chart-line-color);
+    border: var(--scale-50) solid var(--background-color);
+    box-sizing: border-box;
+}
+
+.dot:hover::after,
+.dot:focus-visible::after,
+.dot[aria-pressed="true"]::after {
+    width: var(--chart-dot-size-active);
+    height: var(--chart-dot-size-active);
+}
+
+.tooltip {
+    position: absolute;
+    transform: translate(-50%, calc(-100% - var(--scale-200)));
+    background-color: var(--chart-tooltip-background);
+    color: var(--chart-tooltip-color);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    font-variant-numeric: tabular-nums;
+    padding: var(--scale-100) var(--scale-200);
+    border-radius: var(--component-radius-md);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.tooltipBelow {
+    transform: translate(-50%, var(--scale-200));
+}
+
+.xAxis {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--chart-tick-color);
+    line-height: 1;
+}
+
+.xTick {
+    white-space: nowrap;
+}
+
+.xTick:first-child {
+    text-align: left;
+}
+
+.xTick:last-child {
+    text-align: right;
+}
+
+.labelSm {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .labelMd {
+        display: none;
+    }
+
+    .labelSm {
+        display: inline;
+    }
+}

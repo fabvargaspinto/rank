@@ -28,10 +28,12 @@
     --component-radius-md: var(--scale-200);
     --component-padding-sm: var(--scale-200);
     --component-padding-md: var(--scale-300);
+    --component-padding-lg: var(--scale-400);
     --component-border-md: var(--scale-200);
 
     --component-gap: var(--scale-400);
     --component-inner-gap: var(--scale-200);
+
     
 
     /* Button */
@@ -61,6 +63,26 @@
     --input-radius: var(--component-radius-md);
     --input-gap-field: var(--scale-100);
 
+    /* Avatar */
+    --avatar-size-sm: var(--scale-600);
+    --avatar-size-md: var(--scale-800);
+    --avatar-size-lg: var(--scale-1000);
+    --avatar-radius: 50%;
+    --avatar-background: var(--color-black-3);
+    --avatar-color: var(--color-white-0);
+
+    /* Chart */
+    --chart-height: 168px;
+    --chart-line-color: var(--color-primary);
+    --chart-line-width: var(--scale-50);
+    --chart-area-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+    --chart-tick-color: var(--color-muted-0);
+    --chart-dot-size: var(--scale-300);
+    --chart-dot-size-active: var(--scale-400);
+    --chart-dot-hit: var(--scale-800);
+    --chart-tooltip-background: var(--color-black-3);
+    --chart-tooltip-color: var(--color-white-0);
+
     /* Background */
     --background-color: var(--color-black-1);
 
@@ -80,4 +102,5 @@
     /* Padding Page */
     --padding-page-sm: var(--scale-300);
     --padding-page-lg: var(--scale-400);
+
 }

@@ -1,0 +1,198 @@
+.treeContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+    border-radius: var(--component-radius-md);
+    overflow: hidden;
+}
+
+/* Header */
+
+.treeHeaderContainer {
+    height: 400px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+}
+
+.treeHeaderContainer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    
+}
+
+.treeHeaderOverlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to bottom, transparent , rgba(0, 0, 0, 0.7));
+    z-index: 2;
+}
+
+.treeHeaderContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+    z-index: 3;
+    padding: var(--padding-page-sm);
+    width: 100%;
+}
+
+.treeHeaderTitle {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-white-0);
+}
+
+.treeHeaderDescription {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-white-0);
+}
+
+/* Options */
+
+.treeOptionsContainer {
+    display: flex;
+    padding: var(--padding-page-sm);
+    width: 100%;
+}
+
+.treeOptionsButton {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 40px;
+    cursor: pointer;
+}
+
+
+.treeOptionsActiveIndicator {
+    width: 100%;
+    height: 1px;
+    transition: background-color 0.3s ease;
+    position: absolute;
+    bottom: 0;
+}
+
+.treeOptionsActiveIndicatorActive {
+    background-color: var(--color-primary);
+}
+
+.treeOptionsActiveIndicatorInactive {
+    background-color: var(--color-muted-0);
+}
+
+.treeOptionsButtonText {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-regular);
+}
+
+.treeOptionsButtonTextActive {
+    color: var(--color-gray-0);
+}
+
+.treeOptionsButtonTextInactive {
+    color: var(--text-paragraph-color)
+}
+
+/* Content */
+
+.treeContentContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+    padding: var(--component-padding-sm);
+    
+}
+
+.textBoxContainer {
+    display: flex;
+    flex-direction: row;
+    gap: var(--component-inner-gap);
+    padding: var(--component-padding-lg) var(--component-padding-md);
+    background-color: var(--color-black-2);
+    border-radius: var(--component-radius-md);
+}
+
+.textBoxContentContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+}
+
+.textBoxHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--component-inner-gap);
+}
+
+.textBoxHeaderText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.textBoxTitle {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-white-0);
+}
+
+.textBoxDate {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-muted-0);
+}
+
+.textBoxContent {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    color: var(--text-paragraph-color);
+}
+
+.textBoxLink {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-muted-0);
+    text-decoration: none;
+}
+
+.treeLinkSectionContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-gap);
+    padding: var(--component-padding-md);
+}
+
+.treeLinkSectionHeader{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: var(--component-inner-gap);
+}
+
+.treeLinkSectionTitle {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+}
