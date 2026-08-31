@@ -1,4 +1,5 @@
 import { verifySchema } from "@/lib/verify_schema";
+import { fetchAction } from "@/lib/fetch_action";
 import { z } from "zod";
 import { ActionResponse } from "./action-response";
 
@@ -40,37 +41,23 @@ export async function verifyUserName(
         };
     }
 
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/verify-name`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name: data }),
-        });
+    const result = await fetchAction({
+        path: "/user/verify-name",
+        body: { name: data },
+        fallbackMessage: "no se pudo verificar el nombre",
+    });
 
-        const payload = await response.json().catch(() => null);
-        const message = typeof payload?.message === "string"
-            ? payload.message
-            : response.statusText;
-
-        if (!response.ok || payload?.isError) {
-            return {
-                message: toUserMessage(message),
-                isError: true,
-            };
-        }
-
+    if (result.isError) {
         return {
-            message: "nombre verificado correctamente",
-            isError: false,
-        };
-    } catch {
-        return {
-            message: "no se pudo verificar el nombre",
+            message: toUserMessage(result.message),
             isError: true,
         };
     }
+
+    return {
+        message: "nombre verificado correctamente",
+        isError: false,
+    };
 }
 
 function toUserMessage(message: string): string {

@@ -1,14 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import Button from '@/ui/button/button';
 import Carousel from '@/ui/carousel/carousel';
 import styles from './register-form.module.css';
 import Link from 'next/link';
 import Input from '@/ui/input/input';
-import { useActionState } from 'react';
-import { verifyUserName } from '@/action/verify_user_name';
-import { ActionResponse } from '@/action/action-response';
+import { useRegisterSteps } from '../hooks/use-register-steps';
+import { useRegisterName } from '../hooks/use-register-name';
 
 function GoogleIcon() {
     return (
@@ -22,11 +20,7 @@ function GoogleIcon() {
 }
 
 export default function RegisterForm() {
-    const [step, setStep] = useState(0);
-    const [name, setName] = useState('');
-    const canContinue = name.trim().length > 0;
-
-    
+    const { step, goToData, goToName } = useRegisterSteps();
 
     return (
         <section className={styles.register}>
@@ -35,18 +29,8 @@ export default function RegisterForm() {
                 <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
             </div>
             <Carousel index={step} label="Pasos de registro">
-                <RegisterName
-                    name={name}
-                    onNameChange={setName}
-                    canContinue={canContinue}
-                    onContinue={() => {
-                        if (!canContinue) {
-                            return;
-                        }
-                        setStep(1);
-                    }}
-                />
-                <RegistarData onBack={() => setStep(0)} />
+                <RegisterName onContinue={goToData} />
+                <RegistarData onBack={goToName} />
             </Carousel>
         </section>
     );
@@ -88,30 +72,16 @@ function RegistarData({ onBack }: { onBack: () => void }){
     );
 }
 
-function RegisterName({
-    name,
-    onNameChange,
-    canContinue,
-    onContinue,
-}: {
-    name: string,
-    onNameChange: (name: string) => void,
-    canContinue: boolean,
-    onContinue: () => void,
-}){
-    const [state, action, pending] = useActionState(
-        async (previousState: ActionResponse<void>, formData: FormData) => {
-            const result = await verifyUserName(previousState, formData);
-            if (!result.isError) {
-                onContinue();
-            }
-            return result;
-        },
-        {
-            message: "",
-            isError: false,
-        },
-    );
+function RegisterName({ onContinue }: { onContinue: () => void }){
+    const {
+        name,
+        onNameChange,
+        canContinue,
+        action,
+        pending,
+        isError,
+        errorMessage,
+    } = useRegisterName({ onSuccess: onContinue });
 
     return (
         <form className={styles.registerForm} action={action}>
@@ -142,10 +112,10 @@ function RegisterName({
             <div className={styles.registerFeedback}>
             <p
                 className={styles.registerFeedbackText}
-                data-error={state.isError ? "true" : undefined}
+                data-error={isError ? "true" : undefined}
                 aria-live="polite"
             >
-                {state.isError ? state.message : ""}
+                {errorMessage}
             </p>
             </div>
            
