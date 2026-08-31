@@ -11,7 +11,7 @@ from core.user.domain.user_id import UserId
 
 
 @dataclass(frozen=True)
-class Auth:
+class   Auth:
     id: AuthId
     user_id: UserId
     email: Email

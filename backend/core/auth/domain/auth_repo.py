@@ -5,7 +5,7 @@ from core.auth.domain.auth import Auth
 
 
 @dataclass(frozen=True)
-class RegisterAuthResult:
+class RegisterCredentialsAuthResult:
     auth: Auth
     access_token: str | None = None
     refresh_token: str | None = None

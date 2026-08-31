@@ -1,0 +1,2 @@
+class ErrorApplication(Exception):
+    pass
