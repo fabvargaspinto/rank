@@ -71,14 +71,23 @@ function TreeContent({ tab }: { tab: TreeTab }) {
 function TreeCommentSection(){
     return(
         <ul className={styles.treeContentContainer}>
-            
-                <TextBox />
-                <TextBox />
-            
+            <TextBox />
+            <TextBox />
+            <TextBox />
+            <TextBox />
+             <AddTextBox />
         </ul>
     )
 } 
 
+function AddTextBox() {
+    return(
+       
+            <Button size="icon-md" variant="tertiary" className={styles.addTextBoxButton}>
+                +
+            </Button>
+    )
+}
 
 
 function TextBox() {

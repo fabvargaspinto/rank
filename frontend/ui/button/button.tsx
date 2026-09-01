@@ -1,11 +1,12 @@
 import { Children, cloneElement, isValidElement } from 'react';
 import styles from './button.module.css';
 
-type ButtonVariant = "primary" | "secondary";
-type ButtonSize = "full" | "md" | "sm";
+type ButtonVariant = "primary" | "secondary" | "tertiary";
+type ButtonSize = "full" | "md" | "sm" | "icon-md"; 
 
 export default function Button({
     children,
+    className: classNameProps,
     onClick,
     variant = "primary",
     size = "md",
@@ -20,8 +21,9 @@ export default function Button({
     asChild?: boolean,
     disabled?: boolean,
     type?: "button" | "submit",
+    className?: string,
 }) {
-    const className = styles.button;
+    const className = [styles.button, classNameProps].filter(Boolean).join(' ');
 
     if (asChild) {
         const child = Children.only(children);

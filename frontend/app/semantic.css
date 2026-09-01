@@ -33,6 +33,7 @@
 
     --component-gap: var(--scale-400);
     --component-inner-gap: var(--scale-200);
+    
 
     
 
@@ -43,6 +44,9 @@
     --button-secondary-background: var(--color-black-3);
     --button-secondary-background-hover: var(--color-black-4);
     --button-secondary-color: var(--color-white-0);
+    --button-tertiary-background: var(--color-orange-500);
+    --button-tertiary-background-hover: var(--color-orange-600);
+    --button-tertiary-color: var(--color-white-0);
     --button-padding-md-x: var(--component-padding-md);
     --button-padding-md-y: var(--component-padding-sm);
 

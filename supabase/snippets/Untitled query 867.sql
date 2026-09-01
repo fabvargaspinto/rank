@@ -3,6 +3,7 @@ drop table if exists sessions;
 drop table if exists auths;
 drop table if exists users;
 
+
 create table users (
   id           uuid primary key,
   name         text not null,
@@ -76,4 +77,4 @@ GRANT SELECT, INSERT, UPDATE, DELETE
 
 
   -- pruebas
-  insert into users (id, name, avatar_url, description, created_at, updated_at) values ('123e4567-e89b-12d3-a456-426614174000', 'John_Doe', 'https://example.com/avatar.jpg', 'This is a test description', now(), now());
+  insert into users (id, name, avatar_url, description, created_at, updated_at) values ('123e4567-e89b-12d3-a456-426614174000', 'John Doe', 'https://example.com/avatar.jpg', 'This is a test description', now(), now());

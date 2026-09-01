@@ -62,5 +62,35 @@ class   Auth:
     def update_last_login_at(self) -> None:
         self.last_login_at = AuthLastLoginAt.generate()
 
+    def to_primitives(self):
+        return {
+            "id": self.id.value,
+            "user_id": self.user_id.value,
+            "email": self.email.value,
+            "provider": self.provider.value,
+            "created_at": self.created_at.value,
+            "last_login_at": self.last_login_at.value if self.last_login_at else None,
+            "provider_id": self.provider_id
+        }
+    @classmethod
+    def from_primitives(cls,
+        id: str,
+        user_id: str,
+        email: str,
+        provider: str,
+        created_at: str,
+        last_login_at: str | None,
+        provider_id: str | None
+    ) -> "Auth":
+        return cls(
+            id=AuthId(id),
+            user_id=UserId(user_id),
+            email=Email(email),
+            provider=Provider(provider),
+            created_at=AuthCreatedAt(created_at),
+            last_login_at=AuthLastLoginAt(last_login_at) if last_login_at else None,
+            provider_id=provider_id
+        )
+
     def __str__(self) -> str:
         return f"Auth(email={self.email}, provider={self.provider})"
