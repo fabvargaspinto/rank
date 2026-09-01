@@ -1,6 +1,3 @@
-'use client';
-
-import { useActionState, useRef } from 'react';
 import { ActionResponse } from '@/action/action-response';
 
 type FetchActionOptions = {
@@ -10,11 +7,6 @@ type FetchActionOptions = {
     fallbackMessage?: string,
 };
 
-type ActionFn<T> = (
-    previousState: ActionResponse<T>,
-    formData: FormData,
-) => Promise<ActionResponse<T>>;
-
 export async function fetchAction<T = void>({
     path,
     method = "POST",
@@ -22,7 +14,8 @@ export async function fetchAction<T = void>({
     fallbackMessage = "no se pudo completar la acción",
 }: FetchActionOptions): Promise<ActionResponse<T>> {
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+        const apiUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+        const response = await fetch(`${apiUrl}${path}`, {
             method,
             headers: {
                 Accept: "application/json",
@@ -54,36 +47,4 @@ export async function fetchAction<T = void>({
             isError: true,
         };
     }
-}
-
-export function useFetchAction<T = void>(
-    action: ActionFn<T>,
-    options?: {
-        initialState?: ActionResponse<T>,
-        onSuccess?: (state: ActionResponse<T>) => void,
-        onError?: (state: ActionResponse<T>) => void,
-    },
-) {
-    const onSuccessRef = useRef(options?.onSuccess);
-    const onErrorRef = useRef(options?.onError);
-    onSuccessRef.current = options?.onSuccess;
-    onErrorRef.current = options?.onError;
-
-    return useActionState(
-        async (previousState: ActionResponse<T>, formData: FormData) => {
-            const result = await action(previousState, formData);
-
-            if (result.isError) {
-                onErrorRef.current?.(result);
-            } else {
-                onSuccessRef.current?.(result);
-            }
-
-            return result;
-        },
-        options?.initialState ?? {
-            message: "",
-            isError: false,
-        },
-    );
 }

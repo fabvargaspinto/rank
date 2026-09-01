@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { verifyUserName } from '@/action/verify_user_name';
-import { useFetchAction } from '@/lib/fetch_action';
+import { useFetchAction } from '@/lib/use_fetch_action';
 
 export function useRegisterName({ onSuccess }: { onSuccess: () => void }) {
     const [name, setName] = useState('');
