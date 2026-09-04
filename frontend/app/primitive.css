@@ -16,6 +16,10 @@
     /* Primary */
     --color-orange-500: #ee720d;
     --color-orange-600: #e0660c;
+
+    /* Error */
+    --color-error-500: #ff7b7b;
+
     /* Fonts */
     --font-roboto: 'Roboto', sans-serif;
 

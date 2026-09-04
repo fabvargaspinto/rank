@@ -71,9 +71,6 @@ create unique index comment_trees_user_id_uidx
 
 -- Los GRANT van DESPUÉS de crear las tablas
 GRANT SELECT, INSERT, UPDATE, DELETE
-  ON TABLE public.users, public.auths, public.sessions
+  ON TABLE public.users, public.auths, public.sessions, public.comment_trees
   TO service_role;
 
-
-  -- pruebas
-  insert into users (id, name, avatar_url, description, created_at, updated_at) values ('123e4567-e89b-12d3-a456-426614174000', 'John_Doe', 'https://example.com/avatar.jpg', 'This is a test description', now(), now());

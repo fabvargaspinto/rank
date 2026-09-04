@@ -19,12 +19,7 @@ services:
       - ./backend/.env
 
     environment:
-      URL: http://host.docker.internal:54321/storage/v1/s3
-      SUPABASE_URL: http://host.docker.internal:54321
       WATCHFILES_FORCE_POLLING: "true"
-
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
     healthcheck:
       test:
@@ -68,7 +63,6 @@ services:
       WATCHPACK_POLLING: "true"
       API_URL: http://backend:8000
       NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
       CI: "true"
 
     depends_on:

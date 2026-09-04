@@ -3,7 +3,7 @@ import re
 from core.share.domain.string import String
 from core.user.domain.user_error import InvalidUserNameError
 
-MAX_USERNAME_LENGTH = 32
+MAX_USERNAME_LENGTH = 25
 MIN_USERNAME_LENGTH = 3
 SPACE_REGEX = re.compile(r"\s")
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9-_]+$")

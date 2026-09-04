@@ -1,0 +1,36 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    padding: var(--component-padding);
+    gap: var(--component-inner-gap);
+    width: 100%;
+    margin: 20px auto;
+}
+
+.inputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+}
+
+.inputDescription {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-paragraph-color);
+
+}
+
+.inputError {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-error-500);
+    text-align: center;
+    color: var(--color-error-500);
+}
+
+.buttonContainer{
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+    margin-top: 15px;
+}

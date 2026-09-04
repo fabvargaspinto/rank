@@ -18,15 +18,16 @@ export default async function Page({
   }
 
   const {data, isError, message} = await getUserByName(username);
-   
-    console.log(message,"message from getUserByName");
-    console.log(data,"data from getUserByName");
     
     if (isError) {
         return <div>Error: {message}</div>;
     }
 
+    if (!data) {
+        return <div>User not found</div>;
+    }
+
   return (
-    <TreePage username={username} />
+    <TreePage userProfile={{ username: data.name, description: data.description, image: data.avatar_url }} />
   );
 }

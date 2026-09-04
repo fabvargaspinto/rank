@@ -33,8 +33,9 @@
 
     --component-gap: var(--scale-400);
     --component-inner-gap: var(--scale-200);
-    
 
+/* Error */
+    --error-color: var(--color-error-500);
     
 
     /* Button */
@@ -56,6 +57,16 @@
     --button-radius-md: var(--component-radius-md);
     --button-border-md: var(--component-border-md);
 
+    /* Drawer */
+    --drawer-background: var(--color-black-2);
+    --drawer-overlay: color-mix(in srgb, var(--color-black-0) 60%, transparent);
+    --drawer-radius: var(--component-radius-md);
+    --drawer-padding: var(--component-padding-lg);
+    --drawer-width: 425px;
+    --drawer-min-width-mobile: 300px;
+    --drawer-min-width: 425px;
+    --drawer-max-height: 80dvh;
+
     /* Input */
     --input-background: var(--color-black-1);
     --input-color: var(--text-paragraph-color);
@@ -66,6 +77,17 @@
     --input-padding-y: var(--component-padding-sm);
     --input-radius: var(--component-radius-md);
     --input-gap-field: var(--scale-100);
+
+    /* Textarea */
+    --textarea-background: var(--input-background);
+    --textarea-color: var(--input-color);
+    --textarea-placeholder: var(--input-placeholder);
+    --textarea-border: var(--input-border);
+    --textarea-border-focus: var(--input-border-focus);
+    --textarea-padding-x: var(--input-padding-x);
+    --textarea-padding-y: var(--input-padding-y);
+    --textarea-radius: var(--input-radius);
+    --textarea-gap-field: var(--input-gap-field);
 
     /* Avatar */
     --avatar-size-sm: var(--scale-600);

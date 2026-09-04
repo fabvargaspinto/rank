@@ -1,14 +1,19 @@
 import WrapPage from "@/ui/wrap-page/wrap-page";
 import Tree from "./component/tree";
-import { getUserByName } from "@/action/get_user_by_name";
+
+export interface UserProfile {
+    username: string;
+    description: string;
+    image: string;
+}
 
 
-export default  async function  TreePage({ username }: { username: string }) {
+export default  async function  TreePage({ userProfile }: { userProfile: UserProfile }) {
     
     
     return (
         <WrapPage>
-            <Tree />
+            <Tree profile={userProfile} />
         </WrapPage>
     );
 }

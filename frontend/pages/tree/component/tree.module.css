@@ -4,7 +4,6 @@
     width: 100%;
     max-width: 400px;
     border-radius: var(--component-radius-md);
-    overflow: hidden;
 }
 
 /* Header */
@@ -16,6 +15,8 @@
     justify-content: space-between;
     align-items: flex-end;
     position: relative;
+    overflow: hidden;
+    border-radius: var(--component-radius-md) var(--component-radius-md) 0 0;
 }
 
 .treeHeaderContainer img {
@@ -56,10 +57,21 @@
     color: var(--color-white-0);
 }
 
+
 .treeHeaderDescription {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
     color: var(--color-white-0);
+}
+
+@media (max-width: 375px) {
+    .treeHeaderTitle {
+        font-size: var(--font-size-md);
+    }
+    .treeHeaderDescription {
+        font-size: var(--font-size-xs);
+        
+    }
 }
 
 /* Options */
@@ -113,15 +125,21 @@
 
 /* Content */
 
+.treeContentWrap {
+    display: grid;
+}
+
+.treeContentWrap > :first-child {
+    grid-area: 1 / 1;
+}
+
 .treeContentContainer {
     display: flex;
     flex-direction: column;
     gap: var(--component-inner-gap);
-    padding: var(--component-padding-lg) var(--component-padding-sm) 42px;
-    max-height: 630px;
-    overflow-y: scroll;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-gray-0) var(--color-black-2);
+    padding: var(--component-padding-lg) var(--component-padding-sm) 34px;
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 .textBoxContainer {
@@ -180,12 +198,20 @@
     text-decoration: none;
 }
 
-.addTextBoxButton {
-    position: absolute;
+.addTextBox {
+    grid-area: 1 / 1;
+    position: sticky;
     bottom: 20px;
-    right: 20px;
-    z-index: 100;
+    z-index: 2;
+    align-self: end;
+    justify-self: end;
+    margin: 0 20px 20px 0;
+    height: max-content;
+    pointer-events: none;
+}
 
+.addTextBoxButton {
+    pointer-events: auto;
 }
 .treeLinkSectionContainer {
     display: flex;

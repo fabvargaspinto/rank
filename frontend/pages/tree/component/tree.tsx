@@ -6,29 +6,37 @@ import Carousel from "@/ui/carousel/carousel";
 import LinealChart from "@/ui/chart/lineal_chart";
 import styles from "./tree.module.css";
 import Button from "@/ui/button/button";
+import Drawer from "@/ui/drawer/drawer";
+import { UserProfile } from "../tree_page";
+import DrawerAddComment from "./drawer_add_comment";
 
 type TreeTab = "comments" | "links";
 
-export default function Tree() {
+
+
+export default function Tree({ profile }: { profile: UserProfile }) {
     const [tab, setTab] = useState<TreeTab>("comments");
 
     return(
      <section className={styles.treeContainer}>
-        <TreHeader />
+        <TreHeader profile={profile} />
         <TreeOptions tab={tab} onTabChange={setTab} />
-        <TreeContent tab={tab} />
+        <div className={styles.treeContentWrap}>
+            <TreeContent tab={tab} />
+            {tab === "comments" ? <AddTextBox /> : null}
+        </div>
     </section>
     )
 }
 
-function TreHeader() {
+function TreHeader({ profile }: { profile: UserProfile }) {
     return(
         <header className={styles.treeHeaderContainer}>
-            <img src="demo.jpg" alt="Tree" />
+            <img src={profile.image} alt={profile.username} />
             <div className={styles.treeHeaderOverlay}></div>
             <div className={styles.treeHeaderContent}>
-                <h2 className={styles.treeHeaderTitle}>Tree</h2>
-                <p className={styles.treeHeaderDescription}>Tree Description</p>
+                <h2 className={styles.treeHeaderTitle + " clip-1"}>{profile.username}</h2>
+                <p className={styles.treeHeaderDescription + " clip-4"}>{profile.description}</p>
             </div>
         </header>
     )
@@ -75,17 +83,26 @@ function TreeCommentSection(){
             <TextBox />
             <TextBox />
             <TextBox />
-             <AddTextBox />
         </ul>
     )
 } 
 
 function AddTextBox() {
+    const [open, setOpen] = useState(false);
+
     return(
-       
-            <Button size="icon-md" variant="tertiary" className={styles.addTextBoxButton}>
+        <div className={styles.addTextBox}>
+            <Button
+                size="icon-md"
+                variant="tertiary"
+                className={styles.addTextBoxButton}
+                onClick={() => setOpen(true)}
+            >
                 +
             </Button>
+       
+            <DrawerAddComment open={open} onClose={() => setOpen(false)} />
+        </div>
     )
 }
 
