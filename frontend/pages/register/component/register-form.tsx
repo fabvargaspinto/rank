@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Button from '@/ui/button/button';
 import Carousel from '@/ui/carousel/carousel';
 import styles from './register-form.module.css';
 import Link from 'next/link';
 import Input from '@/ui/input/input';
 import { useRegisterSteps } from '../hooks/use-register-steps';
-import { useRegisterName } from '../hooks/use-register-name';
+import { useVerifyUserName } from '../hooks/use-verify-user-name';
+import { useRegisterCredentials } from '../hooks/use-register-credentials';
 
 function GoogleIcon() {
     return (
@@ -21,6 +23,7 @@ function GoogleIcon() {
 
 export default function RegisterForm() {
     const { step, goToData, goToName } = useRegisterSteps();
+    const [verifiedName, setVerifiedName] = useState('');
 
     return (
         <section className={styles.register}>
@@ -29,28 +32,50 @@ export default function RegisterForm() {
                 <p className={styles.registerDescription}>Crea tu cuenta para unirte a la comunidad</p>
             </div>
             <Carousel index={step} label="Pasos de registro">
-                <RegisterName onContinue={goToData} />
-                <RegistarData onBack={goToName} />
+                <RegisterName
+                    onContinue={(name) => {
+                        setVerifiedName(name);
+                        goToData();
+                    }}
+                />
+                <RegistarData name={verifiedName} onBack={goToName} />
             </Carousel>
         </section>
     );
 }
 
-function RegistarData({ onBack }: { onBack: () => void }){
+function RegistarData({ name, onBack }: { name: string; onBack: () => void }){
+    const {
+        action,
+        pending,
+        canSubmit,
+        isError,
+        errorMessage,
+    } = useRegisterCredentials({ name });
+
     return (
         <div className={styles.registerStep}>
         <button type="button" className={styles.registerBack} onClick={onBack}>
             <BackIcon />
             Volver
         </button>
-        <form className={styles.registerForm}>
+        <form className={styles.registerForm} onSubmit={action}>
+            <input type="hidden" name="name" value={name} />
             <Input type="email" placeholder="Email" name="email" id="email" />
             <Input type="password" placeholder="Password" name="password" id="password" />
             <Input type="password" placeholder="Confirmar password" name="confirmPassword" id="confirmPassword" />
             <div className={styles.registerFeedback}>
-            <p className={styles.registerFeedbackText}></p>
+            <p
+                className={styles.registerFeedbackText}
+                data-error={isError ? "true" : undefined}
+                aria-live="polite"
+            >
+                {errorMessage}
+            </p>
             </div>
-            <Button variant="primary" size="full">Registrarse</Button>
+            <Button variant="primary" size="full" type="submit" disabled={!canSubmit || pending}>
+                Registrarse
+            </Button>
         </form>
         <div className={styles.registerDivider}>
             <span>o</span>
@@ -72,7 +97,7 @@ function RegistarData({ onBack }: { onBack: () => void }){
     );
 }
 
-function RegisterName({ onContinue }: { onContinue: () => void }){
+function RegisterName({ onContinue }: { onContinue: (name: string) => void }){
     const {
         name,
         onNameChange,
@@ -81,10 +106,10 @@ function RegisterName({ onContinue }: { onContinue: () => void }){
         pending,
         isError,
         errorMessage,
-    } = useRegisterName({ onSuccess: onContinue });
+    } = useVerifyUserName({ onSuccess: onContinue });
 
     return (
-        <form className={styles.registerForm} action={action}>
+        <form className={styles.registerForm} onSubmit={action}>
         <p id="name-hint" className={styles.nameDescription}>
             El nombre debe ser único, porque es como te pueden encontrar a través de Sello Nomada.
          </p>

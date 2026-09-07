@@ -1,118 +1,154 @@
-from datetime import datetime
-
-from postgrest.exceptions import APIError
-
-from core.auth.infraestructure.error_infra import AuthAlreadyExistsError
+from core.auth.domain.auth import Auth
+from core.auth.domain.email_protector import EmailProtector
+from core.auth.domain.auth_repo import AuthSession
+from core.auth.infraestructure.error_infra import (
+    AuthAlreadyExistsError,
+    InvalidCredentialsError,
+)
 from core.share.infraestructure.database.supabase_client import SupabaseClient
 from core.share.infraestructure.infra_error import DatabaseError
+from core.user.domain.user import User
 from core.user.infraestructure.error_infra import UserNameAlreadyExistsError
 
 
 class AuthSupabaseRepo:
-    def __init__(self, supabase_client: SupabaseClient):
+    def __init__(
+        self,
+        supabase_client: SupabaseClient,
+        email_protector: EmailProtector,
+    ):
+        self._supabase_client = supabase_client
         self._client = supabase_client.get_client()
+        self._email_protector = email_protector
         self.table = "auths"
 
-    def register_credentials(
-        self,
-        user_id: str,
-        name: str,
-        avatar_url: str | None,
-        description: str,
-        user_created_at: datetime,
-        user_updated_at: datetime,
-        auth_id: str,
-        email_encrypted: str,
-        email_hmac: str,
-        provider: str,
-        auth_created_at: datetime,
-    ) -> None:
-        self._register_user_with_auth(
-            user_id=user_id,
-            name=name,
-            avatar_url=avatar_url,
-            description=description,
-            user_created_at=user_created_at,
-            user_updated_at=user_updated_at,
-            auth_id=auth_id,
-            provider=provider,
-            email_encrypted=email_encrypted,
-            email_hmac=email_hmac,
-            provider_id=None,
-            auth_created_at=auth_created_at,
+    def login(self, email: str, password: str) -> AuthSession:
+        auth_client = self._supabase_client.create_auth_client()
+        try:
+            response = auth_client.auth.sign_in_with_password(
+                {
+                    "email": email,
+                    "password": password,
+                }
+            )
+        except Exception as error:
+            raise InvalidCredentialsError("Invalid email or password") from error
+
+        session = getattr(response, "session", None)
+        access_token = getattr(session, "access_token", None) if session else None
+        refresh_token = getattr(session, "refresh_token", None) if session else None
+        expires_in = getattr(session, "expires_in", None) if session else None
+        if not access_token or not refresh_token or expires_in is None:
+            raise InvalidCredentialsError("Invalid email or password")
+
+        return AuthSession(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=int(expires_in),
         )
 
-    def register_oauth(
+    def register(
         self,
-        user_id: str,
-        name: str,
-        avatar_url: str | None,
-        description: str,
-        user_created_at: datetime,
-        user_updated_at: datetime,
-        auth_id: str,
-        provider: str,
-        email_encrypted: str,
-        email_hmac: str,
-        provider_id: str,
-        auth_created_at: datetime,
+        auth: Auth,
+        user: User,
+        password: str | None = None,
     ) -> None:
-        self._register_user_with_auth(
-            user_id=user_id,
-            name=name,
-            avatar_url=avatar_url,
-            description=description,
-            user_created_at=user_created_at,
-            user_updated_at=user_updated_at,
-            auth_id=auth_id,
-            provider=provider,
-            email_encrypted=email_encrypted,
-            email_hmac=email_hmac,
-            provider_id=provider_id,
-            auth_created_at=auth_created_at,
-        )
+        identity_id: str | None = None
+        try:
+            if auth.provider.is_credentials():
+                if not password:
+                    raise DatabaseError("Password is required to register credentials")
+                identity_id = self._create_identity(
+                    email=auth.email.value,
+                    password=password,
+                    name=user.name.value,
+                    user_id=user.id.value,
+                )
+            self._persist_user_and_auth(auth, user)
+        except Exception:
+            if identity_id is not None:
+                try:
+                    self._delete_identity(identity_id)
+                except Exception as rollback_error:
+                    raise DatabaseError(
+                        "Error registering user and auth: identity rollback failed"
+                    ) from rollback_error
+            raise
 
-    def _register_user_with_auth(
+    def _create_identity(
         self,
-        user_id: str,
+        email: str,
+        password: str,
         name: str,
-        avatar_url: str | None,
-        description: str,
-        user_created_at: datetime,
-        user_updated_at: datetime,
-        auth_id: str,
-        provider: str,
-        email_encrypted: str,
-        email_hmac: str,
-        provider_id: str | None,
-        auth_created_at: datetime,
-    ) -> None:
+        user_id: str,
+    ) -> str:
+        try:
+            response = self._client.auth.admin.create_user(
+                {
+                    "id": user_id,
+                    "email": email,
+                    "password": password,
+                    "email_confirm": True,
+                    "user_metadata": {"name": name},
+                }
+            )
+        except Exception as error:
+            raise self._to_identity_error(error) from error
+
+        identity = getattr(response, "user", None)
+        identity_id = getattr(identity, "id", None) if identity else None
+        return str(identity_id or user_id)
+
+    def _delete_identity(self, identity_id: str) -> None:
+        try:
+            self._client.auth.admin.delete_user(identity_id)
+        except Exception as error:
+            message = getattr(error, "message", None) or str(error)
+            lowered = message.lower()
+            if "not found" in lowered or "404" in lowered:
+                return
+            raise DatabaseError(f"Error deleting auth identity: {message}") from error
+
+    def _persist_user_and_auth(self, auth: Auth, user: User) -> None:
+        email_encrypted = self._email_protector.encrypt(auth.email)
+        email_hmac = self._email_protector.generate_email_hmac_identifier(auth.email)
+
         try:
             self._client.rpc(
                 "register_user_with_auth",
                 {
-                    "p_user_id": user_id,
-                    "p_name": name,
-                    "p_avatar_url": avatar_url,
-                    "p_description": description,
-                    "p_user_created_at": user_created_at.isoformat(),
-                    "p_user_updated_at": user_updated_at.isoformat(),
-                    "p_auth_id": auth_id,
-                    "p_provider": provider,
+                    "p_user_id": user.id.value,
+                    "p_name": user.name.value,
+                    "p_avatar_url": user.avatar_url.value if user.avatar_url else None,
+                    "p_description": (
+                        user.description.value if user.description else ""
+                    ),
+                    "p_user_created_at": user.created_at.value.isoformat(),
+                    "p_user_updated_at": user.updated_at.value.isoformat(),
+                    "p_auth_id": auth.id.value,
+                    "p_provider": str(auth.provider),
                     "p_email_encrypted": email_encrypted,
                     "p_email_hmac": email_hmac,
-                    "p_provider_id": provider_id,
-                    "p_auth_created_at": auth_created_at.isoformat(),
+                    "p_provider_id": auth.provider_id,
+                    "p_auth_created_at": auth.created_at.value.isoformat(),
                 },
             ).execute()
-        except APIError as error:
-            raise self._to_register_error(error) from error
         except Exception as error:
-            raise DatabaseError("Error registering user and auth") from error
+            raise self._to_register_error(error) from error
 
     @staticmethod
-    def _to_register_error(error: APIError) -> Exception:
-        message = error.message or str(error)
+    def _to_identity_error(error: Exception) -> Exception:
+        message = getattr(error, "message", None) or str(error)
+        lowered = message.lower()
+
+        if "already" in lowered or "registered" in lowered or "exists" in lowered:
+            return AuthAlreadyExistsError("Auth email already exists")
+
+        return DatabaseError(f"Error creating auth identity: {message}")
+
+    @staticmethod
+    def _to_register_error(error: Exception) -> Exception:
+        message = getattr(error, "message", None) or str(error)
 
         if "USER_NAME_ALREADY_EXISTS" in message:
             return UserNameAlreadyExistsError("User name already exists")

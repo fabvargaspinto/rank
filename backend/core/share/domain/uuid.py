@@ -1,3 +1,5 @@
+from uuid import UUID as StdUUID
+
 from uuid6 import uuid7
 
 from core.share.domain.domain_error import InvalidUUIDError
@@ -19,7 +21,7 @@ class UUID:
     @classmethod
     def validate(cls, value: str) -> bool:
         try:
-            uuid7(value)
+            StdUUID(str(value))
             return True
         except (ValueError, TypeError, AttributeError):
             return False

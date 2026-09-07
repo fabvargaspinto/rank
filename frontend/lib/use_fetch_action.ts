@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef } from 'react';
+import { startTransition, useActionState, useRef, type SubmitEventHandler } from 'react';
 import { ActionResponse } from '@/action/action-response';
 
 type ActionFn<T> = (
@@ -21,7 +21,7 @@ export function useFetchAction<T = void>(
     onSuccessRef.current = options?.onSuccess;
     onErrorRef.current = options?.onError;
 
-    return useActionState(
+    const [state, dispatch, pending] = useActionState(
         async (previousState: ActionResponse<T>, formData: FormData) => {
             const result = await action(previousState, formData);
 
@@ -38,4 +38,14 @@ export function useFetchAction<T = void>(
             isError: false,
         },
     );
+
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        startTransition(() => {
+            dispatch(formData);
+        });
+    };
+
+    return [state, handleSubmit, pending] as const;
 }

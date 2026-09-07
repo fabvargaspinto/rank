@@ -49,7 +49,10 @@ def create_app(
     app.state.crypto_config = resolved_crypto_config
     app.state.supabase_client = resolved_supabase_client
     app.state.email_protector = resolved_email_protector
-    app.state.auth_repo = AuthSupabaseRepo(supabase_client= resolved_supabase_client)    
+    app.state.auth_repo = AuthSupabaseRepo(
+        supabase_client=resolved_supabase_client,
+        email_protector=resolved_email_protector,
+    )    
     app.state.user_supabase_repo = UserSupabaseRepo(supabase_client= resolved_supabase_client)
 
     app.add_middleware(

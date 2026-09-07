@@ -1,8 +1,10 @@
-from core.share.domain.uuid import UUID
 
-class AuthId(UUID):
+
+class AuthId():
     def __init__(self, value: str):
-        super().__init__(value)
-
-    def __str__(self) -> str:
-        return self.value
+        if not value:
+            raise ValueError("Auth id cannot be empty")
+        if value.isdigit():
+            self.value = int(value)
+        else:
+            self.value = value

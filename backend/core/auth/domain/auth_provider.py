@@ -32,12 +32,12 @@ class Provider:
         return cls(value)
 
     @classmethod
-    def from_google(cls) -> "Provider":
-        return cls(ProviderKind.GOOGLE)
-
-    @classmethod
     def from_credentials(cls) -> "Provider":
         return cls(ProviderKind.CREDENTIALS)
+
+    @classmethod
+    def from_google(cls) -> "Provider":
+        return cls(ProviderKind.GOOGLE)
 
     def is_google(self) -> bool:
         return self.value is ProviderKind.GOOGLE

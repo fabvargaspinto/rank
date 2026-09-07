@@ -1,7 +1,10 @@
+'use client';
+
 import Button from '@/ui/button/button';
 import styles from './login.module.css';
 import Link from 'next/link';
 import Input from '@/ui/input/input';
+import { useLogin } from '../hooks/use-login';
 
 function GoogleIcon() {
     return (
@@ -15,6 +18,8 @@ function GoogleIcon() {
 }
 
 export default function LoginForm() {
+    const { action, pending, isError, errorMessage, isSuccess, successMessage } = useLogin();
+
     return (
         <section className={styles.login}>
         <div className={styles.loginHeader}>
@@ -22,13 +27,21 @@ export default function LoginForm() {
         <p className={styles.loginDescription}>Ingresa tus credenciales para acceder a tu cuenta</p>
             </div>
 
-        <form className={styles.loginForm}>
+        <form className={styles.loginForm} onSubmit={action}>
             <Input  type="email" placeholder="Email" name="email" id="email" />
             <Input  type="password" placeholder="Password" name="password" id="password" />
             <div className={styles.loginFeedback}>
-            <p className={styles.loginFeedbackText}></p>
+            <p
+                className={styles.loginFeedbackText}
+                data-error={isError ? "true" : undefined}
+                aria-live="polite"
+            >
+                {isError ? errorMessage : isSuccess ? successMessage : ""}
+            </p>
             </div>
-            <Button variant="primary" size="full">Iniciar sesión</Button>
+            <Button variant="primary" size="full" type="submit" disabled={pending}>
+                Iniciar sesión
+            </Button>
         </form>
         <div className={styles.loginDivider}>
             <span>o</span>

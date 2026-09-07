@@ -26,23 +26,20 @@ class SupabaseClient:
     def _initialize(self, config: DBConfig | None) -> None:
         resolved_config = config or DBConfig()
         self._url = resolved_config.url.strip()
-        self._client = self._create_client(resolved_config)
+        self._secret_key = resolved_config.secret_key.strip()
+        self._client = self._new_client()
 
-    @staticmethod
-    def _create_client(config: DBConfig) -> Client:
-        url = config.url.strip()
-        secret_key = config.secret_key.strip()
-
-        if not url:
+    def _new_client(self) -> Client:
+        if not self._url:
             raise DatabaseError("Supabase URL is empty")
 
-        if not secret_key:
+        if not self._secret_key:
             raise DatabaseError("Supabase secret key is empty")
 
         try:
             return create_client(
-                url,
-                secret_key,
+                self._url,
+                self._secret_key,
             )
         except Exception as error:
             raise DatabaseError(
@@ -51,6 +48,9 @@ class SupabaseClient:
 
     def get_client(self) -> Client:
         return self._client
+
+    def create_auth_client(self) -> Client:
+        return self._new_client()
 
     def check_connection(self) -> None:
         try:

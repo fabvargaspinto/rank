@@ -5,3 +5,6 @@ class AuthEmailProtectorError(InfraError):
 
 class AuthAlreadyExistsError(InfraError):
     pass
+
+class InvalidCredentialsError(InfraError):
+    pass

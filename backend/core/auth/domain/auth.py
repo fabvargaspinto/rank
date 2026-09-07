@@ -8,6 +8,7 @@ from core.auth.domain.auth_last_login import AuthLastLoginAt
 from core.auth.domain.auth_error import InvalidProviderError
 from core.auth.domain.auth_password import AuthPassword
 from core.user.domain.user_id import UserId
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -27,9 +28,9 @@ class   Auth:
             raise InvalidProviderError("OAuth provider id is required")
 
     @classmethod
-    def create_with_credentials(cls, user_id: UserId, email: str) -> "Auth":
+    def create_with_credentials(cls,id: str, user_id: UserId, email: str) -> "Auth":
         return cls(
-            id=AuthId.generate(),
+            id=AuthId(id),
             user_id=user_id,
             email=Email(email),
             provider=Provider.from_credentials(),

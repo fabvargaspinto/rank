@@ -6,9 +6,11 @@ from config.app_config import AppConfig
 from config.crypto_config import CryptoConfig
 from config.db_config import DBConfig
 from core.auth.application.auth_strategy import GetStrategy
+from core.auth.application.register_auth import RegisterAuth
 from core.auth.infraestructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.domain.email_protector import EmailProtector
 from core.share.infraestructure.database.supabase_client import SupabaseClient
+from core.user.application.register_user import RegisterUser
 from core.user.infraestructure.user_supabase_repo import UserSupabaseRepo
 
 
@@ -50,3 +52,10 @@ EmailProtectorDep = Annotated[EmailProtector, Depends(get_email_protector)]
 GetStrategyDep = Annotated[GetStrategy, Depends(get_strategy_factory)]
 AuthRepoDep = Annotated[AuthSupabaseRepo, Depends(get_auth_repo)]
 UserSupabaseRepoDep = Annotated[UserSupabaseRepo, Depends(get_user_supabase_repo)]
+
+
+def get_register_auth(auth_repo: AuthRepoDep) -> RegisterAuth:
+    return RegisterAuth(auth_repo=auth_repo, register_user=RegisterUser())
+
+
+RegisterAuthDep = Annotated[RegisterAuth, Depends(get_register_auth)]
