@@ -1,0 +1,44 @@
+.loginForm {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--component-outer-gap);
+    max-width: 425px;
+}
+
+.loginFormHeader {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--component-inner-gap);
+    
+}
+
+.loginFormHeaderTitle {
+    font-size: var(--font-hero-title);
+    font-weight: var(--font-hero-title-weight);
+    color: var(--hero-title-color);
+}
+
+.loginFormHeaderTitleAccent {
+    color: var(--accent-color);
+}
+
+.loginFormHeaderDescription {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    color: var(--muted-color);
+}
+
+.loginFormBody {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: var(--component-inner-gap);
+}

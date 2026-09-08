@@ -32,9 +32,9 @@ function RegisterFormBody() {
         <>
  
         <div className={styles.registerFormBody}>
-            <Input type="text" name="username" placeholder="Username" autoComplete="username" />
             <Input type="email" name="email" placeholder="Email" autoComplete="email" />
-            <Input type="password" name="password" placeholder="Password" autoComplete="new-password" />
+            <Input type="password" name="password" placeholder="Password"  />
+            <Input type="password" name="passwordConfirmation" placeholder="Password Confirmation"  />
         </div>
             <Button type="submit">Register</Button>
         </>
