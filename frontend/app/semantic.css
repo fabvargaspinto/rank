@@ -10,7 +10,7 @@
     --core-font-weight: var(--font-weight-regular);
     
     /* Colors */
-    --accent-color: var(--color-gray-light);
+    --accent-color: var(--color-white-0);
     --muted-color: var(--color-gray-black);
 
     
@@ -37,8 +37,8 @@
     --input-border-color-focus: var(--color-gray-light);
 
     /* Button */
-    --button-background-color: var(--color-gray-light);
-    --button-background-color-hover: var(--color-white-0);
+    --button-background-color: var(--color-white-0);
+    --button-background-color-hover: var(--color-gray-light);
     --button-color: var(--color-black-0);
     --button-border-color: var(--color-transparent);
     --button-border-width: var(--scale-1);
@@ -46,5 +46,8 @@
     --button-padding: var(--scale-5) var(--scale-5);
     --button-font-size: var(--font-size-sm);
     --button-font-weight: var(--font-weight-medium);
-    
+
+    --button-secondary-background-color: var(--color-black-3);
+    --button-secondary-background-color-hover: var(--color-black-4);
+    --button-secondary-color: var(--color-gray-light);
 }

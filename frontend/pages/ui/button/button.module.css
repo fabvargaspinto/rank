@@ -1,18 +1,34 @@
 .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--scale-4);
     width: 100%;
     padding: var(--button-padding);
     font-size: var(--button-font-size);
     font-weight: var(--button-font-weight);
-    color: var(--button-color);
-    background-color: var(--button-background-color);
     border: var(--button-border-width) solid var(--button-border-color);
     border-radius: var(--button-border-radius);
     cursor: pointer;
     outline: none;
 }
 
-.button:hover {
+.primary {
+    color: var(--button-color);
+    background-color: var(--button-background-color);
+}
+
+.primary:hover {
     background-color: var(--button-background-color-hover);
+}
+
+.secondary {
+    color: var(--button-secondary-color);
+    background-color: var(--button-secondary-background-color);
+}
+
+.secondary:hover {
+    background-color: var(--button-secondary-background-color-hover);
 }
 
 .button:focus-visible {
@@ -22,4 +38,8 @@
 .button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.button svg {
+    flex-shrink: 0;
 }
