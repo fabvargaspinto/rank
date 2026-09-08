@@ -34,5 +34,17 @@
     --input-color: var(--color-gray-light);
     --input-placeholder-color: var(--color-gray-black);
     --input-border-color-hover: var(--color-black-4);
-    --input-border-color-focus: var(--color-black-4);
+    --input-border-color-focus: var(--color-gray-light);
+
+    /* Button */
+    --button-background-color: var(--color-gray-light);
+    --button-background-color-hover: var(--color-white-0);
+    --button-color: var(--color-black-0);
+    --button-border-color: var(--color-transparent);
+    --button-border-width: var(--scale-1);
+    --button-border-radius: var(--scale-4);
+    --button-padding: var(--scale-5) var(--scale-5);
+    --button-font-size: var(--font-size-sm);
+    --button-font-weight: var(--font-weight-medium);
+    
 }

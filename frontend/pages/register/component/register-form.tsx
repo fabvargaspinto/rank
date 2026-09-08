@@ -1,3 +1,4 @@
+import Button from "@/pages/ui/button/button";
 import Input from "@/pages/ui/input/input";
 import styles from "./register-form.module.css";
 
@@ -28,11 +29,14 @@ function RegisterFormHeader() {
 
 function RegisterFormBody() {
     return (
+        <>
+ 
         <div className={styles.registerFormBody}>
             <Input type="text" name="username" placeholder="Username" autoComplete="username" />
             <Input type="email" name="email" placeholder="Email" autoComplete="email" />
             <Input type="password" name="password" placeholder="Password" autoComplete="new-password" />
-            <button type="submit">Register</button>
         </div>
+            <Button type="submit">Register</Button>
+        </>
     );
 }

@@ -1,0 +1,25 @@
+.button {
+    width: 100%;
+    padding: var(--button-padding);
+    font-size: var(--button-font-size);
+    font-weight: var(--button-font-weight);
+    color: var(--button-color);
+    background-color: var(--button-background-color);
+    border: var(--button-border-width) solid var(--button-border-color);
+    border-radius: var(--button-border-radius);
+    cursor: pointer;
+    outline: none;
+}
+
+.button:hover {
+    background-color: var(--button-background-color-hover);
+}
+
+.button:focus-visible {
+    border-color: var(--color-gray-light);
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
