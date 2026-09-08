@@ -1,0 +1,21 @@
+
+
+:root {
+
+    /* Core */
+    --core-background-color: var(--color-black);
+    --core-text-color: var(--color-white);
+    --core-font-family: var(--font-ubuntu);
+    --core-font-size: var(--font-size-md);
+    --core-font-weight: var(--font-weight-regular);
+
+
+    /* Components */
+    --header-background-color: var(--color-black);
+    --header-text-color: var(--color-white);
+    --header-border-color: var(--color-white);
+    --header-border-width: 1px;
+    --header-border-style: solid;
+    --header-border-radius: 0;
+    --header-padding: 1rem;
+}

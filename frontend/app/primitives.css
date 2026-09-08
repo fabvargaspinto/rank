@@ -1,0 +1,27 @@
+:root {
+
+    /* Font  Family*/
+    --font-ubuntu: 'Ubuntu', sans-serif;
+
+    /* Colors */
+    --color-black: #000000;
+    --color-white: #ffffff;
+
+    /* Font Sizes */
+    --font-size-xs: 0.8rem;     /* 13px */
+    --font-size-sm: 1rem;       /* 16px */
+    --font-size-md: 1.25rem;    /* 20px */
+    --font-size-lg: 1.563rem;   /* 25px */
+    --font-size-xl: 1.953rem;   /* 31px */
+    --font-size-2xl: 2.441rem;  /* 39px */
+    --font-size-3xl: 3.052rem; /* 49px */
+    --font-size-4xl: 3.815rem; /* 61px */
+
+    /* Font Weights */
+    --font-weight-light: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
+    
+   
+}
