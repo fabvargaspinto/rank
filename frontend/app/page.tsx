@@ -1,8 +1,7 @@
+import RegisterPage from "@/pages/register/register-page";
 
 export default function Home() {
   return (
-    <div >
-      
-    </div>
+    <RegisterPage />
   );
 }

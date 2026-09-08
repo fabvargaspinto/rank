@@ -1,0 +1,20 @@
+.pageWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: var(--margin-lg);
+}
+
+@media (max-width: 768px) {
+    .pageWrapper {
+        padding: var(--margin-md);
+    }
+}
+
+@media (max-width: 425px) {
+    .pageWrapper {
+        padding: var(--margin-sm);
+    }
+}

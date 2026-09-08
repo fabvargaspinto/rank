@@ -3,19 +3,36 @@
 :root {
 
     /* Core */
-    --core-background-color: var(--color-black);
-    --core-text-color: var(--color-white);
+    --core-background-color: var(--color-black-0);
+    --core-text-color: var(--color-gray-light);
     --core-font-family: var(--font-ubuntu);
     --core-font-size: var(--font-size-md);
     --core-font-weight: var(--font-weight-regular);
+    
+    /* Colors */
+    --accent-color: var(--color-gray-light);
+    --muted-color: var(--color-gray-black);
 
+    
+    /* Font */
+    --font-hero-title: var(--font-size-2xl);
+    --font-hero-title-weight: var(--font-weight-bold);
+    --hero-title-color: var(--color-gray-black);
 
     /* Components */
-    --header-background-color: var(--color-black);
-    --header-text-color: var(--color-white);
-    --header-border-color: var(--color-white);
-    --header-border-width: 1px;
-    --header-border-style: solid;
-    --header-border-radius: 0;
-    --header-padding: 1rem;
+    --component-inner-gap:var(--scale-4);
+    --component-outer-gap:var(--scale-6);
+
+    /* Input */
+    --input-background-color: var(--color-black-2);
+    --input-border-color: var(--color-transparent);
+    --input-border-width: var(--scale-1);
+    --input-border-radius: var(--scale-4);
+    --input-padding: var(--scale-5) var(--scale-5);
+    --input-font-size: var(--font-size-sm);
+    --input-font-weight: var(--font-weight-regular);
+    --input-color: var(--color-gray-light);
+    --input-placeholder-color: var(--color-gray-black);
+    --input-border-color-hover: var(--color-black-4);
+    --input-border-color-focus: var(--color-black-4);
 }

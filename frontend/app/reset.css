@@ -40,7 +40,7 @@ html,
 }
 
 body {
-  line-height: inherit;
+  line-height: 1;
 }
 
 hr {

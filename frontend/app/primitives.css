@@ -4,8 +4,23 @@
     --font-ubuntu: 'Ubuntu', sans-serif;
 
     /* Colors */
-    --color-black: #000000;
-    --color-white: #ffffff;
+    --color-transparent: transparent;
+    /* Black */
+    --color-black-0: #010101;
+    --color-black-1: #0a0a0a;
+    --color-black-2: #0e0e0e;
+    --color-black-3: #161616;
+    --color-black-4: #2b2b2b;
+
+    /* Gray */
+    --color-gray-light: #999999;
+    --color-gray-black: #686868;
+    
+
+    /* White */
+    --color-white-0: #fefefc;
+
+
 
     /* Font Sizes */
     --font-size-xs: 0.8rem;     /* 13px */
@@ -22,6 +37,21 @@
     --font-weight-regular: 400;
     --font-weight-medium: 500;
     --font-weight-bold: 700;
-    
    
+    /* Margins */
+    --margin-sm:16px;
+    --margin-md:40px;
+    --margin-lg:80px;
+
+   /* Scale */
+   --scale-0:0px;
+   --scale-1:1px;
+   --scale-2:2px;
+   --scale-3:4px;
+   --scale-4:8px;
+   --scale-5:16px;
+   --scale-6:32px;
+   --scale-7:64px;
+
+    
 }
