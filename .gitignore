@@ -1,39 +1,56 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ─────────────────────────────────────
+# Python
+# ─────────────────────────────────────
 
-# dependencies
-frontend/node_modules
-frontend/.pnp
-frontend/.pnp.*
-frontend/.yarn/*
-frontend/.yarn/patches
-frontend/.yarn/plugins
-frontend/.yarn/releases
-frontend/.yarn/versions
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 
-# testing
-frontend/coverage
+.venv/
+venv/
+env/
 
-# next.js
-frontend/.next/
-frontend/out/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# production
-frontend/build
+*.egg-info/
+dist/
+build/
 
-# misc
-frontend/.DS_Store
-*.pem
-
-# debug
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/.pnpm-debug.log*
+# Environment
+.env
+.env.*
+!.env.example
 
 
-# vercel
-frontend/.vercel
+# ─────────────────────────────────────
+# Next.js / Node
+# ─────────────────────────────────────
 
-# typescript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
+node_modules/
+.next/
+out/
+.turbo/
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+
+# ─────────────────────────────────────
+# OS
+# ─────────────────────────────────────
+
+.DS_Store
+Thumbs.db
+
+
+# ─────────────────────────────────────
+# IDE
+# ─────────────────────────────────────
+
+.vscode/
+.idea/
