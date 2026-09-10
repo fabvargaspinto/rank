@@ -1,4 +1,4 @@
-.registerForm {
+.form {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -8,33 +8,33 @@
     max-width: 425px;
 }
 
-.registerFormHeader {
+.header {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
     gap: var(--component-inner-gap);
-    
 }
 
-.registerFormHeaderTitle {
+.title {
     font-size: var(--font-hero-title);
     font-weight: var(--font-hero-title-weight);
     color: var(--hero-title-color);
 }
 
-.registerFormHeaderTitleAccent {
+.titleAccent {
     color: var(--accent-color);
 }
 
-.registerFormHeaderDescription {
+.description {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
     color: var(--muted-color);
+    text-wrap: pretty;
 }
 
-.registerFormBody {
+.section {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -43,7 +43,7 @@
     gap: var(--component-inner-gap);
 }
 
-.registerFormFooterLink {
+.footerLink {
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     color: var(--muted-color);
@@ -51,16 +51,16 @@
     margin: var(--scale-2) var(--scale-4);
 }
 
-.registerFormFooterLink a {
+.footerLink a {
     color: var(--accent-color);
     text-decoration: none;
 }
 
-.registerFormFooterLink a:hover {
-    color: var(--accent-gray-black);
+.footerLink a:hover {
+    color: var(--muted-color);
 }
 
-.registerFormBodySeparator {
+.separator {
     width: 100%;
     height: 1px;
     background-color: var(--color-black-4);

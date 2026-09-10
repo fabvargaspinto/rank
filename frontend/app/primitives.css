@@ -8,17 +8,18 @@
     /* Black */
     --color-black-0: #010101;
     --color-black-1: #0a0a0a;
-    --color-black-2: #0e0e0e;
+    --color-black-2: #0e0e0e; 
+    
     --color-black-3: #161616;
     --color-black-4: #2b2b2b;
 
     /* Gray */
     --color-gray-light: #a9a8a8;
-    --color-gray-black: #686868;
+    --color-gray-black: #5e5e5e;
     
 
     /* White */
-    --color-white-0: #d0d0d0;
+    --color-white-0: #dedede;
 
 
 

@@ -1,0 +1,9 @@
+from typing import Protocol
+
+from core.auth.domain.auth_email import AuthEmail
+
+
+class EmailCrypto(Protocol):
+    def encrypt(self, email: AuthEmail) -> str: ...
+    def decrypt(self, encrypted_email: str) -> AuthEmail: ...
+    def hmac(self, email: AuthEmail) -> str: ...
