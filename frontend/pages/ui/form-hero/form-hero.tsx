@@ -11,6 +11,10 @@ type FormHeroProps = {
     footerPrompt: string;
     footerHref: string;
     footerLabel: string;
+    action?: (formData: FormData) => void | Promise<void>;
+    pending?: boolean;
+    isError?: boolean;
+    message?: string;
 };
 
 export default function FormHero({
@@ -20,9 +24,13 @@ export default function FormHero({
     footerPrompt,
     footerHref,
     footerLabel,
+    action,
+    pending = false,
+    isError = false,
+    message = "",
 }: FormHeroProps) {
     return (
-        <form className={styles.form}>
+        <form className={styles.form} action={action}>
             <div className={styles.header}>
                 <h1 className={styles.title}>
                     Sello{" "}
@@ -31,10 +39,17 @@ export default function FormHero({
                 <p className={styles.description}>{description}</p>
             </div>
             <div className={styles.section}>{children}</div>
+            {pending || message ? (
+                <p className={isError ? styles.messageError : styles.messageOk}>
+                    {pending ? "Cargando..." : message}
+                </p>
+            ) : null}
             <div className={styles.section}>
-                <Button type="submit">{submitLabel}</Button>
+                <Button type="submit" disabled={pending}>
+                    {pending ? "Cargando..." : submitLabel}
+                </Button>
                 <div className={styles.separator} />
-                <GoogleButton />
+                <GoogleButton disabled={pending} />
                 <p className={styles.footerLink}>
                     {footerPrompt}{" "}
                     <Link href={footerHref}>{footerLabel}</Link>

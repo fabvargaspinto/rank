@@ -10,8 +10,20 @@ from core.user.domain.user_updated_at import UserUpdatedAt
 @dataclass
 class User:
     id: UserId
-    name: UserName
-    avatar: UserAvatar
-    description: UserDescription
-    created_at: UserCreatedAt
+    name: UserName | None
+    avatar: UserAvatar | None
+    description: UserDescription | None
+    created_at: UserCreatedAt 
     updated_at: UserUpdatedAt
+
+
+    @staticmethod
+    def create_empty() -> "User":
+        return User(
+            id=UserId.generate(),
+            name=None,
+            avatar=None,
+            description=None,
+            created_at=UserCreatedAt.now(),
+            updated_at=UserUpdatedAt.now(),
+        )

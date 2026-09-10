@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      WATCHFILES_FORCE_POLLING: "true"
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    command:
+      [
+        "sh",
+        "-c",
+        "uv sync --frozen && uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+      ]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_URL: http://backend:8000
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command:
+      ["sh", "-c", "pnpm install && pnpm dev --hostname 0.0.0.0"]
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_venv:
+  frontend_node_modules:

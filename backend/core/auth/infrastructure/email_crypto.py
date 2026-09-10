@@ -4,17 +4,17 @@ import os
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from config.bootstrap import Bootstrap
+from config.crypto_setings import CryptoSettings
 from core.auth.domain.auth_email import AuthEmail
 
 
 class EmailCrypto:
     def __init__(
         self,
-        bootstrap: Bootstrap,
+        crypto_settings: CryptoSettings,
     ):
-        self._aes = AESGCM(bootstrap.email_encryption_key_bytes)
-        self._hmac_key = bootstrap.email_hmac_key_bytes
+        self._aes = AESGCM(crypto_settings.email_encryption_key_bytes)
+        self._hmac_key = crypto_settings.email_hmac_key_bytes
 
     def encrypt(self, email: AuthEmail) -> str:
         nonce = os.urandom(12)

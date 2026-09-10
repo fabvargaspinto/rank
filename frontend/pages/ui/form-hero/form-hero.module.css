@@ -66,3 +66,19 @@
     background-color: var(--color-black-4);
     margin: var(--scale-4) 0;
 }
+
+.messageError,
+.messageOk {
+    width: 100%;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    align-self: flex-start;
+}
+
+.messageError {
+    color: var(--accent-color);
+}
+
+.messageOk {
+    color: var(--muted-color);
+}
