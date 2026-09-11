@@ -108,3 +108,89 @@ class AuthSupabaseRepo(AuthRepository):
             raise DBError(error.message) from error
 
         return bool(response.data)
+
+    def find_auth_method(
+        self, auth_id: AuthId, provider: AuthProvider
+    ) -> AuthMethod | None:
+        try:
+            response = (
+                self.db_client.get_db()
+                .table(self.providers_table)
+                .select("*")
+                .eq("auth_id", auth_id.value)
+                .eq("provider", provider.value)
+                .limit(1)
+                .execute()
+            )
+        except APIError as error:
+            raise DBError(error.message) from error
+
+        if not response.data:
+            return None
+
+        row = response.data[0]
+        found_provider = AuthProvider.from_string(row["provider"])
+        if found_provider.is_email():
+            return AuthMethod.email()
+        return AuthMethod.oauth(found_provider, row["provider_id"])
+
+    def login_with_email(self, email: str, password: str) -> tuple[str, str]:
+        try:
+            response = self.db_client.get_db().auth.sign_in_with_password(
+                {"email": email, "password": password}
+            )
+        except Exception as error:
+            raise DBError(str(error)) from error
+
+        session = response.session
+        if session is None:
+            raise DBError("Login failed")
+
+        return session.access_token, session.refresh_token
+
+    def login_with_oauth(self, email: str) -> tuple[str, str]:
+        try:
+            link = self.db_client.get_db().auth.admin.generate_link(
+                {"type": "magiclink", "email": email}
+            )
+            properties = link.properties
+            email_otp = self._link_property(properties, "email_otp")
+            hashed_token = self._link_property(properties, "hashed_token")
+
+            if email_otp:
+                response = self.db_client.get_db().auth.verify_otp(
+                    {
+                        "email": email,
+                        "token": email_otp,
+                        "type": "magiclink",
+                    }
+                )
+            elif hashed_token:
+                response = self.db_client.get_db().auth.verify_otp(
+                    {
+                        "token_hash": hashed_token,
+                        "type": "email",
+                    }
+                )
+            else:
+                raise DBError("Login failed")
+        except DBError:
+            raise
+        except Exception as error:
+            raise DBError(str(error)) from error
+
+        session = response.session
+        if session is None:
+            raise DBError("Login failed")
+
+        return session.access_token, session.refresh_token
+
+    def _link_property(self, properties: object, name: str) -> str | None:
+        value = getattr(properties, name, None)
+        if value:
+            return str(value)
+        if isinstance(properties, dict):
+            raw = properties.get(name)
+            if raw:
+                return str(raw)
+        return None

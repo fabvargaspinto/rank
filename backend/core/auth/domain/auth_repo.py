@@ -30,3 +30,14 @@ class AuthRepository(Protocol):
 
     def auth_has_provider(self, auth_id: AuthId, provider: AuthProvider) -> bool:
         pass
+
+    def find_auth_method(
+        self, auth_id: AuthId, provider: AuthProvider
+    ) -> AuthMethod | None:
+        pass
+
+    def login_with_email(self, email: str, password: str) -> tuple[str, str]:
+        pass
+
+    def login_with_oauth(self, email: str) -> tuple[str, str]:
+        pass

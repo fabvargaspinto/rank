@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 
 from config.dependency_container import DependencyContainer, get_dependency_container
+from core.auth.application.login_user import LoginUserUseCase
 from core.auth.application.register_user import RegisterUserUseCase
 from core.auth.domain.auth_provider import AuthProvider
 from core.shared.application.application_error import ApplicationError
@@ -16,6 +17,12 @@ def get_register_user_use_case(
     container: Annotated[DependencyContainer, Depends(get_dependency_container)],
 ) -> RegisterUserUseCase:
     return container.register_user_use_case()
+
+
+def get_login_user_use_case(
+    container: Annotated[DependencyContainer, Depends(get_dependency_container)],
+) -> LoginUserUseCase:
+    return container.login_user_use_case()
 
 
 class RegisterEmailRequest(BaseModel):
@@ -60,3 +67,43 @@ def register_with_oauth(
     except (DomainError, ApplicationError) as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return {"ok": True}
+
+
+class LoginEmailRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class LoginOauthRequest(BaseModel):
+    email: EmailStr
+    provider: AuthProvider
+    provider_id: str
+
+
+@router.post("/login/email")
+def login_with_email(
+    request: LoginEmailRequest,
+    use_case: Annotated[LoginUserUseCase, Depends(get_login_user_use_case)],
+) -> dict:
+    try:
+        session = use_case.with_email(request.email, request.password)
+    except (DomainError, ApplicationError) as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return session.to_primitive()
+
+
+@router.post("/login/oauth")
+def login_with_oauth(
+    request: LoginOauthRequest,
+    use_case: Annotated[LoginUserUseCase, Depends(get_login_user_use_case)],
+) -> dict:
+    try:
+        session = use_case.with_oauth(
+            request.email,
+            request.provider,
+            request.provider_id,
+        )
+    except (DomainError, ApplicationError) as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return session.to_primitive()
+

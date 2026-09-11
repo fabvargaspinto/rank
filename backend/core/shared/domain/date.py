@@ -21,6 +21,8 @@ class Date:
     def validate(cls, value: datetime) -> bool:
         return isinstance(value, datetime)
 
-    @staticmethod
-    def from_isoformat(value: str) -> Date:
-        return Date(datetime.fromisoformat(value))
+    @classmethod
+    def from_isoformat(cls, value: str | datetime) -> Date:
+        if isinstance(value, datetime):
+            return cls(value)
+        return cls(datetime.fromisoformat(value.replace("Z", "+00:00")))

@@ -5,3 +5,6 @@ class AuthAlreadyExistsError(ApplicationError):
 
 class InvalidAuthProviderError(ApplicationError):
     pass
+
+class InvalidAuthCredentialsError(ApplicationError):
+    pass

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 from core.auth.domain.auth_created_at import AuthCreatedAt
 from core.auth.domain.auth_email import AuthEmail
@@ -25,8 +24,6 @@ class Auth:
 
     @staticmethod
     def from_primitive(primitive: dict, email: AuthEmail) -> "Auth":
-        
-
         return Auth(
             id=AuthId(primitive["id"]),
             user_id=UserId(primitive["user_id"]),
