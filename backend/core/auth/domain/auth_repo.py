@@ -28,6 +28,9 @@ class AuthRepository(Protocol):
     def find_auth_by_email(self, email: str) -> Auth | None:
         pass
 
+    def find_auth_by_id(self, auth_id: str) -> Auth | None:
+        pass
+
     def auth_has_provider(self, auth_id: AuthId, provider: AuthProvider) -> bool:
         pass
 
@@ -36,7 +39,7 @@ class AuthRepository(Protocol):
     ) -> AuthMethod | None:
         pass
 
-    def login_with_email(self, email: str, password: str) -> tuple[str, str]:
+    def login_with_email(self, email: str, password: str) -> tuple[str, str, str]:
         pass
 
     def login_with_oauth(self, email: str) -> tuple[str, str]:

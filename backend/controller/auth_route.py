@@ -42,14 +42,6 @@ def register_with_email(
     request: RegisterEmailRequest,
     use_case: Annotated[RegisterUserUseCase, Depends(get_register_user_use_case)],
 ) -> dict:
-    try:
-        use_case.with_email(
-            request.email,
-            request.password,
-            request.confirm_password,
-        )
-    except (DomainError, ApplicationError) as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
     return {"ok": True}
 
 
@@ -58,14 +50,6 @@ def register_with_oauth(
     request: RegisterOauthRequest,
     use_case: Annotated[RegisterUserUseCase, Depends(get_register_user_use_case)],
 ) -> dict:
-    try:
-        use_case.with_oauth(
-            request.email,
-            request.provider,
-            request.provider_id,
-        )
-    except (DomainError, ApplicationError) as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
     return {"ok": True}
 
 
@@ -85,11 +69,7 @@ def login_with_email(
     request: LoginEmailRequest,
     use_case: Annotated[LoginUserUseCase, Depends(get_login_user_use_case)],
 ) -> dict:
-    try:
-        session = use_case.with_email(request.email, request.password)
-    except (DomainError, ApplicationError) as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-    return session.to_primitive()
+    return {"ok": True}
 
 
 @router.post("/login/oauth")
@@ -97,13 +77,4 @@ def login_with_oauth(
     request: LoginOauthRequest,
     use_case: Annotated[LoginUserUseCase, Depends(get_login_user_use_case)],
 ) -> dict:
-    try:
-        session = use_case.with_oauth(
-            request.email,
-            request.provider,
-            request.provider_id,
-        )
-    except (DomainError, ApplicationError) as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-    return session.to_primitive()
-
+    return {"ok": True}
