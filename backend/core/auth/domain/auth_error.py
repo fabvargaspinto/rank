@@ -11,7 +11,3 @@ class InvalidAuthProviderError(DomainError):
 
 class InvalidAuthPasswordError(DomainError):
     pass
-
-
-class InvalidAuthOauthProviderError(DomainError):
-    pass

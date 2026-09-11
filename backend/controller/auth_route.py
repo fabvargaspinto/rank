@@ -5,7 +5,8 @@ from pydantic import BaseModel, EmailStr
 
 from config.dependency_container import DependencyContainer, get_dependency_container
 from core.auth.application.register_user import RegisterUserUseCase
-from core.auth.domain.auth_oauth_provider import AuthOauthProvider
+from core.auth.domain.auth_provider import AuthProvider
+from core.shared.application.application_error import ApplicationError
 from core.shared.domain.domain_error import DomainError
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -25,8 +26,8 @@ class RegisterEmailRequest(BaseModel):
 
 class RegisterOauthRequest(BaseModel):
     email: EmailStr
-    oauth_provider: AuthOauthProvider
-    oauth_provider_id: str
+    provider: AuthProvider
+    provider_id: str
 
 
 @router.post("/register/email")
@@ -40,7 +41,7 @@ def register_with_email(
             request.password,
             request.confirm_password,
         )
-    except DomainError as error:
+    except (DomainError, ApplicationError) as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return {"ok": True}
 
@@ -51,11 +52,11 @@ def register_with_oauth(
     use_case: Annotated[RegisterUserUseCase, Depends(get_register_user_use_case)],
 ) -> dict:
     try:
-        use_case.with_oauth_provider(
+        use_case.with_oauth(
             request.email,
-            request.oauth_provider,
-            request.oauth_provider_id,
+            request.provider,
+            request.provider_id,
         )
-    except DomainError as error:
+    except (DomainError, ApplicationError) as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return {"ok": True}

@@ -20,3 +20,7 @@ class Date:
     @classmethod
     def validate(cls, value: datetime) -> bool:
         return isinstance(value, datetime)
+
+    @staticmethod
+    def from_isoformat(value: str) -> Date:
+        return Date(datetime.fromisoformat(value))

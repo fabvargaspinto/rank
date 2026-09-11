@@ -1,12 +1,12 @@
+from core.auth.application.application_error import AuthAlreadyExistsError
+from core.auth.application.application_error import InvalidAuthProviderError
 from core.auth.domain.auth import Auth
-from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_error import InvalidAuthPasswordError
-from core.auth.domain.auth_oauth_provider import AuthOauthProvider
+from core.auth.domain.auth_method import AuthMethod
 from core.auth.domain.auth_password import AuthPassword
-from core.auth.domain.auth_provider_id import AuthProviderId
+from core.auth.domain.auth_provider import AuthProvider
 from core.auth.domain.auth_repo import AuthRepository
 from core.user.domain.user import User
-
 
 
 class RegisterUserUseCase:
@@ -18,32 +18,46 @@ class RegisterUserUseCase:
         email: str,
         password: str,
         confirm_password: str,
-      
     ) -> None:
         if password != confirm_password:
             raise InvalidAuthPasswordError("Las contraseñas no coinciden")
 
-        user = User.create_empty()
-        auth = Auth.create_email_auth(
-            user.id,
-            AuthEmail(email),
-            AuthPassword(password),
-        )
-        self.auth_repository.create_user(user, auth)
+        validated_password = AuthPassword(password)
+        method = AuthMethod.email()
+        existing = self.auth_repository.find_auth_by_email(email)
 
-    def with_oauth_provider(
+        if existing:
+            if self.auth_repository.auth_has_provider(existing.id, AuthProvider.EMAIL):
+                raise AuthAlreadyExistsError("El email ya está registrado")
+            self.auth_repository.link_auth_provider(
+                existing, method, validated_password.value
+            )
+            return
+
+        user = User.create_empty()
+        auth = Auth.create(user.id.value, email)
+        self.auth_repository.create_user(
+            user, auth, method, validated_password.value
+        )
+
+    def with_oauth(
         self,
         email: str,
-        oauth_provider: AuthOauthProvider,
-        oauth_provider_id: str,
+        provider: AuthProvider,
+        provider_id: str,
     ) -> None:
-        user = User.create_empty()
-        auth = Auth.create_oauth_auth(
-            user.id,
-            AuthEmail(email),
-            oauth_provider,
-            AuthProviderId(oauth_provider_id),
-        )
-        self.auth_repository.create_user(user, auth)
+        if not provider.is_oauth():
+            raise InvalidAuthProviderError("El proveedor debe ser un proveedor OAuth")
 
-  
+        method = AuthMethod.oauth(provider, provider_id)
+        existing = self.auth_repository.find_auth_by_email(email)
+
+        if existing:
+            if self.auth_repository.auth_has_provider(existing.id, provider):
+                raise AuthAlreadyExistsError("El email ya está registrado")
+            self.auth_repository.link_auth_provider(existing, method)
+            return
+
+        user = User.create_empty()
+        auth = Auth.create(user.id.value, email)
+        self.auth_repository.create_user(user, auth, method)

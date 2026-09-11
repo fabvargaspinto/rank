@@ -1,7 +1,9 @@
 -- public schema
+DROP TABLE IF EXISTS public.auth_providers;
 DROP TABLE IF EXISTS public.auth;
 DROP TABLE IF EXISTS public.users;
 DROP FUNCTION IF EXISTS public.register_auth CASCADE;
+DROP FUNCTION IF EXISTS public.link_auth_provider CASCADE;
 
 CREATE TABLE public.users (
     id UUID PRIMARY KEY,
@@ -14,35 +16,32 @@ CREATE TABLE public.users (
 
 CREATE TABLE public.auth (
     id UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES public.users (id) ON DELETE CASCADE,
+    user_id UUID NOT NULL UNIQUE REFERENCES public.users (id) ON DELETE CASCADE,
     email_encrypted TEXT NOT NULL,
     email_hmac TEXT NOT NULL UNIQUE,
-    provider VARCHAR(32) NOT NULL CHECK (provider IN ('EMAIL', 'OAUTH')),
-    oauth_provider VARCHAR(32) CHECK (oauth_provider IS NULL OR oauth_provider IN ('GOOGLE')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.auth_providers (
+    id UUID PRIMARY KEY,
+    auth_id UUID NOT NULL REFERENCES public.auth (id) ON DELETE CASCADE,
+    provider VARCHAR(32) NOT NULL CHECK (provider IN ('EMAIL', 'GOOGLE')),
     provider_id VARCHAR(255),
-    identity_key TEXT GENERATED ALWAYS AS (
-        CASE
-            WHEN provider = 'EMAIL' THEN 'EMAIL'
-            ELSE oauth_provider
-        END
-    ) STORED,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT auth_provider_shape CHECK (
+    CONSTRAINT auth_providers_shape CHECK (
         (
             provider = 'EMAIL'
-            AND oauth_provider IS NULL
             AND provider_id IS NULL
         )
         OR (
-            provider = 'OAUTH'
-            AND oauth_provider IS NOT NULL
+            provider <> 'EMAIL'
             AND provider_id IS NOT NULL
         )
     ),
-    UNIQUE (user_id, identity_key)
+    UNIQUE (auth_id, provider)
 );
 
--- Inserts auth.users + public.users + public.auth in a single transaction.
+-- Inserts auth.users + public.users + public.auth + one auth_providers row.
 -- Call with the service role from the backend. Not for anon/authenticated.
 CREATE OR REPLACE FUNCTION public.register_auth(
     p_user_id UUID,
@@ -55,7 +54,6 @@ CREATE OR REPLACE FUNCTION public.register_auth(
     p_email_hmac TEXT,
     p_provider TEXT,
     p_password TEXT DEFAULT NULL,
-    p_oauth_provider TEXT DEFAULT NULL,
     p_provider_id TEXT DEFAULT NULL
 )
 RETURNS TABLE (user_id UUID, auth_id UUID)
@@ -65,13 +63,12 @@ SET search_path = ''
 AS $$
 DECLARE
     v_provider TEXT := upper(p_provider);
-    v_oauth_provider TEXT := NULLIF(upper(COALESCE(p_oauth_provider, '')), '');
     v_gotrue_provider TEXT;
     v_encrypted_password TEXT;
     v_identity_provider_id TEXT;
 BEGIN
-    IF v_provider NOT IN ('EMAIL', 'OAUTH') THEN
-        RAISE EXCEPTION 'provider must be EMAIL or OAUTH'
+    IF v_provider NOT IN ('EMAIL', 'GOOGLE') THEN
+        RAISE EXCEPTION 'provider must be EMAIL or GOOGLE'
             USING ERRCODE = '22023';
     END IF;
 
@@ -80,26 +77,25 @@ BEGIN
             RAISE EXCEPTION 'password is required for EMAIL provider'
                 USING ERRCODE = '22023';
         END IF;
-        IF v_oauth_provider IS NOT NULL OR (p_provider_id IS NOT NULL AND p_provider_id <> '') THEN
-            RAISE EXCEPTION 'oauth_provider and provider_id must be empty for EMAIL provider'
+        IF p_provider_id IS NOT NULL AND p_provider_id <> '' THEN
+            RAISE EXCEPTION 'provider_id must be empty for EMAIL provider'
                 USING ERRCODE = '22023';
         END IF;
 
         v_gotrue_provider := 'email';
         v_encrypted_password := extensions.crypt(p_password, extensions.gen_salt('bf'));
         v_identity_provider_id := p_auth_id::TEXT;
-        v_oauth_provider := NULL;
     ELSE
-        IF v_oauth_provider IS NULL OR v_oauth_provider NOT IN ('GOOGLE') THEN
-            RAISE EXCEPTION 'oauth_provider is required for OAUTH and must be GOOGLE'
+        IF p_provider_id IS NULL OR p_provider_id = '' THEN
+            RAISE EXCEPTION 'provider_id is required for OAuth provider'
                 USING ERRCODE = '22023';
         END IF;
-        IF p_provider_id IS NULL OR p_provider_id = '' THEN
-            RAISE EXCEPTION 'provider_id is required for OAUTH provider'
+        IF p_password IS NOT NULL AND p_password <> '' THEN
+            RAISE EXCEPTION 'password must be empty for OAuth provider'
                 USING ERRCODE = '22023';
         END IF;
 
-        v_gotrue_provider := lower(v_oauth_provider);
+        v_gotrue_provider := lower(v_provider);
         v_encrypted_password := NULL;
         v_identity_provider_id := p_provider_id;
     END IF;
@@ -181,17 +177,23 @@ BEGIN
         id,
         user_id,
         email_encrypted,
-        email_hmac,
-        provider,
-        oauth_provider,
-        provider_id
+        email_hmac
     ) VALUES (
         p_auth_id,
         p_user_id,
         p_email_encrypted,
-        p_email_hmac,
+        p_email_hmac
+    );
+
+    INSERT INTO public.auth_providers (
+        id,
+        auth_id,
+        provider,
+        provider_id
+    ) VALUES (
+        gen_random_uuid(),
+        p_auth_id,
         v_provider,
-        v_oauth_provider,
         NULLIF(p_provider_id, '')
     );
 
@@ -199,5 +201,127 @@ BEGIN
 END;
 $$;
 
+-- Adds a login method to an existing auth / GoTrue user. Does not insert users.
+CREATE OR REPLACE FUNCTION public.link_auth_provider(
+    p_auth_id UUID,
+    p_email TEXT,
+    p_provider TEXT,
+    p_password TEXT DEFAULT NULL,
+    p_provider_id TEXT DEFAULT NULL
+)
+RETURNS TABLE (auth_id UUID)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_provider TEXT := upper(p_provider);
+    v_gotrue_provider TEXT;
+    v_encrypted_password TEXT;
+    v_identity_provider_id TEXT;
+BEGIN
+    IF v_provider NOT IN ('EMAIL', 'GOOGLE') THEN
+        RAISE EXCEPTION 'provider must be EMAIL or GOOGLE'
+            USING ERRCODE = '22023';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM public.auth WHERE id = p_auth_id) THEN
+        RAISE EXCEPTION 'auth does not exist'
+            USING ERRCODE = '22023';
+    END IF;
+
+    IF v_provider = 'EMAIL' THEN
+        IF p_password IS NULL OR p_password = '' THEN
+            RAISE EXCEPTION 'password is required for EMAIL provider'
+                USING ERRCODE = '22023';
+        END IF;
+        IF p_provider_id IS NOT NULL AND p_provider_id <> '' THEN
+            RAISE EXCEPTION 'provider_id must be empty for EMAIL provider'
+                USING ERRCODE = '22023';
+        END IF;
+
+        v_gotrue_provider := 'email';
+        v_encrypted_password := extensions.crypt(p_password, extensions.gen_salt('bf'));
+        v_identity_provider_id := p_auth_id::TEXT;
+    ELSE
+        IF p_provider_id IS NULL OR p_provider_id = '' THEN
+            RAISE EXCEPTION 'provider_id is required for OAuth provider'
+                USING ERRCODE = '22023';
+        END IF;
+        IF p_password IS NOT NULL AND p_password <> '' THEN
+            RAISE EXCEPTION 'password must be empty for OAuth provider'
+                USING ERRCODE = '22023';
+        END IF;
+
+        v_gotrue_provider := lower(v_provider);
+        v_encrypted_password := NULL;
+        v_identity_provider_id := p_provider_id;
+    END IF;
+
+    INSERT INTO auth.identities (
+        id,
+        user_id,
+        identity_data,
+        provider,
+        provider_id,
+        last_sign_in_at,
+        created_at,
+        updated_at
+    ) VALUES (
+        gen_random_uuid(),
+        p_auth_id,
+        jsonb_build_object(
+            'sub', v_identity_provider_id,
+            'email', p_email,
+            'email_verified', TRUE
+        ),
+        v_gotrue_provider,
+        v_identity_provider_id,
+        NOW(),
+        NOW(),
+        NOW()
+    );
+
+    UPDATE auth.users
+    SET
+        encrypted_password = CASE
+            WHEN v_provider = 'EMAIL' THEN v_encrypted_password
+            ELSE encrypted_password
+        END,
+        raw_app_meta_data = jsonb_build_object(
+            'provider', COALESCE(raw_app_meta_data->>'provider', v_gotrue_provider),
+            'providers', (
+                SELECT jsonb_agg(DISTINCT provider_name)
+                FROM (
+                    SELECT jsonb_array_elements_text(
+                        COALESCE(raw_app_meta_data->'providers', '[]'::jsonb)
+                    ) AS provider_name
+                    UNION
+                    SELECT v_gotrue_provider
+                ) providers
+            )
+        ),
+        updated_at = NOW()
+    WHERE id = p_auth_id;
+
+    INSERT INTO public.auth_providers (
+        id,
+        auth_id,
+        provider,
+        provider_id
+    ) VALUES (
+        gen_random_uuid(),
+        p_auth_id,
+        v_provider,
+        NULLIF(p_provider_id, '')
+    );
+
+    RETURN QUERY SELECT p_auth_id;
+END;
+$$;
+
 REVOKE ALL ON FUNCTION public.register_auth FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.register_auth TO service_role;
+
+REVOKE ALL ON FUNCTION public.link_auth_provider FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.link_auth_provider TO service_role;

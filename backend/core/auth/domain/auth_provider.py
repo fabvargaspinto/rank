@@ -3,15 +3,15 @@ from enum import Enum
 from core.auth.domain.auth_error import InvalidAuthProviderError
 
 
-class AuthProvider(Enum):
+class AuthProvider(str, Enum):
     EMAIL = "EMAIL"
-    OAUTH = "OAUTH"
+    GOOGLE = "GOOGLE"
 
     def is_email(self) -> bool:
-        return self is AuthProvider.EMAIL
+        return self == AuthProvider.EMAIL
 
     def is_oauth(self) -> bool:
-        return self is AuthProvider.OAUTH
+        return self != AuthProvider.EMAIL
 
     @classmethod
     def from_string(cls, value: str) -> "AuthProvider":
