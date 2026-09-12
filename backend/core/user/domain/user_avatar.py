@@ -12,6 +12,7 @@ class UserAvatar(String):
         self.validate()
         
     def validate(self):
+        self.value = self.value.strip()
+
         if not self.value.startswith("https://"):
             raise InvalidUserAvatarError("El avatar debe ser una URL válida")
-        self.value = self.value.strip()

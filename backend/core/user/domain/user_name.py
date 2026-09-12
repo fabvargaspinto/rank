@@ -14,6 +14,10 @@ class UserName(String):
         
     def validate(self):
      
+        self.value = self.value.strip()
+
         if len(self.value) < self.MIN_LENGTH or len(self.value) > self.MAX_LENGTH:
-            raise InvalidUserNameError(f"el nombre debe tener entre {self.MIN_LENGTH} y {self.MAX_LENGTH} caracteres")
-        self.value = self.value.strip()    
+            raise InvalidUserNameError(
+                f"El nombre debe tener entre "
+                f"{self.MIN_LENGTH} y {self.MAX_LENGTH} caracteres"
+            ) 
