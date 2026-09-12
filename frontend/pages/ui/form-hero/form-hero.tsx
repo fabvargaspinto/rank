@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import Link from "next/link";
 import Button from "../button/button";
 import GoogleButton from "../google-button/google-button";
@@ -12,6 +12,7 @@ type FormHeroProps = {
     footerHref: string;
     footerLabel: string;
     action?: (formData: FormData) => void | Promise<void>;
+    googleAction?: ComponentProps<"button">["formAction"];
     pending?: boolean;
     isError?: boolean;
     message?: string;
@@ -25,6 +26,7 @@ export default function FormHero({
     footerHref,
     footerLabel,
     action,
+    googleAction,
     pending = false,
     isError = false,
     message = "",
@@ -49,7 +51,11 @@ export default function FormHero({
                     {pending ? "Cargando..." : submitLabel}
                 </Button>
                 <div className={styles.separator} />
-                <GoogleButton disabled={pending} />
+                <GoogleButton
+                    type={googleAction ? "submit" : "button"}
+                    formAction={googleAction}
+                    disabled={pending}
+                />
                 <p className={styles.footerLink}>
                     {footerPrompt}{" "}
                     <Link href={footerHref}>{footerLabel}</Link>

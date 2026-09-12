@@ -17,9 +17,9 @@ class Auth:
     email: AuthEmail | None = None
 
     @staticmethod
-    def create_with_email(user_id: str, email: str) -> "Auth":
+    def create_with_email(id:str,user_id: str, email: str) -> "Auth":
         return Auth(
-            id=AuthId.generate(),
+            id=AuthId(id),
             user_id=UserId(user_id),
             email=AuthEmail(email),
             created_at=AuthCreatedAt.now(),
@@ -28,13 +28,14 @@ class Auth:
 
     @staticmethod
     def create_with_oauth(
+        id:str,
         user_id: str,
         provider: AuthProvider,
         provider_id: str,
         email: str | None = None,
     ) -> "Auth":
         return Auth(
-            id=AuthId.generate(),
+            id=AuthId(id),
             user_id=UserId(user_id),
             email=AuthEmail(email) if email is not None else None,
             created_at=AuthCreatedAt.now(),

@@ -1,7 +1,11 @@
 import LoginPage from "@/pages/login/login-page";
-import RegisterPage from "@/pages/register/register-page";
-export default function Home() {
-  return (
-    <LoginPage />
-  );
+
+type HomeProps = {
+    searchParams: Promise<{ error?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+    const params = await searchParams;
+
+    return <LoginPage initialError={params.error} />;
 }

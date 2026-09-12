@@ -10,7 +10,7 @@ export async function registerCredentialAction(
     const password = String(formData.get("password") ?? "");
     const confirmPassword = String(formData.get("passwordConfirmation") ?? "");
 
-    return fetchData("/auth/register/email", {
+    const result = await fetchData("/auth/register/email", {
         method: "POST",
         body: JSON.stringify({
             email,
@@ -18,4 +18,13 @@ export async function registerCredentialAction(
             confirm_password: confirmPassword,
         }),
     });
+
+    if (result.isError) {
+        return result;
+    }
+
+    return {
+        ...result,
+        message: "Cuenta creada. Ya puedes iniciar sesión.",
+    };
 }

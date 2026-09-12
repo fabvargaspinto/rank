@@ -14,3 +14,6 @@ class EmailAlreadyExistsError(ApplicationError):
 
 class PasswordMismatchError(ApplicationError):
     pass
+
+class EmailNotFoundError(ApplicationError):
+    pass

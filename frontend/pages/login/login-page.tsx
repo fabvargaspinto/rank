@@ -1,11 +1,14 @@
 import PageWrapper from "../ui/page-wrapper/page-wrapper";
 import LoginForm from "./component/login-form";
 
+type LoginPageProps = {
+    initialError?: string;
+};
 
-export default function LoginPage() {
+export default function LoginPage({ initialError }: LoginPageProps) {
     return (
-        <PageWrapper>           
-                <LoginForm />
+        <PageWrapper>
+            <LoginForm initialError={initialError} />
         </PageWrapper>
     );
 }

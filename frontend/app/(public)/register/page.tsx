@@ -1,7 +1,13 @@
 import RegisterPage from "@/pages/register/register-page"
 
-export default function page() {
+type RegisterRouteProps = {
+    searchParams: Promise<{ error?: string }>;
+};
+
+export default async function page({ searchParams }: RegisterRouteProps) {
+    const params = await searchParams;
+
     return (
-        <RegisterPage />
+        <RegisterPage initialError={params.error} />
     );
 }

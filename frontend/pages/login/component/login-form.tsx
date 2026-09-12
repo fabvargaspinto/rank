@@ -5,8 +5,13 @@ import FormHero from "@/pages/ui/form-hero/form-hero";
 import Input from "@/pages/ui/input/input";
 import { emptyFetchResponse } from "@/lib/fetch_data";
 import { loginCredentialAction } from "../action/login-credential-action";
+import { loginGoogleAction } from "../action/login-google-action";
 
-export default function LoginForm() {
+type LoginFormProps = {
+    initialError?: string;
+};
+
+export default function LoginForm({ initialError = "" }: LoginFormProps) {
     const [state, formAction, pending] = useActionState(
         loginCredentialAction,
         emptyFetchResponse,
@@ -20,9 +25,10 @@ export default function LoginForm() {
             footerHref="/register"
             footerLabel="Registrate"
             action={formAction}
+            googleAction={loginGoogleAction}
             pending={pending}
-            isError={state.isError}
-            message={state.message}
+            isError={state.isError || Boolean(initialError)}
+            message={state.message || initialError}
         >
             <Input type="email" name="email" placeholder="Email" autoComplete="email" />
             <Input type="password" name="password" placeholder="Password" autoComplete="current-password" />
