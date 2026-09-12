@@ -11,3 +11,25 @@ dependencies = [
     "supabase>=2.31.0",
     "uuid6>=2025.0.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "unit: tests aislados, sin Supabase ni red",
+    "integration: tests contra Supabase (requieren SUPABASE_URL y SUPABASE_SECRET_KEY)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::starlette.exceptions.StarletteDeprecationWarning",
+]

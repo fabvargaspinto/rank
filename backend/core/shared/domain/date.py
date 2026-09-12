@@ -21,6 +21,9 @@ class Date:
     def validate(cls, value: datetime) -> bool:
         return isinstance(value, datetime)
 
+    def to_isoformat(self) -> str:
+        return self.value.isoformat()
+
     @classmethod
     def from_isoformat(cls, value: str | datetime) -> Date:
         if isinstance(value, datetime):

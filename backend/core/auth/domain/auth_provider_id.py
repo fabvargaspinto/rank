@@ -1,6 +1,6 @@
-class AuthProviderId():
-    
-    def __init__(self, value: str):
-        self.value = value
+from dataclasses import dataclass
 
-    
+
+@dataclass(frozen=True)
+class AuthProviderId:
+    value: str

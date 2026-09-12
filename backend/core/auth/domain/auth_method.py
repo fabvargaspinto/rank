@@ -34,3 +34,17 @@ class AuthMethod:
             provider=provider,
             provider_id=AuthProviderId(provider_id),
         )
+
+
+    @staticmethod
+    def from_primitive(primitive: dict) -> "AuthMethod":
+        return AuthMethod(
+            provider=AuthProvider.from_string(primitive["provider"]),
+            provider_id=None if primitive["provider"] == AuthProvider.EMAIL.value else AuthProviderId(primitive["provider_id"]),
+        )
+
+    def to_primitive(self) -> dict:
+        return {
+            "provider": self.provider.value,
+            "provider_id": self.provider_id.value if self.provider_id is not None else None,
+        }

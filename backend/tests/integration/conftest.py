@@ -1,0 +1,46 @@
+import os
+
+import pytest
+from postgrest.exceptions import APIError
+
+from config.db_settings import DBSettings
+from db.db_client import DBClient
+
+
+def _supabase_env_ready() -> bool:
+    url = os.getenv("SUPABASE_URL", "").strip()
+    key = os.getenv("SUPABASE_SECRET_KEY", "").strip()
+    return bool(url and key)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def require_supabase() -> None:
+    if not _supabase_env_ready():
+        pytest.skip(
+            "Supabase no está configurado. Definí SUPABASE_URL y "
+            "SUPABASE_SECRET_KEY en el .env de la raíz del repo."
+        )
+
+
+@pytest.fixture(scope="session")
+def db_settings() -> DBSettings:
+    return DBSettings()
+
+
+@pytest.fixture(scope="session")
+def db_client(db_settings: DBSettings) -> DBClient:
+    return DBClient(db_settings)
+
+
+@pytest.fixture(scope="session")
+def users_table(db_client: DBClient):
+    try:
+        db_client.get_db().table("users").select("id").limit(1).execute()
+    except APIError as exc:
+        if exc.code == "PGRST205":
+            pytest.skip(
+                "La tabla public.users no existe. Aplicá backend/db/schema.sql "
+                "en el proyecto de Supabase."
+            )
+        raise
+    return db_client
