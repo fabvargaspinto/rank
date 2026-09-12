@@ -23,3 +23,7 @@ class AuthProvider(str, Enum):
             raise InvalidAuthProviderError(
                 f"El proveedor de autenticación debe ser uno de los siguientes: {allowed}"
             )
+    
+    @classmethod
+    def get_all(cls) -> list[str]:
+        return [provider.value for provider in cls]

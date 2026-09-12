@@ -42,3 +42,6 @@ class TestAuthProvider:
     def test_should_reject_unknown_provider(self):
         with pytest.raises(InvalidAuthProviderError):
             AuthProvider.from_string("FACEBOOK")
+
+    def test_should_get_all_providers(self):
+        assert AuthProvider.get_all() == ["EMAIL", "GOOGLE"]

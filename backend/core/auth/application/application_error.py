@@ -8,3 +8,9 @@ class InvalidAuthProviderError(ApplicationError):
 
 class InvalidAuthCredentialsError(ApplicationError):
     pass
+
+class EmailAlreadyExistsError(ApplicationError):
+    pass
+
+class PasswordMismatchError(ApplicationError):
+    pass
