@@ -4,6 +4,8 @@ from core.auth.domain.auth_created_at import AuthCreatedAt
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_id import AuthId
 from core.user.domain.user_id import UserId
+from core.auth.domain.auth_method import AuthMethod
+
 
 
 @dataclass(frozen=True)
@@ -12,6 +14,7 @@ class Auth:
     user_id: UserId
     email: AuthEmail
     created_at: AuthCreatedAt
+    provider_method: AuthMethod
 
     @staticmethod
     def create(user_id: str, email: str) -> "Auth":
