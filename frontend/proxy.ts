@@ -9,10 +9,6 @@ export async function proxy(request: NextRequest) {
 
     const { url, anonKey } = getSupabaseAuthConfig();
 
-    if (!url || !anonKey) {
-        return supabaseResponse;
-    }
-
     const supabase = createServerClient(url, anonKey, {
         cookies: {
             getAll() {

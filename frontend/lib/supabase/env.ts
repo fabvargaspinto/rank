@@ -1,21 +1,15 @@
 export function getSupabaseAuthConfig() {
-    const url = (
-        process.env.NEXT_PUBLIC_SUPABASE_URL ||
-        process.env.SUPABASE_URL ||
-        ""
-    ).trim();
+    const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+    const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
 
-    const anonKey = (
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_PUBLISHABLE_KEY ||
-        ""
-    ).trim();
-
-    const key = anonKey || (process.env.SUPABASE_SECRET_KEY || "").trim();
+    if (!url || !anonKey) {
+        throw new Error(
+            "Supabase no está configurado. Definí NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+        );
+    }
 
     return {
         url,
-        anonKey: key,
+        anonKey,
     };
 }

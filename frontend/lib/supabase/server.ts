@@ -6,12 +6,6 @@ export async function createClient() {
     const cookieStore = await cookies();
     const { url, anonKey } = getSupabaseAuthConfig();
 
-    if (!url || !anonKey) {
-        throw new Error(
-            "Supabase no está configurado. Revisá SUPABASE_URL y SUPABASE_SECRET_KEY en el .env de la raíz.",
-        );
-    }
-
     return createServerClient(url, anonKey, {
         cookies: {
             getAll() {

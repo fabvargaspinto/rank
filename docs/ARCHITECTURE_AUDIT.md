@@ -1061,7 +1061,7 @@ No haría simplemente P0 → P1 → P2 → P3, porque algunas tareas de una mism
 Fase 1 — Seguridad inmediata
 ✅ Eliminar login del backend
 ✅ Renombrar frontend/pages
-Eliminar fallback a SUPABASE_SECRET_KEY
+✅ Eliminar fallback a SUPABASE_SECRET_KEY
 Habilitar RLS
 Eliminar email_confirm: True
 Corregir Value Objects
