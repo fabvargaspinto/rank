@@ -44,3 +44,31 @@ def users_table(db_client: DBClient):
             )
         raise
     return db_client
+
+
+def _anon_key() -> str:
+    return (
+        os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "").strip()
+        or os.getenv("SUPABASE_ANON_KEY", "").strip()
+    )
+
+
+@pytest.fixture(scope="session")
+def anon_client(db_settings: DBSettings):
+    key = _anon_key()
+    if not key:
+        pytest.skip(
+            "Definí NEXT_PUBLIC_SUPABASE_ANON_KEY para probar acceso anon "
+            "y autenticado."
+        )
+
+    from supabase import ClientOptions, create_client
+
+    return create_client(
+        db_settings.supabase_url,
+        key,
+        options=ClientOptions(
+            auto_refresh_token=False,
+            persist_session=False,
+        ),
+    )

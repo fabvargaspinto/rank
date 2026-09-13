@@ -723,7 +723,7 @@ Backlog atómico — ig
 
 Estas tareas deberían completarse antes de cualquier deploy. El propio informe recomienda atacar primero la eliminación del login del backend, luego los cambios mecánicos y finalmente la configuración.
 
-1. Eliminar login del backend
+1. ✅ Eliminar login del backend
  Eliminar el endpoint POST /auth/login/email.
  Eliminar LoginAuth.
  Eliminar AuthRepository.verify_password.
@@ -738,7 +738,7 @@ Estas tareas deberían completarse antes de cualquier deploy. El propio informe 
 
 El objetivo es que FastAPI nunca reciba ni valide passwords; Supabase queda como Identity Provider.
 
-2. Corregir estructura frontend/pages
+2. ✅ Corregir estructura frontend/pages
  Renombrar frontend/pages/ → frontend/features/.
  Mover frontend/pages/ui/ → frontend/components/ui/.
  Actualizar imports @/pages/....
@@ -749,7 +749,7 @@ El objetivo es que FastAPI nunca reciba ni valide passwords; Supabase queda como
 
 El informe identifica esto como P0 porque pages/ está generando rutas públicas no intencionadas.
 
-3. Corregir configuración de Supabase en frontend
+3. ✅ Corregir configuración de Supabase en frontend
  Eliminar fallback de SUPABASE_SECRET_KEY.
  Hacer obligatorio NEXT_PUBLIC_SUPABASE_ANON_KEY.
  Lanzar error si falta la anon key.
@@ -761,7 +761,7 @@ El informe identifica esto como P0 porque pages/ está generando rutas públicas
 
 Esto elimina el fallback que actualmente puede hacer que Next utilice accidentalmente privilegios de service_role.
 
-4. Habilitar RLS
+4. ✅ Habilitar RLS
  Habilitar RLS en public.users.
  Habilitar RLS en public.auth.
  Crear policy de lectura para users.
@@ -1062,7 +1062,7 @@ Fase 1 — Seguridad inmediata
 ✅ Eliminar login del backend
 ✅ Renombrar frontend/pages
 ✅ Eliminar fallback a SUPABASE_SECRET_KEY
-Habilitar RLS
+✅ Habilitar RLS
 Eliminar email_confirm: True
 Corregir Value Objects
 Limpiar .pnpm-store de Git
