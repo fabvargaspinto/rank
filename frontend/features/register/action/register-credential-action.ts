@@ -1,37 +1,36 @@
 "use server";
 
 import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
-
 import { createClient } from "@/lib/supabase/server";
+import { invalidFormResponse, registerSchema } from "@/lib/validation/auth";
 
 export async function registerCredentialAction(
     _prev: FetchDataResponse,
     formData: FormData,
 ): Promise<FetchDataResponse> {
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
-    const confirmPassword = String(formData.get("passwordConfirmation") ?? "");
+    const parsed = registerSchema.safeParse({
+        email: String(formData.get("email") ?? ""),
+        password: String(formData.get("password") ?? ""),
+        passwordConfirmation: String(
+            formData.get("passwordConfirmation") ?? "",
+        ),
+    });
 
-    if (password !== confirmPassword) {
-        return {
-            data: null,
-            isError: true,
-            message: "Las contraseñas no coinciden",
-            status: 400,
-        };
+    if (!parsed.success) {
+        return invalidFormResponse(parsed.error);
     }
 
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: parsed.data.email,
+        password: parsed.data.password,
     });
 
     if (error) {
         return {
             data: null,
             isError: true,
-            message: "No se pudo crear la cuenta.",
+            message: error.message.trim() || "No se pudo crear la cuenta.",
             status: 400,
         };
     }
