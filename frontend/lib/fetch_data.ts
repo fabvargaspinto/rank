@@ -38,6 +38,17 @@ function messageFromBackend(data: unknown): string {
     return "Request failed";
 }
 
+export async function provisionSession(
+    accessToken: string,
+): Promise<FetchDataResponse> {
+    return fetchData("/auth/session", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+}
+
 export async function fetchData<T = unknown>(
     path: string,
     options: RequestInit = {},

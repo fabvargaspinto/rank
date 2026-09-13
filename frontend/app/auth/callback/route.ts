@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { fetchData } from "@/lib/fetch_data";
+import { provisionSession } from "@/lib/fetch_data";
 
 function fromPath(value: string | null) {
     return value === "register" ? "/register" : "/";
@@ -26,12 +26,7 @@ export async function GET(request: Request) {
         );
     }
 
-    const response = await fetchData("/auth/oauth", {
-        method: "POST",
-        body: JSON.stringify({
-            access_token: data.session.access_token,
-        }),
-    });
+    const response = await provisionSession(data.session.access_token);
 
     if (response.isError) {
         return NextResponse.redirect(

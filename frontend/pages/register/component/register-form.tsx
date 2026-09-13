@@ -31,8 +31,19 @@ export default function RegisterForm({ initialError = "" }: RegisterFormProps) {
             message={state.message || initialError}
         >
             <Input type="email" name="email" placeholder="Email" autoComplete="email" />
-            <Input type="password" name="password" placeholder="Password" autoComplete="new-password" />
-            <Input type="password" name="passwordConfirmation" placeholder="Password Confirmation" autoComplete="new-password" />
+            <Input
+                type="password"
+                name="password"
+                placeholder="Password"
+                autoComplete="new-password"
+            />
+            <Input
+                type="password"
+                name="passwordConfirmation"
+                placeholder="Password Confirmation"
+                autoComplete="new-password"
+            
+            />
         </FormHero>
     );
 }

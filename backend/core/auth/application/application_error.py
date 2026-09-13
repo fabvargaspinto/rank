@@ -11,9 +11,3 @@ class InvalidAuthCredentialsError(ApplicationError):
 
 class EmailAlreadyExistsError(ApplicationError):
     pass
-
-class PasswordMismatchError(ApplicationError):
-    pass
-
-class EmailNotFoundError(ApplicationError):
-    pass

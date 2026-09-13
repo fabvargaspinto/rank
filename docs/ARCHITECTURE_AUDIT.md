@@ -711,3 +711,412 @@ El segundo problema es de confianza en las herramientas. Que los 88 tests pasen 
 La conclusión práctica es optimista. Casi todas las correcciones **quitan** código en lugar de agregarlo: eliminar el login del backend borra un endpoint, un caso de uso, tres métodos del repositorio, una saga de compensación y un bug crítico de una sola vez. Renombrar un directorio arregla las rutas fantasma. El fake que hace útiles los tests ya está escrito. Con el volumen actual de código, el plan P0 completo es cuestión de días, no de semanas, y después de eso el proyecto sí está listo para crecer.
 
 **Orden de ataque recomendado:** P0-4 (eliminar el login del backend) primero, porque resuelve el bug más grave y simplifica todo lo que viene después. Luego P0-1 y P0-6, que son mecánicos y de bajo riesgo. Después P0-2, P0-3 y P0-5, que son configuración. Recién ahí empezar con los cambios estructurales de P1.
+
+
+
+
+------
+
+
+Backlog atómico — ig
+🔴 P0 — Crítico
+
+Estas tareas deberían completarse antes de cualquier deploy. El propio informe recomienda atacar primero la eliminación del login del backend, luego los cambios mecánicos y finalmente la configuración.
+
+1. Eliminar login del backend
+ Eliminar el endpoint POST /auth/login/email.
+ Eliminar LoginAuth.
+ Eliminar AuthRepository.verify_password.
+ Eliminar AuthRepository.create_identity.
+ Eliminar AuthRepository.delete_identity.
+ Eliminar sign_in_with_password del backend.
+ Eliminar la lógica de verificación duplicada de password.
+ Eliminar la saga de compensación asociada al login/registro antiguo.
+ Modificar el login de Next para usar directamente signInWithPassword.
+ Configurar Next para conservar la sesión de Supabase.
+ Hacer que Next envíe el access_token al backend para aprovisionamiento.
+
+El objetivo es que FastAPI nunca reciba ni valide passwords; Supabase queda como Identity Provider.
+
+2. Corregir estructura frontend/pages
+ Renombrar frontend/pages/ → frontend/features/.
+ Mover frontend/pages/ui/ → frontend/components/ui/.
+ Actualizar imports @/pages/....
+ Buscar referencias restantes a @/pages.
+ Ejecutar Next en desarrollo.
+ Verificar que desaparezcan las 14 rutas fantasma.
+ Verificar que features/ no sea interpretado como Pages Router.
+
+El informe identifica esto como P0 porque pages/ está generando rutas públicas no intencionadas.
+
+3. Corregir configuración de Supabase en frontend
+ Eliminar fallback de SUPABASE_SECRET_KEY.
+ Hacer obligatorio NEXT_PUBLIC_SUPABASE_ANON_KEY.
+ Lanzar error si falta la anon key.
+ Agregar NEXT_PUBLIC_SUPABASE_ANON_KEY al .env.
+ Agregar NEXT_PUBLIC_SUPABASE_ANON_KEY a docker-compose.yml.
+ Dejar de pasar el .env completo al frontend.
+ Verificar que SUPABASE_SECRET_KEY no llegue al contenedor frontend.
+ Verificar que la secret key nunca sea utilizada por createServerClient.
+
+Esto elimina el fallback que actualmente puede hacer que Next utilice accidentalmente privilegios de service_role.
+
+4. Habilitar RLS
+ Habilitar RLS en public.users.
+ Habilitar RLS en public.auth.
+ Crear policy de lectura para users.
+ Crear policy de escritura para users.
+ Crear policy de lectura para auth.
+ Crear policy de escritura para auth.
+ Basar las policies en auth.uid().
+ Verificar que el RPC create_user_and_auth siga funcionando.
+ Verificar que SECURITY DEFINER siga funcionando.
+ Probar acceso con anon key.
+ Probar acceso autenticado.
+
+El informe marca la ausencia de RLS como CRITICAL.
+
+5. Restaurar verificación de email
+ Eliminar "email_confirm": True.
+ Usar signUp(email, password) desde Next.
+ Configurar Supabase para enviar email de confirmación.
+ Verificar comportamiento cuando el email no está confirmado.
+ Implementar/ajustar callback de confirmación.
+ Verificar que un email no confirmado no pueda iniciar sesión normalmente.
+ Probar registro con email válido.
+ Probar confirmación del email.
+
+El informe señala que email_confirm: True actualmente marca la cuenta como verificada sin verificarla.
+
+6. Reparar Value Objects
+UUID
+ Escribir test para UserId("NOT-A-UUID").
+ Hacer que el test falle.
+ Corregir UUID.validate.
+ Usar uuid.UUID(value) para validar.
+ Corregir la herencia dataclass de UserId.
+ Verificar que UserId ejecute su validación.
+ Agregar test de UUID válido.
+ Agregar test de UUID inválido.
+Fechas
+ Corregir AuthCreatedAt.
+ Corregir UserCreatedAt.
+ Corregir UserUpdatedAt.
+ Verificar que las subclases ejecuten __post_init__.
+ Agregar test para fecha inválida.
+ Agregar test para fecha válida.
+
+El informe detectó que actualmente incluso UserId('NOT-A-UUID-AT-ALL') es aceptado.
+
+7. Limpiar archivos generados de Git
+ Agregar .pnpm-store/ a .gitignore.
+ Agregar tsconfig.tsbuildinfo a .gitignore.
+ Ejecutar git rm -r --cached .pnpm-store.
+ Ejecutar git rm --cached tsconfig.tsbuildinfo.
+ Verificar git status.
+ Verificar que .pnpm-store siga existiendo localmente.
+ Verificar que Git ya no lo rastree.
+ Crear commit de limpieza.
+
+El repositorio tiene aproximadamente 19.653 archivos de .pnpm-store que fueron commiteados accidentalmente.
+
+🟠 P1 — Alta prioridad
+8. Crear get_current_user
+ Crear api/dependencies/auth.py.
+ Crear CurrentUser.
+ Definir auth_id.
+ Definir email.
+ Leer header Authorization.
+ Validar formato Bearer.
+ Extraer JWT.
+ Obtener JWKS de Supabase.
+ Validar firma JWT.
+ Validar expiración.
+ Validar claims necesarios.
+ Extraer sub.
+ Convertir sub en CurrentUser.
+ Lanzar 401 para token inválido.
+ Lanzar 401 cuando no exista token.
+ Testear token válido.
+ Testear token inválido.
+
+La arquitectura propuesta usa Depends(get_current_user) como frontera de autenticación.
+
+9. Crear /auth/session
+ Crear endpoint POST /auth/session.
+ Definir request schema.
+ Definir response schema.
+ Agregar Depends(get_current_user).
+ Obtener CurrentUser.
+ Pasar auth_id al caso de uso.
+ Crear EnsureUserProvisioned.
+ Hacer el aprovisionamiento idempotente.
+ Usar INSERT ... ON CONFLICT DO NOTHING.
+ Hacer que email use /auth/session.
+ Hacer que Google use /auth/session.
+ Eliminar /auth/oauth.
+ Eliminar el token del body.
+ Recibir token únicamente mediante Authorization: Bearer.
+
+El informe propone unificar email y Google en un único camino de aprovisionamiento.
+
+10. Separar RegisterAuth
+ Crear RegisterWithEmail.
+ Mover lógica with_email a RegisterWithEmail.
+ Crear ProvisionOAuthUser.
+ Mover lógica OAuth a ProvisionOAuthUser.
+ Eliminar with_oauth.
+ Eliminar with_oauth_token.
+ Eliminar RegisterAuth.
+ Actualizar dependency container.
+ Actualizar tests.
+
+La razón es que RegisterAuth actualmente agrupa tres casos de uso distintos.
+
+11. Romper Application → Infrastructure
+ Crear IdentityAlreadyExistsError en Domain.
+ Exponerlo desde AuthRepository.
+ Eliminar import de core.auth.infrastructure desde Application.
+ Actualizar RegisterAuth/nuevo use case.
+ Actualizar AuthSupabaseRepo.
+ Ejecutar tests para verificar dirección de dependencias.
+
+12. Crear Response Schemas
+ Crear api/schemas/auth.py.
+ Crear schema para respuesta de sesión.
+ Eliminar {"id": auth.id.value} construido manualmente.
+ Dejar de exponer auth.users.id innecesariamente.
+ Definir explícitamente qué campos devuelve cada endpoint.
+ Agregar response_model a endpoints.
+ Verificar OpenAPI.
+
+El informe identifica la ausencia de response_model como problema P1.
+
+13. Eliminar enumeración de usuarios
+ Unificar error de email inexistente.
+ Unificar error de password incorrecta.
+ Devolver mensaje genérico para credenciales inválidas.
+ Actualizar tests.
+ Verificar que no pueda distinguirse email existente vs inexistente.
+🟡 P2 — Media prioridad
+14. Rehacer tests de Application
+ Identificar tests que utilizan Mock.
+ Reemplazar Mock de AuthRepository.
+ Instanciar FakeAuthRepo.
+ Testear registro exitoso.
+ Testear usuario creado.
+ Testear identidad creada.
+ Testear provider.
+ Testear email normalizado.
+ Testear duplicados.
+ Testear passwords diferentes.
+ Testear rollback.
+ Usar fake con fail_on_save.
+ Eliminar asserts innecesarios sobre llamadas.
+
+El informe recomienda verificar estado observable, no llamadas internas.
+
+15. Arreglar tests que no se ejecutan
+ Renombrar test-user_id.py → test_user_id.py.
+ Ejecutar pytest.
+ Confirmar que los tres tests ahora sean colectados.
+ Borrar fake_repo_user.py.
+ Eliminar el import roto de UserRepo.
+ Ejecutar pytest nuevamente.
+16. Crear integration tests del Repository
+ Crear test de AuthSupabaseRepo.save.
+ Crear test save → find_by_email.
+ Verificar cifrado AES-GCM.
+ Verificar HMAC.
+ Verificar RPC create_user_and_auth.
+ Verificar recuperación del email.
+ Verificar duplicado.
+ Limpiar datos creados durante el test.
+
+El informe señala que esta combinación es una de las partes más delicadas y actualmente no está cubierta.
+
+17. Crear Contract Tests de API
+ Crear TestClient.
+ Sobrescribir dependency container.
+ Inyectar fake.
+ Testear 200 para registro válido.
+ Testear 409 para email duplicado.
+ Testear 401 para credenciales inválidas.
+ Testear 422 para body inválido.
+ Testear handlers de errores.
+18. Testear autenticación JWT
+ Testear JWT válido.
+ Testear JWT expirado.
+ Testear JWT mal firmado.
+ Testear JWT sin sub.
+ Testear ausencia de Authorization.
+ Verificar 401.
+ Testear creación de CurrentUser.
+19. Mover invariantes a Domain
+ Mover "EMAIL requiere email" a Auth.__post_init__.
+ Mover "OAuth requiere email" a Auth.
+ Eliminar esas validaciones del repository.
+ Agregar tests de las invariantes.
+ Verificar que AuthSupabaseRepo solo persista.
+
+El informe considera estas invariantes responsabilidad del Domain.
+
+20. Crear AuthMapper
+ Crear auth_mapper.py.
+ Implementar row → Auth.
+ Implementar Auth → row.
+ Mover to_primitive fuera de Auth.
+ Mover from_primitive fuera de Auth.
+ Eliminar acoplamiento de Auth con estructura de DB.
+ Actualizar tests.
+21. Eliminar abstracciones muertas
+ Eliminar UserRepository.
+ Eliminar EmailCrypto Protocol si se mantiene implementación concreta.
+ O, alternativamente, utilizar el Protocol correctamente.
+ Resolver duplicidad de EmailCrypto.
+ Ejecutar tests.
+22. Corregir duplicados de Supabase
+ Inspeccionar código de error real de Supabase.
+ Crear función para identificar duplicado por código.
+ Eliminar búsqueda por "already".
+ Eliminar búsqueda por "registered".
+ Eliminar búsqueda por "exists".
+ Agregar test para error duplicado.
+ Agregar test para error diferente que contenga esas palabras.
+23. Resolver nombres duplicados
+ Renombrar InvalidAuthProviderError de Application.
+ Actualizar imports.
+ Verificar que exista una sola excepción Domain para el concepto correspondiente.
+🟢 P3 — Baja prioridad
+24. Migraciones
+ Crear directorio db/migrations/.
+ Crear migración inicial.
+ Migrar tablas de schema.sql.
+ Migrar funciones RPC.
+ Migrar constraints.
+ Migrar índices.
+ Eliminar DROP TABLE del flujo normal.
+ Dejar schema.sql fuera del proceso destructivo.
+25. Health check
+ Crear GET /health.
+ Devolver estado HTTP 200.
+ Configurar healthcheck en Docker Compose.
+ Verificar comportamiento cuando FastAPI está disponible.
+ Verificar reinicio de contenedor ante fallo.
+26. Logging estructurado
+ Agregar logging al handler de errores.
+ Registrar InfrastructureError.
+ Registrar traceback.
+ Mantener respuesta HTTP genérica al cliente.
+ No registrar passwords.
+ No registrar access tokens.
+
+El informe recomienda concentrarlo en register_error_handlers, que ya es el punto único de manejo de errores.
+
+27. Request ID
+ Generar request ID en Next.
+ Enviar request ID a FastAPI.
+ Leer request ID en FastAPI.
+ Incluir request ID en logs.
+ Propagar request ID en errores.
+28. Mejorar herramientas Python
+ Declarar python-dotenv en pyproject.toml.
+ Agregar ruff.
+ Agregar mypy.
+ Configurar ruff.
+ Configurar mypy.
+ Ejecutar ambos localmente.
+29. Corregir Docker
+ Quitar --reload del Dockerfile de producción.
+ Mantener --reload únicamente en Compose/dev.
+ Mover Supabase CLI a devDependencies.
+ Verificar build de producción.
+ Verificar build de desarrollo.
+30. Limpieza estructural
+ Renombrar crypto_setings.py → crypto_settings.py.
+ Actualizar imports.
+ Crear README.md con setup del proyecto.
+ Documentar variables de entorno.
+ Documentar cómo levantar Docker.
+ Documentar cómo ejecutar tests.
+ Crear core/auth/domain/value_objects/.
+ Mover los 7 VOs al nuevo directorio.
+ Actualizar imports.
+
+La estructura propuesta explícitamente agrupa los VOs y separa api, core, db/migrations y los tests.
+
+31. CI
+ Crear workflow de CI.
+ Instalar dependencias.
+ Ejecutar unit tests.
+ Ejecutar Ruff.
+ Ejecutar Mypy.
+ Hacer fallar CI si fallan tests.
+ Hacer fallar CI si falla lint.
+ Verificar workflow con un commit.
+📌 Orden exacto que yo seguiría
+
+No haría simplemente P0 → P1 → P2 → P3, porque algunas tareas de una misma prioridad dependen de otras.
+
+Fase 1 — Seguridad inmediata
+Eliminar login del backend
+Renombrar frontend/pages
+Eliminar fallback a SUPABASE_SECRET_KEY
+Habilitar RLS
+Eliminar email_confirm: True
+Corregir Value Objects
+Limpiar .pnpm-store de Git
+Fase 2 — Nueva autenticación
+Crear CurrentUser
+Implementar validación JWT
+Crear get_current_user
+Crear EnsureUserProvisioned
+Crear POST /auth/session
+Cambiar registro email a signUp
+Cambiar login email a signInWithPassword
+Cambiar Google OAuth a Authorization: Bearer
+Unificar email + Google en /auth/session
+Eliminar /auth/oauth
+Fase 3 — Arquitectura
+Mover IdentityAlreadyExistsError a Domain
+Eliminar Application → Infrastructure
+Separar RegisterAuth
+Crear RegisterWithEmail
+Crear ProvisionOAuthUser
+Crear Response Schemas
+Eliminar exposición de auth.users.id
+Unificar mensajes de credenciales
+Fase 4 — Tests
+Renombrar test-user_id.py
+Eliminar fake_repo_user.py
+Reescribir tests de Application usando FakeAuthRepo
+Agregar tests de rollback
+Agregar integration test del Repository
+Agregar roundtrip AES-GCM + HMAC
+Agregar tests del RPC
+Agregar Contract Tests de API
+Agregar tests de get_current_user
+Agregar tests JWT inválido/expirado
+Fase 5 — DDD / limpieza
+Mover invariantes de Auth al Domain
+Crear AuthMapper
+Eliminar to_primitive/from_primitive del Domain
+Eliminar UserRepository
+Resolver EmailCrypto
+Corregir InvalidAuthProviderError
+Detectar duplicados por código Supabase
+Fase 6 — Operación
+Crear migraciones versionadas
+Crear /health
+Agregar healthcheck Docker
+Agregar logging estructurado
+Agregar request ID
+Agregar ruff
+Agregar mypy
+Corregir Dockerfile de producción
+Corregir crypto_settings.py
+Completar README
+Agrupar VOs
+Crear CI
+
+En total: ~54 tareas atómicas, en vez de las 27 tareas originales del informe. Esto conserva exactamente las recomendaciones del documento, pero las divide en unidades que puedes convertir directamente en issues/tickets. El informe además recomienda explícitamente trabajar en ciclo RED → GREEN → REFACTOR, especialmente para los bugs de los Value Objects y autenticación.

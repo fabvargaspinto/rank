@@ -1,12 +1,9 @@
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_provider import AuthProvider
-from core.auth.domain.auth_repo import AuthRepository, OAuthIdentity
+from core.auth.domain.auth_repo import AuthIdentity, AuthRepository
 from core.auth.infrastructure.email_crypto import EmailCrypto
-from core.auth.infrastructure.error_infrastructure import (
-    AuthCreationError,
-    IdentityAlreadyExistsError,
-)
+from core.auth.infrastructure.error_infrastructure import AuthCreationError
 from core.user.domain.user import User
 from db.db_client import DBClient
 
@@ -20,44 +17,6 @@ class AuthSupabaseRepo(AuthRepository):
     ):
         self._db = db_client.get_db()
         self.email_crypto = email_crypto
-
-    def create_identity(
-        self,
-        email: str,
-        password: str,
-    ) -> str:
-        try:
-            response = self._db.auth.admin.create_user({
-                "email": email,
-                "password": password,
-                "email_confirm": True,
-            })
-        except Exception as exc:
-            if self._is_duplicate_identity(exc):
-                raise IdentityAlreadyExistsError(
-                    "El email ya está registrado"
-                ) from exc
-            raise AuthCreationError(
-                "Error al crear el usuario en Supabase"
-            ) from exc
-
-        if not response.user:
-            raise AuthCreationError(
-                "Error al crear el usuario en Supabase"
-            )
-
-        return response.user.id
-
-    def delete_identity(
-        self,
-        auth_id: str,
-    ) -> None:
-        try:
-            self._db.auth.admin.delete_user(auth_id)
-        except Exception as exc:
-            raise AuthCreationError(
-                "Error al eliminar el usuario en Supabase"
-            ) from exc
 
     def save(
         self,
@@ -97,6 +56,9 @@ class AuthSupabaseRepo(AuthRepository):
 
         return auth
 
+    def find_by_id(self, auth_id: str) -> Auth | None:
+        return self._find_auth({"id": auth_id})
+
     def find_by_email(self, email: str) -> Auth | None:
         email_hmac = self.email_crypto.hmac(AuthEmail(email))
         return self._find_auth({"email_hmac": email_hmac})
@@ -111,21 +73,7 @@ class AuthSupabaseRepo(AuthRepository):
             "provider_id": provider_id,
         })
 
-    def verify_password(self, email: str, password: str) -> bool:
-        try:
-            response = self._db.auth.sign_in_with_password({
-                "email": email,
-                "password": password,
-            })
-        except Exception:
-            return False
-
-        return response.user is not None
-
-    def get_oauth_identity(
-        self,
-        access_token: str,
-    ) -> OAuthIdentity | None:
+    def get_identity(self, access_token: str) -> AuthIdentity | None:
         try:
             response = self._db.auth.get_user(access_token)
         except Exception:
@@ -144,24 +92,32 @@ class AuthSupabaseRepo(AuthRepository):
             ),
             None,
         )
-        if google is None:
-            return None
+        if google is not None:
+            identity_data = google.identity_data or {}
+            provider_id = (
+                identity_data.get("sub")
+                or getattr(google, "identity_id", None)
+                or google.id
+            )
+            if not provider_id:
+                return None
 
-        identity_data = google.identity_data or {}
-        provider_id = (
-            identity_data.get("sub")
-            or getattr(google, "identity_id", None)
-            or google.id
-        )
-        if not provider_id:
-            return None
+            return AuthIdentity(
+                id=user.id,
+                provider=AuthProvider.GOOGLE,
+                provider_id=str(provider_id),
+                email=user.email,
+            )
 
-        return OAuthIdentity(
-            id=user.id,
-            provider=AuthProvider.GOOGLE,
-            provider_id=str(provider_id),
-            email=user.email,
-        )
+        if user.email:
+            return AuthIdentity(
+                id=user.id,
+                provider=AuthProvider.EMAIL,
+                provider_id=None,
+                email=user.email,
+            )
+
+        return None
 
     def _find_auth(self, filters: dict) -> Auth | None:
         query = self._db.table("auth").select("*")
@@ -193,8 +149,3 @@ class AuthSupabaseRepo(AuthRepository):
                 "provider_id": row["provider_id"],
             },
         })
-
-    @staticmethod
-    def _is_duplicate_identity(exc: Exception) -> bool:
-        message = str(exc).lower()
-        return "already" in message or "registered" in message or "exists" in message

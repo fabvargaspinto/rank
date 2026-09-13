@@ -25,7 +25,7 @@ CREATE TABLE public.auth (
 
     email_encrypted TEXT NOT NULL,
 
-    email_hmac TEXT UNIQUE,
+    email_hmac TEXT UNIQUE NOT NULL,
 
     provider VARCHAR(32) NOT NULL
         CHECK (provider IN ('EMAIL', 'GOOGLE')),

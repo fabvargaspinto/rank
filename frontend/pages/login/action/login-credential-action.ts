@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchData, type FetchDataResponse } from "@/lib/fetch_data";
+import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
 import { createClient } from "@/lib/supabase/server";
 
 export async function loginCredentialAction(
@@ -10,31 +10,25 @@ export async function loginCredentialAction(
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
 
-    const backend = await fetchData("/auth/login/email", {
-        method: "POST",
-        body: JSON.stringify({
-            email,
-            password,
-        }),
-    });
-
-    if (backend.isError) {
-        return backend;
-    }
-
     const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
     });
 
-    if (error) {
+    if (error || !data.session) {
         return {
             data: null,
             isError: true,
             message: "Email o contraseña incorrectos",
             status: 401,
         };
+    }
+
+    const backend = await provisionSession(data.session.access_token);
+
+    if (backend.isError) {
+        return backend;
     }
 
     return {

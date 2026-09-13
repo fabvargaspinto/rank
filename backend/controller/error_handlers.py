@@ -4,10 +4,8 @@ from fastapi.responses import JSONResponse
 from core.auth.application.application_error import (
     AuthAlreadyExistsError,
     EmailAlreadyExistsError,
-    EmailNotFoundError,
     InvalidAuthCredentialsError,
     InvalidAuthProviderError,
-    PasswordMismatchError,
 )
 from core.shared.application.application_error import ApplicationError
 from core.shared.domain.domain_error import DomainError
@@ -50,14 +48,8 @@ def register_error_handlers(app: FastAPI) -> None:
 def _status_for(exc: ApplicationError) -> int:
     if isinstance(exc, (EmailAlreadyExistsError, AuthAlreadyExistsError)):
         return 409
-    if isinstance(
-        exc,
-        (
-            EmailNotFoundError,
-            InvalidAuthCredentialsError,
-        ),
-    ):
+    if isinstance(exc, InvalidAuthCredentialsError):
         return 401
-    if isinstance(exc, (PasswordMismatchError, InvalidAuthProviderError)):
+    if isinstance(exc, InvalidAuthProviderError):
         return 400
     return 400

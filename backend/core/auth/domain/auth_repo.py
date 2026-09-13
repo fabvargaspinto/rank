@@ -7,10 +7,10 @@ from core.user.domain.user import User
 
 
 @dataclass(frozen=True)
-class OAuthIdentity:
+class AuthIdentity:
     id: str
     provider: AuthProvider
-    provider_id: str
+    provider_id: str | None
     email: str | None
 
 
@@ -19,10 +19,7 @@ class AuthRepository(Protocol):
     def save(self, user: User, auth: Auth) -> Auth:
         pass
 
-    def create_identity(self, email: str, password: str) -> str:
-        pass
-
-    def delete_identity(self, auth_id: str) -> None:
+    def find_by_id(self, auth_id: str) -> Auth | None:
         pass
 
     def find_by_email(self, email: str) -> Auth | None:
@@ -33,8 +30,5 @@ class AuthRepository(Protocol):
     ) -> Auth | None:
         pass
 
-    def get_oauth_identity(self, access_token: str) -> OAuthIdentity | None:
-        pass
-
-    def verify_password(self, email: str, password: str) -> bool:
+    def get_identity(self, access_token: str) -> AuthIdentity | None:
         pass
