@@ -33,6 +33,8 @@ node_modules/
 .next/
 out/
 .turbo/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 *.log
 npm-debug.log*
