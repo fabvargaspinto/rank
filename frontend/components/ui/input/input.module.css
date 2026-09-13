@@ -26,3 +26,33 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.passwordField {
+    position: relative;
+    width: 100%;
+}
+
+.inputWithToggle {
+    padding-right: calc(var(--scale-5) + var(--scale-6));
+}
+
+.toggle {
+    position: absolute;
+    top: 50%;
+    right: var(--scale-4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--scale-3);
+    border: none;
+    background: transparent;
+    color: var(--input-placeholder-color);
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.toggle:hover,
+.toggle:focus-visible {
+    color: var(--input-color);
+    outline: none;
+}
