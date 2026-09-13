@@ -1,3 +1,6 @@
+import pytest
+
+from core.shared.domain.domain_error import InvalidUUIDError
 from core.user.domain.user_id import UserId
 
 
@@ -9,6 +12,10 @@ class TestUserId:
         user_id = UserId(value)
 
         assert user_id.value == value
+
+    def test_should_reject_invalid_uuid(self):
+        with pytest.raises(InvalidUUIDError):
+            UserId("NOT-A-UUID")
 
     def test_should_generate_user_id(self):
         user_id = UserId.generate()

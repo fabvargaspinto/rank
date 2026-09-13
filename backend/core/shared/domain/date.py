@@ -8,10 +8,9 @@ from core.shared.domain.domain_error import InvalidDateError
 class Date:
     value: datetime
 
-    def __init__(self, value: datetime):
-        if not self.validate(value):
-            raise InvalidDateError(f"Invalid date: {value}")
-        object.__setattr__(self, "value", value)
+    def __post_init__(self):
+        if not self.validate(self.value):
+            raise InvalidDateError(f"Invalid date: {self.value}")
     
     @classmethod
     def now(cls) -> Date:
