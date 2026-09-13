@@ -1,4 +1,4 @@
-import PageWrapper from "../ui/page-wrapper/page-wrapper";
+import PageWrapper from "@/components/ui/page-wrapper/page-wrapper";
 import LoginForm from "./component/login-form";
 
 type LoginPageProps = {

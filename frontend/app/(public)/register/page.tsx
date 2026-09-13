@@ -1,4 +1,4 @@
-import RegisterPage from "@/pages/register/register-page"
+import RegisterPage from "@/features/register/register-page"
 
 type RegisterRouteProps = {
     searchParams: Promise<{ error?: string }>;

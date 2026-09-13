@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import FormHero from "@/pages/ui/form-hero/form-hero";
-import Input from "@/pages/ui/input/input";
+import FormHero from "@/components/ui/form-hero/form-hero";
+import Input from "@/components/ui/input/input";
 import { emptyFetchResponse } from "@/lib/fetch_data";
 import { loginCredentialAction } from "../action/login-credential-action";
 import { loginGoogleAction } from "../action/login-google-action";

@@ -1059,13 +1059,14 @@ La estructura propuesta explícitamente agrupa los VOs y separa api, core, db/mi
 No haría simplemente P0 → P1 → P2 → P3, porque algunas tareas de una misma prioridad dependen de otras.
 
 Fase 1 — Seguridad inmediata
-Eliminar login del backend
-Renombrar frontend/pages
+✅ Eliminar login del backend
+✅ Renombrar frontend/pages
 Eliminar fallback a SUPABASE_SECRET_KEY
 Habilitar RLS
 Eliminar email_confirm: True
 Corregir Value Objects
 Limpiar .pnpm-store de Git
+
 Fase 2 — Nueva autenticación
 Crear CurrentUser
 Implementar validación JWT
@@ -1077,6 +1078,7 @@ Cambiar login email a signInWithPassword
 Cambiar Google OAuth a Authorization: Bearer
 Unificar email + Google en /auth/session
 Eliminar /auth/oauth
+
 Fase 3 — Arquitectura
 Mover IdentityAlreadyExistsError a Domain
 Eliminar Application → Infrastructure
@@ -1086,6 +1088,7 @@ Crear ProvisionOAuthUser
 Crear Response Schemas
 Eliminar exposición de auth.users.id
 Unificar mensajes de credenciales
+
 Fase 4 — Tests
 Renombrar test-user_id.py
 Eliminar fake_repo_user.py
@@ -1097,6 +1100,7 @@ Agregar tests del RPC
 Agregar Contract Tests de API
 Agregar tests de get_current_user
 Agregar tests JWT inválido/expirado
+
 Fase 5 — DDD / limpieza
 Mover invariantes de Auth al Domain
 Crear AuthMapper
@@ -1105,6 +1109,7 @@ Eliminar UserRepository
 Resolver EmailCrypto
 Corregir InvalidAuthProviderError
 Detectar duplicados por código Supabase
+
 Fase 6 — Operación
 Crear migraciones versionadas
 Crear /health

@@ -1,4 +1,4 @@
-import LoginPage from "@/pages/login/login-page";
+import LoginPage from "@/features/login/login-page";
 
 type HomeProps = {
     searchParams: Promise<{ error?: string }>;
