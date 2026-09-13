@@ -28,7 +28,14 @@ export const registerSchema = z
             })
             .refine((value) => /\d/.test(value), {
                 message: "La contraseña debe incluir al menos un número",
+            })
+            .refine((value) => /[A-Z]/.test(value), {
+                message: "La contraseña debe incluir al menos una letra mayúscula",
+            })
+            .refine((value) => /[a-z]/.test(value), {
+                message: "La contraseña debe incluir al menos una letra minúscula",
             }),
+        
         passwordConfirmation: z
             .string()
             .min(1, "Confirmá la contraseña"),

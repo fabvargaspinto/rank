@@ -1,4 +1,11 @@
-import type { ComponentProps, ReactNode } from "react";
+"use client";
+
+import {
+    startTransition,
+    type ComponentProps,
+    type FormEvent,
+    type ReactNode,
+} from "react";
 import Link from "next/link";
 import Button from "../button/button";
 import GoogleButton from "../google-button/google-button";
@@ -31,8 +38,23 @@ export default function FormHero({
     isError = false,
     message = "",
 }: FormHeroProps) {
+    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        const submitter = (event.nativeEvent as SubmitEvent).submitter;
+        if (
+            submitter instanceof HTMLButtonElement &&
+            submitter.dataset.provider === "google"
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        startTransition(() => {
+            action?.(new FormData(event.currentTarget));
+        });
+    }
+
     return (
-        <form className={styles.form} action={action}>
+        <form className={styles.form} action={action} onSubmit={handleSubmit}>
             <div className={styles.header}>
                 <h1 className={styles.title}>
                     Sello{" "}
@@ -53,6 +75,7 @@ export default function FormHero({
                 <div className={styles.separator} />
                 <GoogleButton
                     type={googleAction ? "submit" : "button"}
+                    data-provider="google"
                     formAction={googleAction}
                     disabled={pending}
                 />
