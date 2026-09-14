@@ -2,36 +2,26 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header
 
+from api.dependencies.auth import (
+    CurrentUser,
+    extract_bearer_token,
+    get_current_user,
+)
 from config.dependency_container import get_ensure_user_provisioned
-from core.auth.application.application_error import InvalidAuthCredentialsError
 from core.auth.application.ensure_user_provisioned import EnsureUserProvisioned
 
 router = APIRouter()
 
 
-def _bearer_token(authorization: str | None) -> str:
-    if not authorization:
-        raise InvalidAuthCredentialsError(
-            "El token de autenticación no es válido"
-        )
-
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token.strip():
-        raise InvalidAuthCredentialsError(
-            "El token de autenticación no es válido"
-        )
-
-    return token.strip()
-
-
 @router.post("/auth/session")
 def provision_session(
+    _current_user: Annotated[CurrentUser, Depends(get_current_user)],
     authorization: Annotated[str | None, Header()] = None,
     ensure_user_provisioned: EnsureUserProvisioned = Depends(
         get_ensure_user_provisioned
     ),
 ):
-    auth = ensure_user_provisioned.execute(_bearer_token(authorization))
+    auth = ensure_user_provisioned.execute(extract_bearer_token(authorization))
 
     return {
         "id": auth.id.value,

@@ -776,7 +776,7 @@ Esto elimina el fallback que actualmente puede hacer que Next utilice accidental
 
 El informe marca la ausencia de RLS como CRITICAL.
 
-5. Restaurar verificación de email
+5. ????????? (ya esta hehco) Restaurar verificación de email
  Eliminar "email_confirm": True.
  Usar signUp(email, password) desde Next.
  Configurar Supabase para enviar email de confirmación.
@@ -788,7 +788,7 @@ El informe marca la ausencia de RLS como CRITICAL.
 
 El informe señala que email_confirm: True actualmente marca la cuenta como verificada sin verificarla.
 
-6. Reparar Value Objects
+6. ✅ Reparar Value Objects
 UUID
  Escribir test para UserId("NOT-A-UUID").
  Hacer que el test falle.
@@ -808,7 +808,7 @@ Fechas
 
 El informe detectó que actualmente incluso UserId('NOT-A-UUID-AT-ALL') es aceptado.
 
-7. Limpiar archivos generados de Git
+7. ✅ Limpiar archivos generados de Git
  Agregar .pnpm-store/ a .gitignore.
  Agregar tsconfig.tsbuildinfo a .gitignore.
  Ejecutar git rm -r --cached .pnpm-store.
@@ -821,7 +821,8 @@ El informe detectó que actualmente incluso UserId('NOT-A-UUID-AT-ALL') es acept
 El repositorio tiene aproximadamente 19.653 archivos de .pnpm-store que fueron commiteados accidentalmente.
 
 🟠 P1 — Alta prioridad
-8. Crear get_current_user
+
+8. ✅ Crear get_current_user
  Crear api/dependencies/auth.py.
  Crear CurrentUser.
  Definir auth_id.
@@ -898,6 +899,8 @@ El informe identifica la ausencia de response_model como problema P1.
  Devolver mensaje genérico para credenciales inválidas.
  Actualizar tests.
  Verificar que no pueda distinguirse email existente vs inexistente.
+
+
 🟡 P2 — Media prioridad
 14. Rehacer tests de Application
  Identificar tests que utilizan Mock.
@@ -1058,17 +1061,17 @@ La estructura propuesta explícitamente agrupa los VOs y separa api, core, db/mi
 
 No haría simplemente P0 → P1 → P2 → P3, porque algunas tareas de una misma prioridad dependen de otras.
 
-Fase 1 — Seguridad inmediata
+✅ Fase 1 — Seguridad inmediata
 ✅ Eliminar login del backend
 ✅ Renombrar frontend/pages
 ✅ Eliminar fallback a SUPABASE_SECRET_KEY
 ✅ Habilitar RLS
-Eliminar email_confirm: True
-Corregir Value Objects
-Limpiar .pnpm-store de Git
+? (ya esta hehco) Eliminar email_confirm: True
+✅ Corregir Value Objects
+✅ Limpiar .pnpm-store de Git
 
 Fase 2 — Nueva autenticación
-Crear CurrentUser
+ ✅Crear CurrentUser
 Implementar validación JWT
 Crear get_current_user
 Crear EnsureUserProvisioned
