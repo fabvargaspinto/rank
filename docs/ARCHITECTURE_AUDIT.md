@@ -861,7 +861,7 @@ La arquitectura propuesta usa Depends(get_current_user) como frontera de autenti
 
 El informe propone unificar email y Google en un único camino de aprovisionamiento.
 
-10.✅ Separar RegisterAuth
+10. ✅ Separar RegisterAuth
  Crear RegisterWithEmail.
  Mover lógica with_email a RegisterWithEmail.
  Crear ProvisionOAuthUser.
@@ -874,7 +874,7 @@ El informe propone unificar email y Google en un único camino de aprovisionamie
 
 La razón es que RegisterAuth actualmente agrupa tres casos de uso distintos.
 
-11. Romper Application → Infrastructure
+11. ✅ Romper Application → Infrastructure
  Crear IdentityAlreadyExistsError en Domain.
  Exponerlo desde AuthRepository.
  Eliminar import de core.auth.infrastructure desde Application.
@@ -990,6 +990,7 @@ El informe considera estas invariantes responsabilidad del Domain.
  Renombrar InvalidAuthProviderError de Application.
  Actualizar imports.
  Verificar que exista una sola excepción Domain para el concepto correspondiente.
+
 🟢 P3 — Baja prioridad
 24. Migraciones
  Crear directorio db/migrations/.

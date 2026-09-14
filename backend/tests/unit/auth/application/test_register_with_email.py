@@ -63,3 +63,11 @@ class TestRegisterWithEmail:
             self.use_case.execute(AUTH_ID, "TEST@EXAMPLE.COM")
 
         assert self.repo.auths == [existing]
+
+    def test_maps_identity_already_exists_from_repository(self):
+        self.repo.duplicate_on_save = True
+
+        with pytest.raises(EmailAlreadyExistsError):
+            self.use_case.execute(AUTH_ID, EMAIL)
+
+        assert self.repo.auths == []

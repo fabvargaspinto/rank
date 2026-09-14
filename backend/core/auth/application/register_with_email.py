@@ -4,7 +4,7 @@ from core.auth.application.application_error import (
 )
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
-from core.auth.domain.auth_repo import AuthRepository
+from core.auth.domain.auth_repo import AuthRepository, IdentityAlreadyExistsError
 from core.user.domain.user import User
 
 
@@ -35,4 +35,9 @@ class RegisterWithEmail:
             email=email_vo.value,
         )
 
-        return self.auth_repo.save(user=user, auth=auth)
+        try:
+            return self.auth_repo.save(user=user, auth=auth)
+        except IdentityAlreadyExistsError as exc:
+            raise EmailAlreadyExistsError(
+                "El email ya está registrado"
+            ) from exc

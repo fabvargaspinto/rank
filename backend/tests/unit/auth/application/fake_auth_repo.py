@@ -1,6 +1,6 @@
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_provider import AuthProvider
-from core.auth.domain.auth_repo import AuthIdentity, AuthRepository
+from core.auth.domain.auth_repo import AuthIdentity, AuthRepository, IdentityAlreadyExistsError
 from core.user.domain.user import User
 
 
@@ -10,8 +10,11 @@ class FakeAuthRepo(AuthRepository):
         self.users = []
         self.identity: AuthIdentity | None = None
         self.identity_lookups: list[str] = []
+        self.duplicate_on_save = False
 
     def save(self, user: User, auth: Auth) -> Auth:
+        if self.duplicate_on_save:
+            raise IdentityAlreadyExistsError("La identidad ya existe")
         self.users.append(user)
         self.auths.append(auth)
         return auth

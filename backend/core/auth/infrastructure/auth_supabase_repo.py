@@ -1,11 +1,19 @@
+from postgrest.exceptions import APIError
+
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_provider import AuthProvider
-from core.auth.domain.auth_repo import AuthIdentity, AuthRepository
+from core.auth.domain.auth_repo import (
+    AuthIdentity,
+    AuthRepository,
+    IdentityAlreadyExistsError,
+)
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.auth.infrastructure.error_infrastructure import AuthCreationError
 from core.user.domain.user import User
 from db.db_client import DBClient
+
+_UNIQUE_VIOLATION = "23505"
 
 
 class AuthSupabaseRepo(AuthRepository):
@@ -49,6 +57,14 @@ class AuthSupabaseRepo(AuthRepository):
                     ),
                 },
             ).execute()
+        except APIError as exc:
+            if str(exc.code) == _UNIQUE_VIOLATION:
+                raise IdentityAlreadyExistsError(
+                    "La identidad ya existe"
+                ) from exc
+            raise AuthCreationError(
+                "Error al guardar el usuario"
+            ) from exc
         except Exception as exc:
             raise AuthCreationError(
                 "Error al guardar el usuario"

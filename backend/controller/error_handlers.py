@@ -7,6 +7,7 @@ from core.auth.application.application_error import (
     InvalidAuthCredentialsError,
     InvalidAuthProviderError,
 )
+from core.auth.domain.auth_error import IdentityAlreadyExistsError
 from core.shared.application.application_error import ApplicationError
 from core.shared.domain.domain_error import DomainError
 from core.shared.infrastructure.infrastructure_error import InfrastructureError
@@ -29,8 +30,9 @@ def register_error_handlers(app: FastAPI) -> None:
         _request: Request,
         exc: DomainError,
     ) -> JSONResponse:
+        status_code = 409 if isinstance(exc, IdentityAlreadyExistsError) else 400
         return JSONResponse(
-            status_code=400,
+            status_code=status_code,
             content={"detail": str(exc)},
         )
 

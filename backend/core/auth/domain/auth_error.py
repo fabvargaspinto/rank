@@ -11,3 +11,7 @@ class InvalidAuthProviderError(DomainError):
 
 class InvalidAuthPasswordError(DomainError):
     pass
+
+
+class IdentityAlreadyExistsError(DomainError):
+    pass
