@@ -882,7 +882,7 @@ La razón es que RegisterAuth actualmente agrupa tres casos de uso distintos.
  Actualizar AuthSupabaseRepo.
  Ejecutar tests para verificar dirección de dependencias.
 
-12. Crear Response Schemas
+12. ✅ Crear Response Schemas
  Crear api/schemas/auth.py.
  Crear schema para respuesta de sesión.
  Eliminar {"id": auth.id.value} construido manualmente.
@@ -893,7 +893,7 @@ La razón es que RegisterAuth actualmente agrupa tres casos de uso distintos.
 
 El informe identifica la ausencia de response_model como problema P1.
 
-13. Eliminar enumeración de usuarios
+13. ✅ Eliminar enumeración de usuarios
  Unificar error de email inexistente.
  Unificar error de password incorrecta.
  Devolver mensaje genérico para credenciales inválidas.
@@ -902,6 +902,7 @@ El informe identifica la ausencia de response_model como problema P1.
 
 
 🟡 P2 — Media prioridad
+
 14. Rehacer tests de Application
  Identificar tests que utilizan Mock.
  Reemplazar Mock de AuthRepository.
@@ -947,6 +948,7 @@ El informe señala que esta combinación es una de las partes más delicadas y a
  Testear 401 para credenciales inválidas.
  Testear 422 para body inválido.
  Testear handlers de errores.
+
 18. Testear autenticación JWT
  Testear JWT válido.
  Testear JWT expirado.
@@ -956,6 +958,7 @@ El informe señala que esta combinación es una de las partes más delicadas y a
  Verificar 401.
  Testear creación de CurrentUser.
 19. Mover invariantes a Domain
+
  Mover "EMAIL requiere email" a Auth.__post_init__.
  Mover "OAuth requiere email" a Auth.
  Eliminar esas validaciones del repository.
@@ -1023,6 +1026,7 @@ El informe recomienda concentrarlo en register_error_handlers, que ya es el punt
  Leer request ID en FastAPI.
  Incluir request ID en logs.
  Propagar request ID en errores.
+
 28. Mejorar herramientas Python
  Declarar python-dotenv en pyproject.toml.
  Agregar ruff.
@@ -1030,12 +1034,14 @@ El informe recomienda concentrarlo en register_error_handlers, que ya es el punt
  Configurar ruff.
  Configurar mypy.
  Ejecutar ambos localmente.
+
 29. Corregir Docker
  Quitar --reload del Dockerfile de producción.
  Mantener --reload únicamente en Compose/dev.
  Mover Supabase CLI a devDependencies.
  Verificar build de producción.
  Verificar build de desarrollo.
+ 
 30. Limpieza estructural
  Renombrar crypto_setings.py → crypto_settings.py.
  Actualizar imports.
@@ -1073,15 +1079,15 @@ No haría simplemente P0 → P1 → P2 → P3, porque algunas tareas de una mism
 
 Fase 2 — Nueva autenticación
  ✅Crear CurrentUser
-Implementar validación JWT
-Crear get_current_user
-Crear EnsureUserProvisioned
-Crear POST /auth/session
-Cambiar registro email a signUp
-Cambiar login email a signInWithPassword
-Cambiar Google OAuth a Authorization: Bearer
-Unificar email + Google en /auth/session
-Eliminar /auth/oauth
+✅ Implementar validación JWT
+✅ Crear get_current_user
+✅ Crear EnsureUserProvisioned
+✅ Crear POST /auth/session
+✅ Cambiar registro email a signUp
+✅ Cambiar login email a signInWithPassword
+✅ Cambiar Google OAuth a Authorization: Bearer
+✅ Unificar email + Google en /auth/session
+✅ Eliminar /auth/oauth
 
 Fase 3 — Arquitectura
 Mover IdentityAlreadyExistsError a Domain

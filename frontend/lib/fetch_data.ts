@@ -38,10 +38,14 @@ function messageFromBackend(data: unknown): string {
     return "Request failed";
 }
 
+export type SessionResponse = {
+    provisioned: boolean;
+};
+
 export async function provisionSession(
     accessToken: string,
-): Promise<FetchDataResponse> {
-    return fetchData("/auth/session", {
+): Promise<FetchDataResponse<SessionResponse>> {
+    return fetchData<SessionResponse>("/auth/session", {
         method: "POST",
         headers: {
             Authorization: `Bearer ${accessToken}`,

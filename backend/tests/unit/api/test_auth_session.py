@@ -101,3 +101,35 @@ class TestAuthSession:
         assert second.json() == {"provisioned": True}
         assert len(repo.auths) == 1
         assert repo.identity_lookups == [AUTH_ID]
+
+
+def _session_openapi_schema():
+    app = FastAPI()
+    app.include_router(router)
+    spec = app.openapi()
+    ref = spec["paths"]["/auth/session"]["post"]["responses"]["200"][
+        "content"
+    ]["application/json"]["schema"]["$ref"]
+    name = ref.rsplit("/", 1)[-1]
+    return spec, spec["components"]["schemas"][name]
+
+
+class TestSessionOpenApi:
+    def test_documents_session_response_without_identity_id(self):
+        spec, schema = _session_openapi_schema()
+
+        assert set(schema["properties"]) == {"provisioned"}
+        assert schema.get("required") == ["provisioned"]
+        assert "SessionResponse" in spec["components"]["schemas"]
+
+    def test_documents_unauthorized_and_conflict_errors(self):
+        app = FastAPI()
+        app.include_router(router)
+        openapi = app.openapi()
+        responses = openapi["paths"]["/auth/session"]["post"]["responses"]
+
+        assert "401" in responses
+        assert "409" in responses
+        error_schema = openapi["components"]["schemas"]["ErrorResponse"]
+        assert set(error_schema["properties"]) == {"detail"}
+        assert "id" not in error_schema["properties"]
