@@ -861,7 +861,7 @@ La arquitectura propuesta usa Depends(get_current_user) como frontera de autenti
 
 El informe propone unificar email y Google en un único camino de aprovisionamiento.
 
-10. Separar RegisterAuth
+10.✅ Separar RegisterAuth
  Crear RegisterWithEmail.
  Mover lógica with_email a RegisterWithEmail.
  Crear ProvisionOAuthUser.
