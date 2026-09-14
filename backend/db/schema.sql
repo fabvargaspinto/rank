@@ -77,7 +77,8 @@ SET search_path = public
 AS $$
 BEGIN
     INSERT INTO public.users (id)
-    VALUES (p_user_id);
+    VALUES (p_user_id)
+    ON CONFLICT (id) DO NOTHING;
 
     INSERT INTO public.auth (
         id,
@@ -94,7 +95,16 @@ BEGIN
         p_email_hmac,
         p_provider,
         p_provider_id
-    );
+    )
+    ON CONFLICT (id) DO NOTHING;
+
+    DELETE FROM public.users AS leftover
+    WHERE leftover.id = p_user_id
+      AND NOT EXISTS (
+          SELECT 1
+          FROM public.auth
+          WHERE user_id = leftover.id
+      );
 END;
 $$;
 

@@ -54,7 +54,13 @@ class AuthSupabaseRepo(AuthRepository):
                 "Error al guardar el usuario"
             ) from exc
 
-        return auth
+        persisted = self.find_by_id(auth.id.value)
+        if persisted is None:
+            raise AuthCreationError(
+                "Error al guardar el usuario"
+            )
+
+        return persisted
 
     def find_by_id(self, auth_id: str) -> Auth | None:
         return self._find_auth({"id": auth_id})
@@ -73,9 +79,9 @@ class AuthSupabaseRepo(AuthRepository):
             "provider_id": provider_id,
         })
 
-    def get_identity(self, access_token: str) -> AuthIdentity | None:
+    def get_identity(self, auth_id: str) -> AuthIdentity | None:
         try:
-            response = self._db.auth.get_user(access_token)
+            response = self._db.auth.admin.get_user_by_id(auth_id)
         except Exception:
             return None
 

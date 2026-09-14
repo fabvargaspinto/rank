@@ -9,6 +9,7 @@ class FakeAuthRepo(AuthRepository):
         self.auths = []
         self.users = []
         self.identity: AuthIdentity | None = None
+        self.identity_lookups: list[str] = []
 
     def save(self, user: User, auth: Auth) -> Auth:
         self.users.append(user)
@@ -40,5 +41,6 @@ class FakeAuthRepo(AuthRepository):
                 return auth
         return None
 
-    def get_identity(self, access_token: str) -> AuthIdentity | None:
+    def get_identity(self, auth_id: str) -> AuthIdentity | None:
+        self.identity_lookups.append(auth_id)
         return self.identity

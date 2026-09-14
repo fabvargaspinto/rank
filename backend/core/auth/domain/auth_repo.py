@@ -30,5 +30,5 @@ class AuthRepository(Protocol):
     ) -> Auth | None:
         pass
 
-    def get_identity(self, access_token: str) -> AuthIdentity | None:
+    def get_identity(self, auth_id: str) -> AuthIdentity | None:
         pass

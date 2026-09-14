@@ -843,7 +843,7 @@ El repositorio tiene aproximadamente 19.653 archivos de .pnpm-store que fueron c
 
 La arquitectura propuesta usa Depends(get_current_user) como frontera de autenticación.
 
-9. Crear /auth/session
+9. ✅ Crear /auth/session
  Crear endpoint POST /auth/session.
  Definir request schema.
  Definir response schema.

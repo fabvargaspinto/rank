@@ -12,22 +12,21 @@ class EnsureUserProvisioned:
     def __init__(self, auth_repo: AuthRepository):
         self.auth_repo = auth_repo
 
-    def execute(self, access_token: str) -> Auth:
-        identity = self.auth_repo.get_identity(access_token)
-
-        if not identity:
-            raise InvalidAuthCredentialsError(
-                "El token de autenticación no es válido"
-            )
-
-        if not identity.email:
+    def execute(self, auth_id: str, email: str) -> Auth:
+        if not email.strip():
             raise InvalidAuthCredentialsError(
                 "El email es requerido"
             )
 
-        existing_by_id = self.auth_repo.find_by_id(identity.id)
+        existing_by_id = self.auth_repo.find_by_id(auth_id)
         if existing_by_id:
             return existing_by_id
+
+        identity = self.auth_repo.get_identity(auth_id)
+        if not identity:
+            raise InvalidAuthCredentialsError(
+                "El token de autenticación no es válido"
+            )
 
         if identity.provider.is_oauth():
             if not identity.provider_id:
@@ -42,7 +41,7 @@ class EnsureUserProvisioned:
             if existing_by_provider:
                 return existing_by_provider
 
-        email_vo = AuthEmail(identity.email)
+        email_vo = AuthEmail(email)
 
         if self.auth_repo.find_by_email(email_vo.value):
             raise EmailAlreadyExistsError(
@@ -50,7 +49,12 @@ class EnsureUserProvisioned:
             )
 
         user = User.create_empty()
-        auth = self._auth_from_identity(identity, user.id.value, email_vo.value)
+        auth = self._auth_from_identity(
+            identity,
+            user.id.value,
+            email_vo.value,
+            auth_id,
+        )
 
         return self.auth_repo.save(
             user=user,
@@ -62,10 +66,11 @@ class EnsureUserProvisioned:
         identity: AuthIdentity,
         user_id: str,
         email: str,
+        auth_id: str,
     ) -> Auth:
         if identity.provider.is_email():
             return Auth.create_with_email(
-                id=identity.id,
+                id=auth_id,
                 user_id=user_id,
                 email=email,
             )
@@ -76,7 +81,7 @@ class EnsureUserProvisioned:
             )
 
         return Auth.create_with_oauth(
-            id=identity.id,
+            id=auth_id,
             user_id=user_id,
             provider=identity.provider,
             provider_id=identity.provider_id,
