@@ -4,6 +4,8 @@ import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
 import { createClient } from "@/lib/supabase/server";
 import { invalidFormResponse, registerSchema } from "@/lib/validation/auth";
 
+const CHECK_EMAIL_MESSAGE = "Revisá tu email para confirmar la cuenta.";
+
 export async function registerCredentialAction(
     _prev: FetchDataResponse,
     formData: FormData,
@@ -27,10 +29,22 @@ export async function registerCredentialAction(
     });
 
     if (error) {
+        if (
+            error.code === "user_already_exists" ||
+            error.code === "email_exists"
+        ) {
+            return {
+                data: null,
+                isError: false,
+                message: CHECK_EMAIL_MESSAGE,
+                status: 200,
+            };
+        }
+
         return {
             data: null,
             isError: true,
-            message: error.message.trim() || "No se pudo crear la cuenta.",
+            message: "No se pudo crear la cuenta.",
             status: 400,
         };
     }
@@ -39,7 +53,7 @@ export async function registerCredentialAction(
         return {
             data: null,
             isError: false,
-            message: "Revisá tu email para confirmar la cuenta.",
+            message: CHECK_EMAIL_MESSAGE,
             status: 200,
         };
     }

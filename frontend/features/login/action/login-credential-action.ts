@@ -27,8 +27,7 @@ export async function loginCredentialAction(
         return {
             data: null,
             isError: true,
-            message:
-                error?.message.trim() || "Email o contraseña incorrectos",
+            message: "Email o contraseña incorrectos",
             status: 401,
         };
     }
