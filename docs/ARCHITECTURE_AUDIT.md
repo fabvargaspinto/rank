@@ -950,7 +950,7 @@ El informe señala que esta combinación es una de las partes más delicadas y a
  Testear 422 para body inválido.
  Testear handlers de errores.
 
-18. Testear autenticación JWT
+18. ✅ Testear autenticación JWT
  Testear JWT válido.
  Testear JWT expirado.
  Testear JWT mal firmado.
@@ -1116,8 +1116,8 @@ Fase 4 — Tests
 ✅Agregar roundtrip AES-GCM + HMAC
 ✅Agregar tests del RPC
 ✅ Agregar Contract Tests de API
-Agregar tests de get_current_user
-Agregar tests JWT inválido/expirado
+✅ Agregar tests de get_current_user
+✅ Agregar tests JWT inválido/expirado
 
 Fase 5 — DDD / limpieza
 Mover invariantes de Auth al Domain

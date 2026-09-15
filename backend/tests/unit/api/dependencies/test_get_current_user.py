@@ -5,6 +5,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
+from jwt import PyJWKClientError
 
 from api.dependencies.auth import (
     AuthJwtSettings,
@@ -82,36 +83,53 @@ def client(private_key):
     return TestClient(app)
 
 
+def _unauthorized(client, **kwargs):
+    return client.get("/me", **kwargs)
+
+
+def _assert_unauthorized(response):
+    assert response.status_code == 401
+    assert response.json() == {"detail": "El token de autenticación no es válido"}
+
+
 class TestGetCurrentUser:
-    def test_valid_token_returns_current_user(self, client, private_key):
-        token = _token(private_key)
+    def test_valid_token_creates_current_user(self, client, private_key):
+        token = _token(
+            private_key,
+            sub="custom-auth-id",
+            email="other@example.com",
+        )
 
         response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
 
         assert response.status_code == 200
-        assert response.json() == {"auth_id": AUTH_ID, "email": EMAIL}
+        assert response.json() == {
+            "auth_id": "custom-auth-id",
+            "email": "other@example.com",
+        }
 
     def test_missing_authorization_returns_401(self, client):
-        response = client.get("/me")
+        _assert_unauthorized(_unauthorized(client))
 
-        assert response.status_code == 401
-        assert response.json() == {"detail": "El token de autenticación no es válido"}
-
-    def test_invalid_token_returns_401(self, client):
-        response = client.get(
-            "/me",
-            headers={"Authorization": "Bearer not-a-jwt"},
+    def test_empty_bearer_returns_401(self, client):
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": "Bearer "})
         )
 
-        assert response.status_code == 401
-        assert response.json() == {"detail": "El token de autenticación no es válido"}
+    def test_invalid_token_returns_401(self, client):
+        _assert_unauthorized(
+            _unauthorized(
+                client,
+                headers={"Authorization": "Bearer not-a-jwt"},
+            )
+        )
 
     def test_non_bearer_scheme_returns_401(self, client, private_key):
         token = _token(private_key)
 
-        response = client.get("/me", headers={"Authorization": f"Basic {token}"})
-
-        assert response.status_code == 401
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Basic {token}"})
+        )
 
     def test_expired_token_returns_401(self, client, private_key):
         token = _token(
@@ -119,28 +137,61 @@ class TestGetCurrentUser:
             exp=datetime.now(timezone.utc) - timedelta(minutes=2),
         )
 
-        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
-
-        assert response.status_code == 401
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
 
     def test_token_signed_with_another_key_returns_401(self, client):
         other_key = _private_key()
         token = _token(other_key)
 
-        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
-
-        assert response.status_code == 401
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
 
     def test_token_without_sub_returns_401(self, client, private_key):
         token = _token(private_key, omit=("sub",))
 
-        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
 
-        assert response.status_code == 401
+    def test_empty_sub_returns_401(self, client, private_key):
+        token = _token(private_key, sub="")
+
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
 
     def test_token_without_email_returns_401(self, client, private_key):
         token = _token(private_key, omit=("email",))
 
-        response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
 
-        assert response.status_code == 401
+    def test_wrong_issuer_returns_401(self, client, private_key):
+        token = _token(private_key, iss="https://other.example/auth/v1")
+
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
+
+    def test_wrong_audience_returns_401(self, client, private_key):
+        token = _token(private_key, aud="anon")
+
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
+
+    def test_jwks_lookup_failure_returns_401(self, client, private_key):
+        class _FailingJwks:
+            def get_signing_key_from_jwt(self, token: str):
+                raise PyJWKClientError("unable to find a signing key")
+
+        client.app.dependency_overrides[get_jwks_client] = lambda: _FailingJwks()
+        token = _token(private_key)
+
+        _assert_unauthorized(
+            _unauthorized(client, headers={"Authorization": f"Bearer {token}"})
+        )
