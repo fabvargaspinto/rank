@@ -959,8 +959,7 @@ El informe señala que esta combinación es una de las partes más delicadas y a
  Verificar 401.
  Testear creación de CurrentUser.
 
-19. Mover invariantes a Domain
-
+19. ✅Mover invariantes a Domain
  Mover "EMAIL requiere email" a Auth.__post_init__.
  Mover "OAuth requiere email" a Auth.
  Eliminar esas validaciones del repository.
@@ -969,7 +968,7 @@ El informe señala que esta combinación es una de las partes más delicadas y a
 
 El informe considera estas invariantes responsabilidad del Domain.
 
-20. Crear AuthMapper
+20. ✅ Crear AuthMapper
  Crear auth_mapper.py.
  Implementar row → Auth.
  Implementar Auth → row.
@@ -1120,8 +1119,8 @@ Fase 4 — Tests
 ✅ Agregar tests JWT inválido/expirado
 
 Fase 5 — DDD / limpieza
-Mover invariantes de Auth al Domain
-Crear AuthMapper
+✅ Mover invariantes de Auth al Domain
+✅ Crear AuthMapper
 Eliminar to_primitive/from_primitive del Domain
 Eliminar UserRepository
 Resolver EmailCrypto

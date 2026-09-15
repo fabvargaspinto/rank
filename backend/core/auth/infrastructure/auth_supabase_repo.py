@@ -8,6 +8,7 @@ from core.auth.domain.auth_repo import (
     AuthRepository,
     IdentityAlreadyExistsError,
 )
+from core.auth.infrastructure.auth_mapper import AuthMapper
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.auth.infrastructure.error_infrastructure import AuthCreationError
 from core.user.domain.user import User
@@ -25,36 +26,25 @@ class AuthSupabaseRepo(AuthRepository):
     ):
         self._db = db_client.get_db()
         self.email_crypto = email_crypto
+        self._mapper = AuthMapper(email_crypto)
 
     def save(
         self,
         user: User,
         auth: Auth,
     ) -> Auth:
-        if auth.email is None:
-            raise AuthCreationError(
-                "El email es requerido"
-            )
-
-        email_encrypted = self.email_crypto.encrypt(auth.email)
-        email_hmac = self.email_crypto.hmac(auth.email)
+        row = self._mapper.to_row(auth)
 
         try:
             self._db.rpc(
                 "create_user_and_auth",
                 {
                     "p_user_id": user.id.value,
-                    "p_auth_id": auth.id.value,
-                    "p_email_encrypted": email_encrypted,
-                    "p_email_hmac": email_hmac,
-                    "p_provider": (
-                        auth.provider_method.provider.value
-                    ),
-                    "p_provider_id": (
-                        auth.provider_method.provider_id.value
-                        if auth.provider_method.provider_id
-                        else None
-                    ),
+                    "p_auth_id": row["id"],
+                    "p_email_encrypted": row["email_encrypted"],
+                    "p_email_hmac": row["email_hmac"],
+                    "p_provider": row["provider"],
+                    "p_provider_id": row["provider_id"],
                 },
             ).execute()
         except APIError as exc:
@@ -157,17 +147,4 @@ class AuthSupabaseRepo(AuthRepository):
         if not rows:
             return None
 
-        return self._row_to_auth(rows[0])
-
-    def _row_to_auth(self, row: dict) -> Auth:
-        email = self.email_crypto.decrypt(row["email_encrypted"])
-        return Auth.from_primitive({
-            "id": row["id"],
-            "user_id": row["user_id"],
-            "email": email.value,
-            "created_at": row["created_at"],
-            "provider_method": {
-                "provider": row["provider"],
-                "provider_id": row["provider_id"],
-            },
-        })
+        return self._mapper.to_domain(rows[0])
