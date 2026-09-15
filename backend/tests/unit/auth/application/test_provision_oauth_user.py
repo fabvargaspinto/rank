@@ -17,30 +17,41 @@ EMAIL = "test@example.com"
 GOOGLE_ID = "google-123"
 
 
+def _seed_oauth_auth(
+    repo: FakeAuthRepo,
+    auth_id: str,
+    email: str,
+    provider_id: str,
+) -> Auth:
+    user = User.create_empty()
+    auth = Auth.create_with_oauth(
+        id=auth_id,
+        user_id=user.id.value,
+        provider=AuthProvider.GOOGLE,
+        provider_id=provider_id,
+        email=email,
+    )
+    repo.save(user, auth)
+    return auth
+
+
+def _seed_email_auth(repo: FakeAuthRepo, auth_id: str, email: str) -> Auth:
+    user = User.create_empty()
+    auth = Auth.create_with_email(
+        id=auth_id,
+        user_id=user.id.value,
+        email=email,
+    )
+    repo.save(user, auth)
+    return auth
+
+
 class TestProvisionOAuthUser:
     def setup_method(self):
         self.repo = FakeAuthRepo()
         self.use_case = ProvisionOAuthUser(self.repo)
 
-    def test_rejects_empty_email(self):
-        with pytest.raises(InvalidAuthCredentialsError):
-            self.use_case.execute(AUTH_ID, "   ", AuthProvider.GOOGLE, GOOGLE_ID)
-
-        assert self.repo.auths == []
-
-    def test_rejects_email_provider(self):
-        with pytest.raises(InvalidAuthProviderError):
-            self.use_case.execute(AUTH_ID, EMAIL, AuthProvider.EMAIL, None)
-
-        assert self.repo.auths == []
-
-    def test_rejects_oauth_without_provider_id(self):
-        with pytest.raises(InvalidAuthCredentialsError):
-            self.use_case.execute(AUTH_ID, EMAIL, AuthProvider.GOOGLE, None)
-
-        assert self.repo.auths == []
-
-    def test_provisions_google_identity(self):
+    def test_registering_creates_a_user_and_a_google_identity(self):
         result = self.use_case.execute(
             AUTH_ID,
             "TEST@EXAMPLE.COM",
@@ -48,23 +59,54 @@ class TestProvisionOAuthUser:
             GOOGLE_ID,
         )
 
+        assert (
+            self.repo.find_by_provider_id(AuthProvider.GOOGLE, GOOGLE_ID)
+            == result
+        )
         assert result.id.value == AUTH_ID
-        assert result.email.value == "test@example.com"
+        assert len(self.repo.users) == 1
+        assert result.user_id.value == self.repo.users[0].id.value
         assert result.provider_method.provider is AuthProvider.GOOGLE
         assert result.provider_method.provider_id.value == GOOGLE_ID
-        assert self.repo.find_by_provider_id(AuthProvider.GOOGLE, GOOGLE_ID) == result
-        assert len(self.repo.users) == 1
+
+    def test_normalizes_email(self):
+        result = self.use_case.execute(
+            AUTH_ID,
+            "TEST@EXAMPLE.COM",
+            AuthProvider.GOOGLE,
+            GOOGLE_ID,
+        )
+
+        assert result.email.value == "test@example.com"
+
+    def test_rejects_empty_email(self):
+        with pytest.raises(InvalidAuthCredentialsError):
+            self.use_case.execute(
+                AUTH_ID,
+                "   ",
+                AuthProvider.GOOGLE,
+                GOOGLE_ID,
+            )
+
+        assert self.repo.auths == []
+        assert self.repo.users == []
+
+    def test_rejects_email_provider(self):
+        with pytest.raises(InvalidAuthProviderError):
+            self.use_case.execute(AUTH_ID, EMAIL, AuthProvider.EMAIL, None)
+
+        assert self.repo.auths == []
+        assert self.repo.users == []
+
+    def test_rejects_oauth_without_provider_id(self):
+        with pytest.raises(InvalidAuthCredentialsError):
+            self.use_case.execute(AUTH_ID, EMAIL, AuthProvider.GOOGLE, None)
+
+        assert self.repo.auths == []
+        assert self.repo.users == []
 
     def test_returns_existing_auth_by_id(self):
-        existing_user = User.create_empty()
-        existing = Auth.create_with_oauth(
-            id=AUTH_ID,
-            user_id=existing_user.id.value,
-            provider=AuthProvider.GOOGLE,
-            provider_id=GOOGLE_ID,
-            email=EMAIL,
-        )
-        self.repo.save(existing_user, existing)
+        existing = _seed_oauth_auth(self.repo, AUTH_ID, EMAIL, GOOGLE_ID)
 
         result = self.use_case.execute(
             AUTH_ID,
@@ -74,18 +116,16 @@ class TestProvisionOAuthUser:
         )
 
         assert result is existing
-        assert len(self.repo.auths) == 1
+        assert self.repo.auths == [existing]
+        assert len(self.repo.users) == 1
 
     def test_returns_existing_auth_by_provider_id(self):
-        existing_user = User.create_empty()
-        existing = Auth.create_with_oauth(
-            id=OTHER_AUTH_ID,
-            user_id=existing_user.id.value,
-            provider=AuthProvider.GOOGLE,
-            provider_id=GOOGLE_ID,
-            email="other@example.com",
+        existing = _seed_oauth_auth(
+            self.repo,
+            OTHER_AUTH_ID,
+            "other@example.com",
+            GOOGLE_ID,
         )
-        self.repo.save(existing_user, existing)
 
         result = self.use_case.execute(
             AUTH_ID,
@@ -95,16 +135,11 @@ class TestProvisionOAuthUser:
         )
 
         assert result is existing
-        assert len(self.repo.auths) == 1
+        assert self.repo.auths == [existing]
+        assert len(self.repo.users) == 1
 
-    def test_rejects_when_email_already_registered(self):
-        existing_user = User.create_empty()
-        existing = Auth.create_with_email(
-            id=OTHER_AUTH_ID,
-            user_id=existing_user.id.value,
-            email=EMAIL,
-        )
-        self.repo.save(existing_user, existing)
+    def test_rejects_duplicate_email(self):
+        existing = _seed_email_auth(self.repo, OTHER_AUTH_ID, EMAIL)
 
         with pytest.raises(EmailAlreadyExistsError):
             self.use_case.execute(
@@ -115,9 +150,10 @@ class TestProvisionOAuthUser:
             )
 
         assert self.repo.auths == [existing]
+        assert len(self.repo.users) == 1
 
-    def test_maps_identity_already_exists_from_repository(self):
-        self.repo.duplicate_on_save = True
+    def test_save_failure_does_not_persist_user_or_identity(self):
+        self.repo.fail_on_save = True
 
         with pytest.raises(EmailAlreadyExistsError):
             self.use_case.execute(
@@ -128,3 +164,5 @@ class TestProvisionOAuthUser:
             )
 
         assert self.repo.auths == []
+        assert self.repo.users == []
+        assert self.repo.find_by_provider_id(AuthProvider.GOOGLE, GOOGLE_ID) is None

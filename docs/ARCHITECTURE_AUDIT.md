@@ -903,7 +903,7 @@ El informe identifica la ausencia de response_model como problema P1.
 
 🟡 P2 — Media prioridad
 
-14. Rehacer tests de Application
+14. ✅ Rehacer tests de Application
  Identificar tests que utilizan Mock.
  Reemplazar Mock de AuthRepository.
  Instanciar FakeAuthRepo.
@@ -913,7 +913,7 @@ El informe identifica la ausencia de response_model como problema P1.
  Testear provider.
  Testear email normalizado.
  Testear duplicados.
- Testear passwords diferentes.
+ Testear passwords diferentes. (N/A: Application ya no recibe passwords)
  Testear rollback.
  Usar fake con fail_on_save.
  Eliminar asserts innecesarios sobre llamadas.
@@ -927,6 +927,7 @@ El informe recomienda verificar estado observable, no llamadas internas.
  Borrar fake_repo_user.py.
  Eliminar el import roto de UserRepo.
  Ejecutar pytest nuevamente.
+
 16. Crear integration tests del Repository
  Crear test de AuthSupabaseRepo.save.
  Crear test save → find_by_email.
@@ -957,6 +958,7 @@ El informe señala que esta combinación es una de las partes más delicadas y a
  Testear ausencia de Authorization.
  Verificar 401.
  Testear creación de CurrentUser.
+
 19. Mover invariantes a Domain
 
  Mover "EMAIL requiere email" a Auth.__post_init__.
@@ -975,12 +977,14 @@ El informe considera estas invariantes responsabilidad del Domain.
  Mover from_primitive fuera de Auth.
  Eliminar acoplamiento de Auth con estructura de DB.
  Actualizar tests.
+
 21. Eliminar abstracciones muertas
  Eliminar UserRepository.
  Eliminar EmailCrypto Protocol si se mantiene implementación concreta.
  O, alternativamente, utilizar el Protocol correctamente.
  Resolver duplicidad de EmailCrypto.
  Ejecutar tests.
+
 22. Corregir duplicados de Supabase
  Inspeccionar código de error real de Supabase.
  Crear función para identificar duplicado por código.
@@ -989,12 +993,14 @@ El informe considera estas invariantes responsabilidad del Domain.
  Eliminar búsqueda por "exists".
  Agregar test para error duplicado.
  Agregar test para error diferente que contenga esas palabras.
+
 23. Resolver nombres duplicados
  Renombrar InvalidAuthProviderError de Application.
  Actualizar imports.
  Verificar que exista una sola excepción Domain para el concepto correspondiente.
 
 🟢 P3 — Baja prioridad
+
 24. Migraciones
  Crear directorio db/migrations/.
  Crear migración inicial.
@@ -1004,12 +1010,14 @@ El informe considera estas invariantes responsabilidad del Domain.
  Migrar índices.
  Eliminar DROP TABLE del flujo normal.
  Dejar schema.sql fuera del proceso destructivo.
+
 25. Health check
  Crear GET /health.
  Devolver estado HTTP 200.
  Configurar healthcheck en Docker Compose.
  Verificar comportamiento cuando FastAPI está disponible.
  Verificar reinicio de contenedor ante fallo.
+
 26. Logging estructurado
  Agregar logging al handler de errores.
  Registrar InfrastructureError.
@@ -1090,20 +1098,20 @@ Fase 2 — Nueva autenticación
 ✅ Eliminar /auth/oauth
 
 Fase 3 — Arquitectura
-Mover IdentityAlreadyExistsError a Domain
-Eliminar Application → Infrastructure
-Separar RegisterAuth
-Crear RegisterWithEmail
-Crear ProvisionOAuthUser
-Crear Response Schemas
-Eliminar exposición de auth.users.id
-Unificar mensajes de credenciales
+✅ Mover IdentityAlreadyExistsError a Domain
+✅ Eliminar Application → Infrastructure
+✅ Separar RegisterAuth
+✅ Crear RegisterWithEmail 
+ ✅Crear ProvisionOAuthUser
+ ✅Crear Response Schemas
+✅Eliminar exposición de auth.users.id
+✅Unificar mensajes de credenciales
 
 Fase 4 — Tests
 Renombrar test-user_id.py
 Eliminar fake_repo_user.py
-Reescribir tests de Application usando FakeAuthRepo
-Agregar tests de rollback
+✅ Reescribir tests de Application usando FakeAuthRepo
+✅ Agregar tests de rollback
 Agregar integration test del Repository
 Agregar roundtrip AES-GCM + HMAC
 Agregar tests del RPC

@@ -21,17 +21,17 @@ class TestEnsureUserProvisioned:
         with pytest.raises(InvalidAuthCredentialsError):
             self.use_case.execute(AUTH_ID, "   ")
 
-        assert self.repo.identity_lookups == []
         assert self.repo.auths == []
+        assert self.repo.users == []
 
     def test_rejects_missing_identity(self):
         with pytest.raises(InvalidAuthCredentialsError):
             self.use_case.execute(AUTH_ID, EMAIL)
 
         assert self.repo.auths == []
-        assert self.repo.identity_lookups == [AUTH_ID]
+        assert self.repo.users == []
 
-    def test_returns_existing_auth_by_id_without_identity_lookup(self):
+    def test_returns_existing_auth_by_id(self):
         existing_user = User.create_empty()
         existing = Auth.create_with_email(
             id=AUTH_ID,
@@ -43,9 +43,10 @@ class TestEnsureUserProvisioned:
         result = self.use_case.execute(AUTH_ID, EMAIL)
 
         assert result is existing
-        assert self.repo.identity_lookups == []
+        assert self.repo.auths == [existing]
+        assert len(self.repo.users) == 1
 
-    def test_dispatches_email_identity_to_register_with_email(self):
+    def test_provisions_email_identity(self):
         self.repo.identity = AuthIdentity(
             id=AUTH_ID,
             provider=AuthProvider.EMAIL,
@@ -55,11 +56,12 @@ class TestEnsureUserProvisioned:
 
         result = self.use_case.execute(AUTH_ID, "TEST@EXAMPLE.COM")
 
+        assert self.repo.find_by_email("test@example.com") == result
         assert result.provider_method.provider is AuthProvider.EMAIL
         assert result.email.value == "test@example.com"
-        assert self.repo.identity_lookups == [AUTH_ID]
+        assert len(self.repo.users) == 1
 
-    def test_dispatches_google_identity_to_provision_oauth_user(self):
+    def test_provisions_google_identity(self):
         self.repo.identity = AuthIdentity(
             id=AUTH_ID,
             provider=AuthProvider.GOOGLE,
@@ -69,6 +71,10 @@ class TestEnsureUserProvisioned:
 
         result = self.use_case.execute(AUTH_ID, EMAIL)
 
+        assert (
+            self.repo.find_by_provider_id(AuthProvider.GOOGLE, "google-123")
+            == result
+        )
         assert result.provider_method.provider is AuthProvider.GOOGLE
         assert result.provider_method.provider_id.value == "google-123"
-        assert self.repo.identity_lookups == [AUTH_ID]
+        assert len(self.repo.users) == 1

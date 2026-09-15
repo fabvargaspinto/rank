@@ -100,7 +100,7 @@ class TestAuthSession:
         assert first.json() == {"provisioned": True}
         assert second.json() == {"provisioned": True}
         assert len(repo.auths) == 1
-        assert repo.identity_lookups == [AUTH_ID]
+        assert len(repo.users) == 1
 
 
 def _session_openapi_schema():
