@@ -920,7 +920,7 @@ El informe identifica la ausencia de response_model como problema P1.
 
 El informe recomienda verificar estado observable, no llamadas internas.
 
-15. Arreglar tests que no se ejecutan
+15. ✅ Arreglar tests que no se ejecutan
  Renombrar test-user_id.py → test_user_id.py.
  Ejecutar pytest.
  Confirmar que los tres tests ahora sean colectados.
@@ -928,7 +928,7 @@ El informe recomienda verificar estado observable, no llamadas internas.
  Eliminar el import roto de UserRepo.
  Ejecutar pytest nuevamente.
 
-16. Crear integration tests del Repository
+16. ✅ Crear integration tests del Repository
  Crear test de AuthSupabaseRepo.save.
  Crear test save → find_by_email.
  Verificar cifrado AES-GCM.
@@ -940,7 +940,7 @@ El informe recomienda verificar estado observable, no llamadas internas.
 
 El informe señala que esta combinación es una de las partes más delicadas y actualmente no está cubierta.
 
-17. Crear Contract Tests de API
+17. ✅ Crear Contract Tests de API
  Crear TestClient.
  Sobrescribir dependency container.
  Inyectar fake.
@@ -1108,14 +1108,14 @@ Fase 3 — Arquitectura
 ✅Unificar mensajes de credenciales
 
 Fase 4 — Tests
-Renombrar test-user_id.py
-Eliminar fake_repo_user.py
+✅ Renombrar test-user_id.py
+✅ Eliminar fake_repo_user.py
 ✅ Reescribir tests de Application usando FakeAuthRepo
 ✅ Agregar tests de rollback
-Agregar integration test del Repository
-Agregar roundtrip AES-GCM + HMAC
-Agregar tests del RPC
-Agregar Contract Tests de API
+✅Agregar integration test del Repository
+✅Agregar roundtrip AES-GCM + HMAC
+✅Agregar tests del RPC
+✅ Agregar Contract Tests de API
 Agregar tests de get_current_user
 Agregar tests JWT inválido/expirado
 

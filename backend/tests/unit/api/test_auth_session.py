@@ -12,11 +12,14 @@ from config.dependency_container import get_ensure_user_provisioned
 from controller.auth_route import router
 from controller.error_handlers import register_error_handlers
 from core.auth.application.ensure_user_provisioned import EnsureUserProvisioned
+from core.auth.domain.auth import Auth
 from core.auth.domain.auth_provider import AuthProvider
 from core.auth.domain.auth_repo import AuthIdentity
+from core.user.domain.user import User
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
+OTHER_AUTH_ID = "770e8400-e29b-41d4-a716-446655440000"
 EMAIL = "user@example.com"
 ISSUER = "https://example.supabase.co/auth/v1"
 
@@ -101,6 +104,48 @@ class TestAuthSession:
         assert second.json() == {"provisioned": True}
         assert len(repo.auths) == 1
         assert len(repo.users) == 1
+
+    def test_duplicate_email_returns_409(self):
+        repo = FakeAuthRepo()
+        existing_user = User.create_empty()
+        existing = Auth.create_with_email(
+            id=OTHER_AUTH_ID,
+            user_id=existing_user.id.value,
+            email=EMAIL,
+        )
+        repo.save(existing_user, existing)
+        repo.identity = AuthIdentity(
+            id=AUTH_ID,
+            provider=AuthProvider.EMAIL,
+            provider_id=None,
+            email=EMAIL,
+        )
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email=EMAIL,
+        )
+
+        response = app_client.post("/auth/session")
+
+        assert response.status_code == 409
+        assert response.json() == {"detail": "El email ya está registrado"}
+        assert repo.find_by_id(AUTH_ID) is None
+        assert repo.find_by_email(EMAIL) is existing
+
+    def test_missing_identity_returns_401(self):
+        app_client = _client()
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email=EMAIL,
+        )
+
+        response = app_client.post("/auth/session")
+
+        assert response.status_code == 401
+        assert response.json() == {
+            "detail": "El token de autenticación no es válido"
+        }
 
 
 def _session_openapi_schema():
