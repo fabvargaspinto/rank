@@ -5,7 +5,7 @@ from core.auth.application.application_error import (
     AuthAlreadyExistsError,
     EmailAlreadyExistsError,
     InvalidAuthCredentialsError,
-    InvalidAuthProviderError,
+    UnsupportedAuthProviderError,
 )
 from core.auth.domain.auth_error import IdentityAlreadyExistsError
 from core.shared.application.application_error import ApplicationError
@@ -52,6 +52,6 @@ def _status_for(exc: ApplicationError) -> int:
         return 409
     if isinstance(exc, InvalidAuthCredentialsError):
         return 401
-    if isinstance(exc, InvalidAuthProviderError):
+    if isinstance(exc, UnsupportedAuthProviderError):
         return 400
     return 400

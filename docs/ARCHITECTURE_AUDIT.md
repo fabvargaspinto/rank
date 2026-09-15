@@ -984,7 +984,7 @@ El informe considera estas invariantes responsabilidad del Domain.
  Resolver duplicidad de EmailCrypto.
  Ejecutar tests.
 
-22. Corregir duplicados de Supabase
+22. ✅ Corregir duplicados de Supabase
  Inspeccionar código de error real de Supabase.
  Crear función para identificar duplicado por código.
  Eliminar búsqueda por "already".
@@ -993,14 +993,14 @@ El informe considera estas invariantes responsabilidad del Domain.
  Agregar test para error duplicado.
  Agregar test para error diferente que contenga esas palabras.
 
-23. Resolver nombres duplicados
+23. ✅ Resolver nombres duplicados
  Renombrar InvalidAuthProviderError de Application.
  Actualizar imports.
  Verificar que exista una sola excepción Domain para el concepto correspondiente.
 
 🟢 P3 — Baja prioridad
 
-24. Migraciones
+24. (todavía no) Migraciones
  Crear directorio db/migrations/.
  Crear migración inicial.
  Migrar tablas de schema.sql.
@@ -1010,7 +1010,7 @@ El informe considera estas invariantes responsabilidad del Domain.
  Eliminar DROP TABLE del flujo normal.
  Dejar schema.sql fuera del proceso destructivo.
 
-25. Health check
+25. ✅ Health check
  Crear GET /health.
  Devolver estado HTTP 200.
  Configurar healthcheck en Docker Compose.
@@ -1121,16 +1121,16 @@ Fase 4 — Tests
 Fase 5 — DDD / limpieza
 ✅ Mover invariantes de Auth al Domain
 ✅ Crear AuthMapper
-Eliminar to_primitive/from_primitive del Domain
+✅ Eliminar to_primitive/from_primitive del Domain
 ✅ Eliminar UserRepository
 ✅ Resolver EmailCrypto
-Corregir InvalidAuthProviderError
-Detectar duplicados por código Supabase
+✅ Corregir InvalidAuthProviderError
+✅ Detectar duplicados por código Supabase
 
 Fase 6 — Operación
 Crear migraciones versionadas
-Crear /health
-Agregar healthcheck Docker
+✅ Crear /health
+✅ Agregar healthcheck Docker
 Agregar logging estructurado
 Agregar request ID
 Agregar ruff

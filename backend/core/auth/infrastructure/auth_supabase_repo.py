@@ -11,10 +11,9 @@ from core.auth.domain.auth_repo import (
 from core.auth.infrastructure.auth_mapper import AuthMapper
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.auth.infrastructure.error_infrastructure import AuthCreationError
+from core.auth.infrastructure.postgres_error import is_unique_violation
 from core.user.domain.user import User
 from db.db_client import DBClient
-
-_UNIQUE_VIOLATION = "23505"
 
 
 class AuthSupabaseRepo(AuthRepository):
@@ -48,7 +47,7 @@ class AuthSupabaseRepo(AuthRepository):
                 },
             ).execute()
         except APIError as exc:
-            if str(exc.code) == _UNIQUE_VIOLATION:
+            if is_unique_violation(exc):
                 raise IdentityAlreadyExistsError(
                     "La identidad ya existe"
                 ) from exc

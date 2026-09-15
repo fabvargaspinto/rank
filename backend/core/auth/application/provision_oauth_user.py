@@ -1,7 +1,7 @@
 from core.auth.application.application_error import (
     EmailAlreadyExistsError,
     InvalidAuthCredentialsError,
-    InvalidAuthProviderError,
+    UnsupportedAuthProviderError,
 )
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
@@ -27,7 +27,7 @@ class ProvisionOAuthUser:
             )
 
         if not provider.is_oauth():
-            raise InvalidAuthProviderError(
+            raise UnsupportedAuthProviderError(
                 "El proveedor debe ser un proveedor OAuth"
             )
 

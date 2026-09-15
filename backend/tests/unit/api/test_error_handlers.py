@@ -7,9 +7,13 @@ from core.auth.application.application_error import (
     AuthAlreadyExistsError,
     EmailAlreadyExistsError,
     InvalidAuthCredentialsError,
-    InvalidAuthProviderError,
+    UnsupportedAuthProviderError,
 )
-from core.auth.domain.auth_error import IdentityAlreadyExistsError, InvalidEmailError
+from core.auth.domain.auth_error import (
+    IdentityAlreadyExistsError,
+    InvalidAuthProviderError,
+    InvalidEmailError,
+)
 from core.auth.infrastructure.error_infrastructure import AuthCreationError
 
 
@@ -29,7 +33,7 @@ def _client() -> TestClient:
             "credentials": InvalidAuthCredentialsError(
                 "El token de autenticación no es válido"
             ),
-            "provider": InvalidAuthProviderError(
+            "provider": UnsupportedAuthProviderError(
                 "El proveedor debe ser un proveedor OAuth"
             ),
         }
@@ -40,6 +44,9 @@ def _client() -> TestClient:
         errors = {
             "email": InvalidEmailError("Invalid email address"),
             "identity": IdentityAlreadyExistsError("La identidad ya existe"),
+            "provider": InvalidAuthProviderError(
+                "El proveedor de autenticación debe ser uno de los siguientes: EMAIL, GOOGLE"
+            ),
         }
         raise errors[kind]
 
@@ -74,7 +81,7 @@ class TestErrorHandlers:
             "detail": "El token de autenticación no es válido"
         }
 
-    def test_invalid_provider_is_400(self):
+    def test_unsupported_provider_is_400(self):
         response = _client().post("/raise/application?kind=provider")
 
         assert response.status_code == 400
@@ -84,6 +91,11 @@ class TestErrorHandlers:
 
         assert response.status_code == 400
         assert response.json() == {"detail": "Invalid email address"}
+
+    def test_domain_invalid_provider_is_400(self):
+        response = _client().post("/raise/domain?kind=provider")
+
+        assert response.status_code == 400
 
     def test_identity_already_exists_is_409(self):
         response = _client().post("/raise/domain?kind=identity")

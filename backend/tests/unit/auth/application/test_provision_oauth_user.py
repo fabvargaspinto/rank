@@ -3,7 +3,7 @@ import pytest
 from core.auth.application.application_error import (
     EmailAlreadyExistsError,
     InvalidAuthCredentialsError,
-    InvalidAuthProviderError,
+    UnsupportedAuthProviderError,
 )
 from core.auth.application.provision_oauth_user import ProvisionOAuthUser
 from core.auth.domain.auth import Auth
@@ -92,7 +92,7 @@ class TestProvisionOAuthUser:
         assert self.repo.users == []
 
     def test_rejects_email_provider(self):
-        with pytest.raises(InvalidAuthProviderError):
+        with pytest.raises(UnsupportedAuthProviderError):
             self.use_case.execute(AUTH_ID, EMAIL, AuthProvider.EMAIL, None)
 
         assert self.repo.auths == []

@@ -3,7 +3,7 @@ from core.shared.application.application_error import ApplicationError
 class AuthAlreadyExistsError(ApplicationError):
     pass
 
-class InvalidAuthProviderError(ApplicationError):
+class UnsupportedAuthProviderError(ApplicationError):
     pass
 
 class InvalidAuthCredentialsError(ApplicationError):
