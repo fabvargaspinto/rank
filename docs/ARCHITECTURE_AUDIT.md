@@ -977,7 +977,7 @@ El informe considera estas invariantes responsabilidad del Domain.
  Eliminar acoplamiento de Auth con estructura de DB.
  Actualizar tests.
 
-21. Eliminar abstracciones muertas
+21. ✅ Eliminar abstracciones muertas
  Eliminar UserRepository.
  Eliminar EmailCrypto Protocol si se mantiene implementación concreta.
  O, alternativamente, utilizar el Protocol correctamente.
@@ -1122,8 +1122,8 @@ Fase 5 — DDD / limpieza
 ✅ Mover invariantes de Auth al Domain
 ✅ Crear AuthMapper
 Eliminar to_primitive/from_primitive del Domain
-Eliminar UserRepository
-Resolver EmailCrypto
+✅ Eliminar UserRepository
+✅ Resolver EmailCrypto
 Corregir InvalidAuthProviderError
 Detectar duplicados por código Supabase
 
