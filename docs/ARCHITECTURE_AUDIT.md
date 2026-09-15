@@ -1017,7 +1017,7 @@ El informe considera estas invariantes responsabilidad del Domain.
  Verificar comportamiento cuando FastAPI está disponible.
  Verificar reinicio de contenedor ante fallo.
 
-26. Logging estructurado
+26. ✅ Logging estructurado
  Agregar logging al handler de errores.
  Registrar InfrastructureError.
  Registrar traceback.
@@ -1131,7 +1131,7 @@ Fase 6 — Operación
 Crear migraciones versionadas
 ✅ Crear /health
 ✅ Agregar healthcheck Docker
-Agregar logging estructurado
+✅ Agregar logging estructurado
 Agregar request ID
 Agregar ruff
 Agregar mypy

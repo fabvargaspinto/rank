@@ -103,11 +103,23 @@ class TestErrorHandlers:
         assert response.status_code == 409
         assert response.json() == {"detail": "La identidad ya existe"}
 
-    def test_infrastructure_error_is_500(self):
-        response = _client().post("/raise/infrastructure")
+    def test_infrastructure_error_is_500(self, caplog):
+        token = "secret-access-token"
+        password = "Password123"
+
+        with caplog.at_level("ERROR", logger="ig.errors"):
+            response = _client().post(
+                "/raise/infrastructure",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"password": password},
+            )
 
         assert response.status_code == 500
         assert response.json() == {"detail": "Error al guardar el usuario"}
+        assert "Traceback" in caplog.text
+        assert "AuthCreationError" in caplog.text
+        assert token not in caplog.text
+        assert password not in caplog.text
 
     def test_invalid_body_is_422(self):
         response = _client().post("/raise/body", json={})
