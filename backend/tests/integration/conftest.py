@@ -3,7 +3,10 @@ import os
 import pytest
 from postgrest.exceptions import APIError
 
+from config.crypto_setings import CryptoSettings
 from config.db_settings import DBSettings
+from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
+from core.auth.infrastructure.email_crypto import EmailCrypto
 from db.db_client import DBClient
 
 
@@ -72,3 +75,25 @@ def anon_client(db_settings: DBSettings):
             persist_session=False,
         ),
     )
+
+
+def _crypto_env_ready() -> bool:
+    return bool(
+        os.getenv("EMAIL_ENCRYPTION_KEY", "").strip()
+        and os.getenv("EMAIL_HMAC_KEY", "").strip()
+    )
+
+
+@pytest.fixture(scope="session")
+def email_crypto() -> EmailCrypto:
+    if not _crypto_env_ready():
+        pytest.skip(
+            "Definí EMAIL_ENCRYPTION_KEY y EMAIL_HMAC_KEY en el .env "
+            "de la raíz del repo."
+        )
+    return EmailCrypto(CryptoSettings())
+
+
+@pytest.fixture(scope="session")
+def auth_repo(users_table: DBClient, email_crypto: EmailCrypto) -> AuthSupabaseRepo:
+    return AuthSupabaseRepo(users_table, email_crypto)
