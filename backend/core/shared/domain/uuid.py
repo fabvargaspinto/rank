@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Self
 from uuid import UUID as PythonUUID
+
 from uuid6 import uuid7
 
 from core.shared.domain.domain_error import InvalidUUIDError
@@ -16,7 +18,7 @@ class UUID:
             raise InvalidUUIDError(f"Invalid UUID: {self.value}")
 
     @classmethod
-    def generate(cls) -> UUID:
+    def generate(cls) -> Self:
         return cls(str(uuid7()))
 
     @classmethod
@@ -28,5 +30,5 @@ class UUID:
             return False
 
     @classmethod
-    def from_string(cls, value: str) -> UUID:
+    def from_string(cls, value: str) -> Self:
         return cls(value)

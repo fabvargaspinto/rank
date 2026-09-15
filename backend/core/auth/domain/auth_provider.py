@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 
 from core.auth.domain.auth_error import InvalidAuthProviderError
 
 
-class AuthProvider(str, Enum):
+class AuthProvider(StrEnum):
     EMAIL = "EMAIL"
     GOOGLE = "GOOGLE"
 
@@ -18,12 +18,12 @@ class AuthProvider(str, Enum):
         normalized = value.strip().upper()
         try:
             return cls(normalized)
-        except ValueError:
+        except ValueError as exc:
             allowed = ", ".join(provider.value for provider in cls)
             raise InvalidAuthProviderError(
                 f"El proveedor de autenticación debe ser uno de los siguientes: {allowed}"
-            )
-    
+            ) from exc
+
     @classmethod
     def get_all(cls) -> list[str]:
         return [provider.value for provider in cls]

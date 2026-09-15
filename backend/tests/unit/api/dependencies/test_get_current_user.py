@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
@@ -35,7 +35,7 @@ def _private_key():
 
 
 def _token(private_key, omit=(), **claims) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": AUTH_ID,
         "email": EMAIL,
@@ -134,7 +134,7 @@ class TestGetCurrentUser:
     def test_expired_token_returns_401(self, client, private_key):
         token = _token(
             private_key,
-            exp=datetime.now(timezone.utc) - timedelta(minutes=2),
+            exp=datetime.now(UTC) - timedelta(minutes=2),
         )
 
         _assert_unauthorized(

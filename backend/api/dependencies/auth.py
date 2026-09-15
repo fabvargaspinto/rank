@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Annotated, Protocol
+from typing import Annotated, Any, Protocol
 
 import jwt
 from fastapi import Depends, Header
@@ -18,7 +18,7 @@ _JWT_AUDIENCE = "authenticated"
 
 class JwtSigningKey(Protocol):
     @property
-    def key(self) -> object: ...
+    def key(self) -> Any: ...
 
 
 class JwtKeySet(Protocol):
@@ -39,7 +39,7 @@ class AuthJwtSettings:
 
 
 def get_auth_jwt_settings() -> AuthJwtSettings:
-    base_url = DBSettings().supabase_url.rstrip("/")
+    base_url = DBSettings().supabase_url.rstrip("/")  # type: ignore[call-arg]
     return AuthJwtSettings(
         jwks_url=f"{base_url}/auth/v1/.well-known/jwks.json",
         issuer=f"{base_url}/auth/v1",

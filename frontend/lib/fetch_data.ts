@@ -5,6 +5,7 @@ export type FetchDataResponse<T = unknown> = {
     isError: boolean;
     message: string;
     status: number;
+    requestId?: string;
 };
 
 export const emptyFetchResponse: FetchDataResponse = {
@@ -59,16 +60,21 @@ export async function fetchData<T = unknown>(
 ): Promise<FetchDataResponse<T>> {
     const url = path.startsWith("http") ? path : `${API_URL}${path}`;
 
+    const requestId = crypto.randomUUID();
+
     try {
         const response = await fetch(url, {
             ...options,
             headers: {
                 "Content-Type": "application/json",
+                "X-Request-ID": requestId,
                 ...options.headers,
             },
         });
 
         const data = await response.json().catch(() => null);
+        const echoedId =
+            response.headers.get("X-Request-ID")?.trim() || requestId;
 
         if (!response.ok) {
             return {
@@ -76,6 +82,7 @@ export async function fetchData<T = unknown>(
                 isError: true,
                 message: messageFromBackend(data),
                 status: response.status,
+                requestId: echoedId,
             };
         }
 
@@ -84,6 +91,7 @@ export async function fetchData<T = unknown>(
             isError: false,
             message: "",
             status: response.status,
+            requestId: echoedId,
         };
     } catch (error) {
         return {
@@ -91,6 +99,7 @@ export async function fetchData<T = unknown>(
             isError: true,
             message: error instanceof Error ? error.message : "Request failed",
             status: 0,
+            requestId,
         };
     }
 }

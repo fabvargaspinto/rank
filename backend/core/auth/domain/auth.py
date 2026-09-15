@@ -4,9 +4,9 @@ from core.auth.domain.auth_created_at import AuthCreatedAt
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_error import InvalidEmailError
 from core.auth.domain.auth_id import AuthId
-from core.user.domain.user_id import UserId
 from core.auth.domain.auth_method import AuthMethod
 from core.auth.domain.auth_provider import AuthProvider
+from core.user.domain.user_id import UserId
 
 
 @dataclass(frozen=True)

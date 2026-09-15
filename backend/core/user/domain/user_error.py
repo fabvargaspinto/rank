@@ -1,5 +1,6 @@
 from core.shared.domain.domain_error import DomainError
 
+
 class InvalidUserNameError(DomainError):
     pass
 

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class AuthId():
+class AuthId:
     value: str
 
-    

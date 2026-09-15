@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from controller.error_handlers import register_error_handlers
+from controller.request_id import REQUEST_ID_HEADER, register_request_id
 from core.auth.application.application_error import (
     AuthAlreadyExistsError,
     EmailAlreadyExistsError,
@@ -23,6 +24,7 @@ class _Body(BaseModel):
 
 def _client() -> TestClient:
     app = FastAPI()
+    register_request_id(app)
     register_error_handlers(app)
 
     @app.post("/raise/application")
@@ -106,16 +108,25 @@ class TestErrorHandlers:
     def test_infrastructure_error_is_500(self, caplog):
         token = "secret-access-token"
         password = "Password123"
+        request_id = "req-test-123"
 
         with caplog.at_level("ERROR", logger="ig.errors"):
             response = _client().post(
                 "/raise/infrastructure",
-                headers={"Authorization": f"Bearer {token}"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    REQUEST_ID_HEADER: request_id,
+                },
                 json={"password": password},
             )
 
         assert response.status_code == 500
         assert response.json() == {"detail": "Error al guardar el usuario"}
+        assert response.headers[REQUEST_ID_HEADER] == request_id
+        assert any(
+            getattr(record, "request_id", None) == request_id
+            for record in caplog.records
+        )
         assert "Traceback" in caplog.text
         assert "AuthCreationError" in caplog.text
         assert token not in caplog.text

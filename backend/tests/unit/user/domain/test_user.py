@@ -3,7 +3,6 @@ from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_description import UserDescription
 from core.user.domain.user_name import UserName
 
-
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 
@@ -59,7 +58,7 @@ class TestUser:
         assert primitive["name"] == "John Doe"
         assert primitive["avatar"] == "https://example.com/avatar.jpg"
         assert primitive["description"] == "My description"
-    
+
 
     def test_should_recreate_empty_user_from_primitive(self):
         user = User.create_empty()

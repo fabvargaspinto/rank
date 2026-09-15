@@ -1,7 +1,7 @@
 import pytest
 
-from core.user.domain.user_name import UserName
 from core.user.domain.user_error import InvalidUserNameError
+from core.user.domain.user_name import UserName
 
 
 class TestUserName:
@@ -50,4 +50,4 @@ class TestUserName:
 
     def test_should_reject_name_with_only_spaces(self):
         with pytest.raises(InvalidUserNameError):
-            UserName("   ")   
+            UserName("   ")

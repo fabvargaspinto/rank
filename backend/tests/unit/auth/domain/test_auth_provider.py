@@ -1,7 +1,7 @@
 import pytest
 
-from core.auth.domain.auth_provider import AuthProvider
 from core.auth.domain.auth_error import InvalidAuthProviderError
+from core.auth.domain.auth_provider import AuthProvider
 
 
 class TestAuthProvider:

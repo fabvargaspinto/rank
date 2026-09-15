@@ -1,6 +1,10 @@
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_provider import AuthProvider
-from core.auth.domain.auth_repo import AuthIdentity, AuthRepository, IdentityAlreadyExistsError
+from core.auth.domain.auth_repo import (
+    AuthIdentity,
+    AuthRepository,
+    IdentityAlreadyExistsError,
+)
 from core.user.domain.user import User
 
 

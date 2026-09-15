@@ -12,8 +12,8 @@ from db.db_client import DBClient
 
 class DependencyContainer:
     def __init__(self) -> None:
-        self.db_settings = DBSettings()
-        self.crypto_settings = CryptoSettings()
+        self.db_settings = DBSettings()  # type: ignore[call-arg]
+        self.crypto_settings = CryptoSettings()  # type: ignore[call-arg]
         self.db_client = DBClient(self.db_settings)
         self.email_crypto = EmailCrypto(self.crypto_settings)
         self.auth_repository = AuthSupabaseRepo(self.db_client, self.email_crypto)

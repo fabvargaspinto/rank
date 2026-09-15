@@ -1027,14 +1027,14 @@ El informe considera estas invariantes responsabilidad del Domain.
 
 El informe recomienda concentrarlo en register_error_handlers, que ya es el punto único de manejo de errores.
 
-27. Request ID
+27. ✅ Request ID
  Generar request ID en Next.
  Enviar request ID a FastAPI.
  Leer request ID en FastAPI.
  Incluir request ID en logs.
  Propagar request ID en errores.
 
-28. Mejorar herramientas Python
+28. ✅ Mejorar herramientas Python
  Declarar python-dotenv en pyproject.toml.
  Agregar ruff.
  Agregar mypy.
@@ -1042,7 +1042,7 @@ El informe recomienda concentrarlo en register_error_handlers, que ya es el punt
  Configurar mypy.
  Ejecutar ambos localmente.
 
-29. Corregir Docker
+29. ✅ Corregir Docker
  Quitar --reload del Dockerfile de producción.
  Mantener --reload únicamente en Compose/dev.
  Mover Supabase CLI a devDependencies.
@@ -1071,6 +1071,8 @@ La estructura propuesta explícitamente agrupa los VOs y separa api, core, db/mi
  Hacer fallar CI si fallan tests.
  Hacer fallar CI si falla lint.
  Verificar workflow con un commit.
+
+
 📌 Orden exacto que yo seguiría
 
 No haría simplemente P0 → P1 → P2 → P3, porque algunas tareas de una misma prioridad dependen de otras.
@@ -1132,10 +1134,10 @@ Crear migraciones versionadas
 ✅ Crear /health
 ✅ Agregar healthcheck Docker
 ✅ Agregar logging estructurado
-Agregar request ID
-Agregar ruff
-Agregar mypy
-Corregir Dockerfile de producción
+✅ Agregar request ID
+✅ Agregar ruff
+✅ Agregar mypy
+✅ Corregir Dockerfile de producción
 Corregir crypto_settings.py
 Completar README
 Agrupar VOs

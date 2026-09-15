@@ -146,4 +146,7 @@ class AuthSupabaseRepo(AuthRepository):
         if not rows:
             return None
 
-        return self._mapper.to_domain(rows[0])
+        row = rows[0]
+        if not isinstance(row, dict):
+            raise AuthCreationError("Error al buscar el usuario")
+        return self._mapper.to_domain(row)

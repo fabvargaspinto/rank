@@ -1,5 +1,6 @@
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_created_at import AuthCreatedAt
+from core.auth.domain.auth_error import InvalidEmailError
 from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_method import AuthMethod
 from core.auth.domain.auth_provider import AuthProvider
@@ -28,6 +29,8 @@ class AuthMapper:
 
     def to_row(self, auth: Auth) -> dict:
         email = auth.email
+        if email is None:
+            raise InvalidEmailError("El email es requerido")
         return {
             "id": auth.id.value,
             "user_id": auth.user_id.value,

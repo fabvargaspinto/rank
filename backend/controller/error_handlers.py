@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from controller.request_id import REQUEST_ID_HEADER, get_request_id
 from core.auth.application.application_error import (
     AuthAlreadyExistsError,
     EmailAlreadyExistsError,
@@ -26,10 +27,7 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         status_code = _status_for(exc)
         _log_error(request, exc, status_code)
-        return JSONResponse(
-            status_code=status_code,
-            content={"detail": str(exc)},
-        )
+        return _json_error(request, status_code, str(exc))
 
     @app.exception_handler(DomainError)
     async def handle_domain_error(
@@ -38,10 +36,7 @@ def register_error_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         status_code = 409 if isinstance(exc, IdentityAlreadyExistsError) else 400
         _log_error(request, exc, status_code)
-        return JSONResponse(
-            status_code=status_code,
-            content={"detail": str(exc)},
-        )
+        return _json_error(request, status_code, str(exc))
 
     @app.exception_handler(InfrastructureError)
     async def handle_infrastructure_error(
@@ -49,10 +44,7 @@ def register_error_handlers(app: FastAPI) -> None:
         exc: InfrastructureError,
     ) -> JSONResponse:
         _log_error(request, exc, 500, traceback=True)
-        return JSONResponse(
-            status_code=500,
-            content={"detail": str(exc)},
-        )
+        return _json_error(request, 500, str(exc))
 
 
 def _log_error(
@@ -67,11 +59,23 @@ def _log_error(
         "method": request.method,
         "status_code": status_code,
         "error_type": type(exc).__name__,
+        "request_id": get_request_id(request),
     }
     if traceback:
         logger.exception("infrastructure_error", extra=extra)
         return
     logger.warning("handled_error", extra=extra)
+
+
+def _json_error(request: Request, status_code: int, detail: str) -> JSONResponse:
+    response = JSONResponse(
+        status_code=status_code,
+        content={"detail": detail},
+    )
+    request_id = get_request_id(request)
+    if request_id != "-":
+        response.headers[REQUEST_ID_HEADER] = request_id
+    return response
 
 
 def _status_for(exc: ApplicationError) -> int:
