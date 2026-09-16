@@ -2,12 +2,20 @@
 
 :root {
 
+    /* z-index */
+    --z-index-1: 10;
+    --z-index-2: 20;
+    --z-index-3: 30;
+
     /* Core */
     --core-background-color: var(--color-black-0);
     --core-text-color: var(--color-gray-light);
     --core-font-family: var(--font-ubuntu);
     --core-font-size: var(--font-size-md);
     --core-font-weight: var(--font-weight-regular);
+
+    --core-on-background-color-1: var(--color-black-2);
+    --core-on-background-color-2: var(--color-black-3);
     
     /* Colors */
     --accent-color: var(--color-white-0);
@@ -22,6 +30,11 @@
     /* Components */
     --component-inner-gap:var(--scale-5);
     --component-outer-gap:var(--scale-6);
+    --component-text-gap:var(--scale-3);
+    --component-padding:var(--scale-4);
+    --component-border-radius:var(--scale-4);
+    
+    
 
     /* Input */
     --input-background-color: var(--color-black-3);
@@ -50,4 +63,37 @@
     --button-secondary-background-color: var(--color-black-3);
     --button-secondary-background-color-hover: var(--color-black-4);
     --button-secondary-color: var(--color-gray-black);
+
+    /* Avatar */
+    --avatar-background-color: var(--color-black-3);
+    --avatar-color: var(--color-gray-light);
+    --avatar-border-color: var(--color-black-4);
+    --avatar-border-width: var(--scale-1);
+    --avatar-size-sm: var(--scale-6);
+    --avatar-size-md: var(--scale-7);
+    --avatar-size-lg: calc(var(--scale-7) + var(--scale-6));
+
+    /* Chart */
+    --chart-line-color: var(--accent-color);
+    --chart-area-color: var(--accent-color);
+    --chart-axis-color: var(--color-black-4);
+    --chart-label-color: var(--muted-color);
+    --chart-grid-color: var(--color-black-4);
+    --chart-point-color: var(--accent-color);
+
+    /* Drawer */
+    --drawer-z-index: 40;
+    --drawer-background-color: var(--core-on-background-color-1);
+    --drawer-color: var(--core-text-color);
+    --drawer-overlay-color: color-mix(in srgb, var(--color-black-0) 72%, transparent);
+    --drawer-width: 425px;
+    --drawer-max-height: 80dvh;
+    --drawer-padding: var(--scale-5);
+    --drawer-border-radius: var(--component-border-radius);
+    --drawer-title-color: var(--accent-color);
+    --drawer-handle-color: var(--color-black-4);
+    --drawer-close-size: var(--scale-6);
+    --drawer-close-background-color: var(--color-black-3);
+    --drawer-close-background-color-hover: var(--color-black-4);
+    --drawer-close-color: var(--accent-color);
 }

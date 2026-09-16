@@ -1,0 +1,83 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-3);
+}
+
+.fieldLabel {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-color);
+}
+
+.photoPicker {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+    cursor: pointer;
+}
+
+.photoPreview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+}
+
+.photoInput {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.photoHint {
+    position: absolute;
+    right: var(--scale-4);
+    bottom: var(--scale-4);
+    z-index: 1;
+    padding: var(--scale-2) var(--scale-4);
+    border-radius: var(--component-border-radius);
+    background-color: color-mix(in srgb, var(--color-black-0) 64%, transparent);
+    color: var(--accent-color);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    pointer-events: none;
+}
+
+.textarea {
+    width: 100%;
+    min-height: calc(var(--scale-7) + var(--scale-6));
+    padding: var(--input-padding);
+    font-size: var(--input-font-size);
+    font-weight: var(--input-font-weight);
+    color: var(--input-color);
+    background-color: var(--input-background-color);
+    border: var(--input-border-width) solid var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    outline: none;
+    resize: vertical;
+}
+
+.textarea::placeholder {
+    color: var(--input-placeholder-color);
+}
+
+.textarea:hover {
+    border-color: var(--input-border-color-hover);
+}
+
+.textarea:focus {
+    border-color: var(--input-border-color-focus);
+}

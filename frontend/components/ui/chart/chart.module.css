@@ -1,0 +1,115 @@
+.chart {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.svg {
+    display: block;
+    width: 100%;
+    height: 140px;
+    min-height: 140px;
+    overflow: hidden;
+    font-family: inherit;
+    cursor: crosshair;
+    touch-action: pan-y;
+    flex-shrink: 0;
+}
+
+.line {
+    fill: none;
+    stroke: var(--chart-line-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.axis {
+    fill: none;
+    stroke: var(--chart-axis-color);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.guide {
+    fill: none;
+    stroke: var(--chart-grid-color);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.point {
+    fill: var(--chart-point-color);
+    stroke: var(--core-on-background-color-2);
+    stroke-width: 2;
+}
+
+.labels {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--scale-4);
+    padding-top: var(--scale-3);
+}
+
+.label {
+    flex: 1;
+    color: var(--chart-label-color);
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.labelCompact {
+    display: none;
+}
+
+@media (max-width: 425px) {
+    .labelFull {
+        display: none;
+    }
+
+    .labelCompact {
+        display: revert;
+    }
+}
+
+.tooltip {
+    position: absolute;
+    top: var(--scale-3);
+    left: var(--scale-3);
+    padding: var(--scale-2) var(--scale-4);
+    border-radius: var(--component-border-radius);
+    background-color: var(--color-black-4);
+    color: var(--accent-color);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    pointer-events: none;
+    opacity: 0;
+}
+
+.tooltipVisible {
+    opacity: 1;
+}
+
+.empty {
+    padding: var(--scale-6) var(--scale-5);
+    color: var(--chart-label-color);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

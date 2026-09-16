@@ -4,7 +4,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: var(--margin-lg);
+    padding: var(--margin-md);
 }
 
 @media (max-width: 768px) {

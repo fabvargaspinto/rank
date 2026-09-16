@@ -1,0 +1,80 @@
+.socials {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+}
+
+.options {
+    display: flex;
+    gap: var(--component-inner-gap);
+}
+
+.item {
+    display: flex;
+    height: 35px;
+    width: 35px;
+    border-radius: var(--component-border-radius);
+    background-color: var(--color-black-3);
+}
+
+.item:focus-visible {
+    outline: var(--scale-1) solid var(--color-gray-light);
+    outline-offset: var(--scale-2);
+}
+
+.chart {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: var(--scale-4);
+    padding: var(--scale-5);
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+}
+
+.chartHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--scale-4);
+}
+
+.chartSummary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-2);
+}
+
+.chartTitle {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-color);
+}
+
+.chartValue {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--accent-color);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.deltaUp,
+.deltaDown {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.deltaUp {
+    color: var(--accent-color);
+}
+
+.deltaDown {
+    color: var(--muted-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .item {
+        transition: none;
+    }
+}
