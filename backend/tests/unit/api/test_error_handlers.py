@@ -16,6 +16,7 @@ from core.auth.domain.auth_error import (
     InvalidEmailError,
 )
 from core.auth.infrastructure.error_infrastructure import AuthCreationError
+from core.user.application.application_error import UserNotFoundError
 
 
 class _Body(BaseModel):
@@ -38,6 +39,7 @@ def _client() -> TestClient:
             "provider": UnsupportedAuthProviderError(
                 "El proveedor debe ser un proveedor OAuth"
             ),
+            "user": UserNotFoundError("El usuario no existe"),
         }
         raise errors[kind]
 
@@ -87,6 +89,12 @@ class TestErrorHandlers:
         response = _client().post("/raise/application?kind=provider")
 
         assert response.status_code == 400
+
+    def test_user_not_found_is_404(self):
+        response = _client().post("/raise/application?kind=user")
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "El usuario no existe"}
 
     def test_domain_error_is_400(self):
         response = _client().post("/raise/domain?kind=email")

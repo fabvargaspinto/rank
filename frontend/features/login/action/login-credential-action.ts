@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
 import { createClient } from "@/lib/supabase/server";
 import { invalidFormResponse, loginSchema } from "@/lib/validation/auth";
@@ -38,8 +39,5 @@ export async function loginCredentialAction(
         return backend;
     }
 
-    return {
-        ...backend,
-        message: "Sesión iniciada.",
-    };
+    redirect("/tree");
 }

@@ -43,6 +43,13 @@ export type SessionResponse = {
     provisioned: boolean;
 };
 
+export type UserResponse = {
+    id: string;
+    name: string | null;
+    avatar: string | null;
+    description: string | null;
+};
+
 export async function provisionSession(
     accessToken: string,
 ): Promise<FetchDataResponse<SessionResponse>> {
@@ -52,6 +59,25 @@ export async function provisionSession(
             Authorization: `Bearer ${accessToken}`,
         },
     });
+}
+
+export async function fetchUserByAuthId(
+    authId: string,
+    accessToken: string,
+): Promise<FetchDataResponse<UserResponse>> {
+    return fetchData<UserResponse>(`/users/${encodeURIComponent(authId)}`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+}
+
+export async function fetchUserByName(
+    name: string,
+): Promise<FetchDataResponse<UserResponse>> {
+    return fetchData<UserResponse>(
+        `/users/name/${encodeURIComponent(name)}`,
+    );
 }
 
 export async function fetchData<T = unknown>(

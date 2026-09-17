@@ -17,7 +17,6 @@ class User:
     created_at: UserCreatedAt
     updated_at: UserUpdatedAt
 
-
     @staticmethod
     def create_empty() -> "User":
         return User(
@@ -29,23 +28,5 @@ class User:
             updated_at=UserUpdatedAt.now(),
         )
 
-    def to_primitive(self) -> dict:
-        return {
-            "id": self.id.value,
-            "name": self.name.value if self.name else None,
-            "avatar": self.avatar.value if self.avatar else None,
-            "description": self.description.value if self.description else None,
-            "created_at": self.created_at.value,
-            "updated_at": self.updated_at.value,
-        }
-
-    @staticmethod
-    def from_primitive(primitive: dict) -> "User":
-        return User(
-            id=UserId(primitive["id"]),
-            name=UserName(primitive["name"]) if primitive["name"] else None,
-            avatar=UserAvatar(primitive["avatar"]) if primitive["avatar"] else None,
-            description=UserDescription(primitive["description"]) if primitive["description"] else None,
-            created_at=UserCreatedAt(primitive["created_at"]),
-            updated_at=UserUpdatedAt(primitive["updated_at"]),
-        )
+    def has_name(self) -> bool:
+        return self.name is not None and self.name.value != ""

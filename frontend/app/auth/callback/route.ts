@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { provisionSession } from "@/lib/fetch_data";
 
 function fromPath(value: string | null) {
-    return value === "register" ? "/register" : "/";
+    return value === "register" ? "/register" : "/login";
 }
 
 export async function GET(request: Request) {
@@ -34,5 +34,5 @@ export async function GET(request: Request) {
         );
     }
 
-    return NextResponse.redirect(`${origin}/`);
+    return NextResponse.redirect(`${origin}/tree`);
 }

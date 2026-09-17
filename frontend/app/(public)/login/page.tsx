@@ -1,19 +1,17 @@
 import { redirect } from "next/navigation";
-import RegisterPage from "@/features/register/register-page";
+import LoginPage from "@/features/login/login-page";
 import { getAuthSession } from "@/lib/supabase/session";
 
-type RegisterRouteProps = {
+type HomeProps = {
     searchParams: Promise<{ error?: string }>;
 };
 
-export default async function page({ searchParams }: RegisterRouteProps) {
+export default async function page({ searchParams }: HomeProps) {
     if (await getAuthSession()) {
         redirect("/tree");
     }
 
     const params = await searchParams;
 
-    return (
-        <RegisterPage initialError={params.error} />
-    );
+    return <LoginPage initialError={params.error} />;
 }

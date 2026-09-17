@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
 import { createClient } from "@/lib/supabase/server";
 import { invalidFormResponse, registerSchema } from "@/lib/validation/auth";
@@ -64,8 +65,5 @@ export async function registerCredentialAction(
         return backend;
     }
 
-    return {
-        ...backend,
-        message: "Cuenta creada.",
-    };
+    redirect("/tree");
 }

@@ -5,6 +5,7 @@ import {
     isValidElement,
     useEffect,
     useId,
+    useLayoutEffect,
     useRef,
     useState,
     type MouseEvent,
@@ -12,6 +13,7 @@ import {
     type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { lockBodyScroll } from "./lock-body-scroll";
 import styles from "./drawer.module.css";
 
 type DrawerSide = "bottom" | "left" | "right";
@@ -118,25 +120,12 @@ export default function Drawer({
         return () => clearTimeout(timeout);
     }, [open, rendered]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!rendered) {
             return;
         }
 
-        const { body, documentElement } = document;
-        const scrollbarWidth = window.innerWidth - documentElement.clientWidth;
-        const previousBodyOverflow = body.style.overflow;
-        const previousBodyPaddingRight = body.style.paddingRight;
-
-        body.style.overflow = "hidden";
-        if (scrollbarWidth > 0) {
-            body.style.paddingRight = `${scrollbarWidth}px`;
-        }
-
-        return () => {
-            body.style.overflow = previousBodyOverflow;
-            body.style.paddingRight = previousBodyPaddingRight;
-        };
+        return lockBodyScroll();
     }, [rendered]);
 
     useEffect(() => {

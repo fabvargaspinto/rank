@@ -150,6 +150,15 @@
     overflow-y: auto;
 }
 
+.content:hover::-webkit-scrollbar-thumb,
+.content:focus-within::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb-color);
+}
+
+.content:hover::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-color-hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .backdrop,
     .panel {

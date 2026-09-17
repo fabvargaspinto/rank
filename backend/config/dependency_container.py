@@ -7,6 +7,9 @@ from core.auth.application.provision_oauth_user import ProvisionOAuthUser
 from core.auth.application.register_with_email import RegisterWithEmail
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
+from core.user.application.get_user import GetUser
+from core.user.application.get_user_by_name import GetUserByName
+from core.user.infrastructure.user_supabase_repo import UserSupabaseRepo
 from db.db_client import DBClient
 
 
@@ -17,6 +20,7 @@ class DependencyContainer:
         self.db_client = DBClient(self.db_settings)
         self.email_crypto = EmailCrypto(self.crypto_settings)
         self.auth_repository = AuthSupabaseRepo(self.db_client, self.email_crypto)
+        self.user_repository = UserSupabaseRepo(self.db_client)
         self.register_with_email = RegisterWithEmail(self.auth_repository)
         self.provision_oauth_user = ProvisionOAuthUser(self.auth_repository)
 
@@ -27,6 +31,12 @@ class DependencyContainer:
             self.provision_oauth_user,
         )
 
+    def get_user(self) -> GetUser:
+        return GetUser(self.user_repository)
+
+    def get_user_by_name(self) -> GetUserByName:
+        return GetUserByName(self.user_repository)
+
 
 @lru_cache
 def get_dependency_container() -> DependencyContainer:
@@ -35,3 +45,11 @@ def get_dependency_container() -> DependencyContainer:
 
 def get_ensure_user_provisioned() -> EnsureUserProvisioned:
     return get_dependency_container().ensure_user_provisioned()
+
+
+def get_user_use_case() -> GetUser:
+    return get_dependency_container().get_user()
+
+
+def get_user_by_name_use_case() -> GetUserByName:
+    return get_dependency_container().get_user_by_name()

@@ -14,6 +14,7 @@ from core.auth.infrastructure.error_infrastructure import AuthCreationError
 from core.auth.infrastructure.postgres_error import is_unique_violation
 from core.user.domain.user import User
 from db.db_client import DBClient
+from core.user.infrastructure.user_mapper import UserMapper
 
 
 class AuthSupabaseRepo(AuthRepository):
@@ -26,6 +27,7 @@ class AuthSupabaseRepo(AuthRepository):
         self._db = db_client.get_db()
         self.email_crypto = email_crypto
         self._mapper = AuthMapper(email_crypto)
+        self._user_mapper = UserMapper()
 
     def save(
         self,
@@ -33,12 +35,14 @@ class AuthSupabaseRepo(AuthRepository):
         auth: Auth,
     ) -> Auth:
         row = self._mapper.to_row(auth)
+        user_row = self._user_mapper.to_row(user)
+
 
         try:
             self._db.rpc(
                 "create_user_and_auth",
                 {
-                    "p_user_id": user.id.value,
+                    "p_user_id": user_row["id"],
                     "p_auth_id": row["id"],
                     "p_email_encrypted": row["email_encrypted"],
                     "p_email_hmac": row["email_hmac"],

@@ -25,7 +25,7 @@ function fromQuery(from: string) {
 }
 
 function fromPath(from: string) {
-    return from === "/register" ? "/register" : "/";
+    return from === "/register" ? "/register" : "/login";
 }
 
 export async function startGoogleOAuthAction(from: string) {

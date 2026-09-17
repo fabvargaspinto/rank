@@ -96,4 +96,9 @@
     --drawer-close-background-color: var(--color-black-3);
     --drawer-close-background-color-hover: var(--color-black-4);
     --drawer-close-color: var(--accent-color);
+
+    /* Scrollbar */
+    --scrollbar-size: 6px;
+    --scrollbar-thumb-color: color-mix(in srgb, var(--color-gray-light) 42%, transparent);
+    --scrollbar-thumb-color-hover: color-mix(in srgb, var(--color-gray-light) 68%, transparent);
 }

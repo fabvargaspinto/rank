@@ -1,11 +1,7 @@
-import LoginPage from "@/features/login/login-page";
+import { redirect } from "next/navigation";
+import { getAuthSession } from "@/lib/supabase/session";
 
-type HomeProps = {
-    searchParams: Promise<{ error?: string }>;
-};
-
-export default async function Home({ searchParams }: HomeProps) {
-    const params = await searchParams;
-
-    return <LoginPage initialError={params.error} />;
+export default async function page() {
+    const session = await getAuthSession();
+    redirect(session ? "/tree" : "/login");
 }

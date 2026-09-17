@@ -116,6 +116,15 @@
     padding: var(--scale-6) var(--scale-5);
 }
 
+.panel:hover::-webkit-scrollbar-thumb,
+.panel:focus-within::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb-color);
+}
+
+.panel:hover::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-color-hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .tab {
         transition: none;
