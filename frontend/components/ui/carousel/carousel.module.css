@@ -1,0 +1,39 @@
+.root {
+    width: 100%;
+    overflow: hidden;
+}
+
+.track {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.slide {
+    grid-area: 1 / 1;
+    min-width: 0;
+    opacity: 0;
+    transform: translateX(var(--scale-5));
+    pointer-events: none;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    transition:
+        opacity 280ms ease,
+        transform 280ms ease;
+}
+
+.slideActive {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
+    height: auto;
+    overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slide {
+        transition: none;
+        transform: none;
+    }
+}

@@ -3,5 +3,5 @@ import { getAuthSession } from "@/lib/supabase/session";
 
 export default async function page() {
     const session = await getAuthSession();
-    redirect(session ? "/tree" : "/login");
+    redirect(session ? "/dashboard" : "/login");
 }
