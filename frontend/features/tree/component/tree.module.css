@@ -67,6 +67,87 @@
     text-wrap: pretty;
 }
 
+.headerLinksWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: fit-content;
+    margin-bottom: var(--scale-4);
+}
+
+.headerLinksContainer {
+    --header-link-size: 26px;
+    --header-link-gap: var(--scale-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--header-link-gap);
+    width: fit-content;
+}
+
+.headerLinksCollapsed,
+.headerLinksExpanded {
+    overflow: hidden;
+    justify-content: flex-end;
+    transition: max-height 200ms ease;
+}
+
+.headerLinksCollapsed {
+    max-height: calc(
+        var(--header-link-size) * 3 + var(--header-link-gap) * 3
+    );
+}
+
+.headerLinksExpanded {
+    max-height: calc(
+        var(--header-link-size) * 6 + var(--header-link-gap) * 5
+    );
+}
+
+.headerLink {
+    flex-shrink: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-light);
+    text-decoration: none;
+    width: var(--header-link-size);
+    height: var(--header-link-size);
+    border-radius: 50%;
+    background-color: var(--color-gray-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.headerLinksToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    margin-bottom: var(--scale-3);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: var(--accent-color);
+    cursor: pointer;
+    animation: headerLinksToggleFloat 1.8s ease-in-out infinite;
+}
+
+.headerLinksToggle svg {
+    width: 10px;
+    height: 10px;
+}
+
+.headerLinksToggle:hover,
+.headerLinksToggle:focus-visible {
+    animation-play-state: paused;
+}
+
+.headerLinksToggle:focus-visible {
+    outline: var(--scale-1) solid var(--color-gray-light);
+    outline-offset: var(--scale-1);
+}
+
 .tabs {
     display: flex;
     flex-shrink: 0;
@@ -125,9 +206,26 @@
     background-color: var(--scrollbar-thumb-color-hover);
 }
 
+@keyframes headerLinksToggleFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .tab {
+    .tab,
+    .headerLinksCollapsed,
+    .headerLinksExpanded {
         transition: none;
+    }
+
+    .headerLinksToggle {
+        animation: none;
     }
 }
 
@@ -136,3 +234,5 @@
         padding: var(--scale-5) var(--scale-4);
     }
 }
+
+

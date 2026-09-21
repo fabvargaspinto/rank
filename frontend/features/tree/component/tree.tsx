@@ -110,6 +110,24 @@ export default function Tree({
     );
 }
 
+function ChevronIcon({ up = false }: { up?: boolean }) {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            {up ? <path d="M6 15l6-6 6 6" /> : <path d="M6 9l6 6 6-6" />}
+        </svg>
+    );
+}
+
 function TreeHeader({
     profile,
     editable,
@@ -119,6 +137,35 @@ function TreeHeader({
     editable: boolean;
     onSaveProfile: (next: Profile) => void;
 }) {
+    const [linksExpanded, setLinksExpanded] = useState(false);
+    const links = [
+        {
+            label: "Facebook",
+            url: "https://www.facebook.com/profile.php?id=100000000000000",
+        },
+        {
+            label: "Twitter",
+            url: "https://www.twitter.com/profile.php?id=100000000000000",
+        },
+        {
+            label: "Instagram",
+            url: "https://www.instagram.com/profile.php?id=100000000000000",
+        },
+        {
+            label: "Linkedin",
+            url: "https://www.linkedin.com/profile.php?id=100000000000000",
+        },
+        {
+            label: "GitHub",
+            url: "https://www.github.com/profile.php?id=100000000000000",
+        },
+        {
+            label: "YouTube",
+            url: "https://www.youtube.com/profile.php?id=100000000000000",
+        },
+    ].slice(0, 6);
+    const canExpandLinks = links.length > 3;
+
     return (
         <header className={styles.header}>
             {hasPhoto(profile.photo) ? (
@@ -143,6 +190,45 @@ function TreeHeader({
                 <DrawerPerfil profile={profile} onSave={onSaveProfile} />
             ) : null}
             <div className={styles.headerContent}>
+                <div className={styles.headerLinksWrap}>
+                    {canExpandLinks ? (
+                        <button
+                            type="button"
+                            className={styles.headerLinksToggle}
+                            aria-expanded={linksExpanded}
+                            aria-label={
+                                linksExpanded
+                                    ? "Mostrar menos redes"
+                                    : "Mostrar más redes"
+                            }
+                            onClick={() => setLinksExpanded((open) => !open)}
+                        >
+                            <ChevronIcon up={!linksExpanded} />
+                        </button>
+                    ) : null}
+                    <div
+                        className={[
+                            styles.headerLinksContainer,
+                            canExpandLinks
+                                ? linksExpanded
+                                    ? styles.headerLinksExpanded
+                                    : styles.headerLinksCollapsed
+                                : "",
+                        ]
+                            .filter(Boolean)
+                            .join(" ")}
+                    >
+                        {links.map(({ label, url }) => (
+                            <a
+                                key={label}
+                                href={url}
+                                className={styles.headerLink}
+                            >
+                                {label[0].toLowerCase()}
+                            </a>
+                        ))}
+                    </div>
+                </div>
                 <h1 className={styles.headerTitle}>{profile.name}</h1>
                 {profile.description ? (
                     <p className={styles.headerDescription}>{profile.description}</p>
