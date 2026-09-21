@@ -12,8 +12,27 @@ class TestUserLinkType:
     def test_should_have_instagram_type(self):
         assert UserLinkType.INSTAGRAM.value == "instagram"
 
+    def test_should_have_spotify_type(self):
+        assert UserLinkType.SPOTIFY.value == "spotify"
+
+    def test_should_have_tiktok_type(self):
+        assert UserLinkType.TIKTOK.value == "tiktok"
+
+    def test_should_have_twitch_type(self):
+        assert UserLinkType.TWITCH.value == "twitch"
+
+    def test_should_have_kick_type(self):
+        assert UserLinkType.KICK.value == "kick"
+
+    def test_should_have_facebook_type(self):
+        assert UserLinkType.FACEBOOK.value == "facebook"
+
     def test_should_have_default_type(self):
         assert UserLinkType.DEFAULT.value == "default"
+
+    def test_should_have_x_type(self):
+        assert UserLinkType.X.value == "x"
+
 
     def test_default_should_be_default_type(self):
         assert UserLinkType.DEFAULT.is_default() is True
@@ -39,6 +58,42 @@ class TestUserLinkType:
             "www.instagram.com",
         )
 
+    def test_spotify_should_have_spotify_hosts(self):
+        assert UserLinkType.SPOTIFY.hosts() == (
+            "spotify.com",
+            "www.spotify.com",
+        )
+
+    def test_tiktok_should_have_tiktok_hosts(self):
+        assert UserLinkType.TIKTOK.hosts() == (
+            "tiktok.com",
+            "www.tiktok.com",
+        )
+
+    def test_twitch_should_have_twitch_hosts(self):
+        assert UserLinkType.TWITCH.hosts() == (
+            "twitch.tv",
+            "www.twitch.tv",
+        )
+
+    def test_kick_should_have_kick_hosts(self):
+        assert UserLinkType.KICK.hosts() == (
+            "kick.com",
+            "www.kick.com",
+        )
+
+    def test_facebook_should_have_facebook_hosts(self):
+        assert UserLinkType.FACEBOOK.hosts() == (
+            "facebook.com",
+            "www.facebook.com",
+        )
+
+    def test_x_should_have_x_hosts(self):
+        assert UserLinkType.X.hosts() == (
+            "x.com",
+            "www.x.com",
+        )
+
     def test_default_should_have_no_hosts(self):
         assert UserLinkType.DEFAULT.hosts() == ()
 
@@ -59,7 +114,17 @@ class TestUserLinkType:
 
     def test_should_reject_unknown_type(self):
         with pytest.raises(InvalidUserLinkTypeError):
-            UserLinkType.from_string("tiktok")
+            UserLinkType.from_string("linkedin")
 
     def test_should_get_all_types(self):
-        assert UserLinkType.get_all() == ["youtube", "instagram", "default"]
+        assert UserLinkType.get_all() == [
+            "youtube",
+            "instagram",
+            "spotify",
+            "tiktok",
+            "twitch",
+            "kick",
+            "facebook",
+            "x",
+            "default",
+        ]
