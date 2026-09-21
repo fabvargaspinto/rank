@@ -9,3 +9,12 @@ class InvalidUserAvatarError(DomainError):
 
 class InvalidUserDescriptionError(DomainError):
     pass
+
+class InvalidUserLinkTypeError(DomainError):
+    pass
+
+class InvalidUserLinkUrlError(DomainError):
+    pass
+
+class InvalidUserLinkSortIndexError(DomainError):
+    pass
