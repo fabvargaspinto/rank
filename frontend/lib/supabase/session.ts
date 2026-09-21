@@ -7,22 +7,17 @@ export type AuthSession = {
 
 export async function getAuthSession(): Promise<AuthSession | null> {
     const supabase = await createClient();
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    const user = userData.user;
-
-    if (userError || !user?.id) {
-        return null;
-    }
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
+    const authId = userData.user?.id ?? sessionData.session?.user?.id;
 
-    if (sessionError || !accessToken) {
+    if (!authId || !accessToken) {
         return null;
     }
 
     return {
         accessToken,
-        authId: user.id,
+        authId,
     };
 }

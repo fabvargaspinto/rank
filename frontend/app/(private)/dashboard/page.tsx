@@ -1,6 +1,6 @@
-import TreePage from "@/features/tree/tree-page";
+import { redirect } from "next/navigation";
+import { getPostAuthPath } from "@/lib/post-auth-path";
 
-export default function page() {
-    return <TreePage />;
+export default async function page() {
+    redirect(await getPostAuthPath());
 }
- 

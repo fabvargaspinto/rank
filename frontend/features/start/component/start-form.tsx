@@ -136,7 +136,7 @@ export default function StartForm() {
     }
 
     function finish() {
-        router.push("/dashboard");
+        router.push("/dashboard/tree");
     }
 
     function onSubmit(event: FormEvent<HTMLFormElement>) {

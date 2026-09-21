@@ -64,3 +64,5 @@ def read_user_by_auth_id(
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
     return _to_response(use_case.execute(auth_id))
+
+

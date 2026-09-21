@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import StartPage from "@/features/start/start-page";
-import { getAuthSession } from "@/lib/supabase/session";
+import { DASHBOARD_START_PATH, getPostAuthPath } from "@/lib/post-auth-path";
 
 export default async function page() {
-    if (!(await getAuthSession())) {
-        redirect("/login");
+    const path = await getPostAuthPath();
+
+    if (path !== DASHBOARD_START_PATH) {
+        redirect(path);
     }
 
     return <StartPage />;

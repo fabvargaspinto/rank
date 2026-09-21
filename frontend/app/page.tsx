@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { getAuthSession } from "@/lib/supabase/session";
+import { getPostAuthPath } from "@/lib/post-auth-path";
 
 export default async function page() {
-    const session = await getAuthSession();
-    redirect(session ? "/dashboard" : "/login");
+    redirect(await getPostAuthPath());
 }

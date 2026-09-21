@@ -35,7 +35,22 @@ export async function proxy(request: NextRequest) {
         },
     });
 
-    await supabase.auth.getClaims();
+    const { data } = await supabase.auth.getClaims();
+    const { pathname } = request.nextUrl;
+
+    if (
+        data?.claims &&
+        (pathname === "/login" || pathname === "/register")
+    ) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/";
+        redirectUrl.search = "";
+        const redirectResponse = NextResponse.redirect(redirectUrl);
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+            redirectResponse.cookies.set(cookie);
+        });
+        return redirectResponse;
+    }
 
     return supabaseResponse;
 }

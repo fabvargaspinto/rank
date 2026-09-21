@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
+import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { createClient } from "@/lib/supabase/server";
 import { invalidFormResponse, loginSchema } from "@/lib/validation/auth";
 
@@ -39,5 +40,10 @@ export async function loginCredentialAction(
         return backend;
     }
 
-    redirect("/tree");
+    redirect(
+        await postAuthPathForToken(
+            data.session.user.id,
+            data.session.access_token,
+        ),
+    );
 }

@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
 import LoginPage from "@/features/login/login-page";
-import { getAuthSession } from "@/lib/supabase/session";
+import { LOGIN_PATH, getPostAuthPath } from "@/lib/post-auth-path";
 
 type HomeProps = {
     searchParams: Promise<{ error?: string }>;
 };
 
 export default async function page({ searchParams }: HomeProps) {
-    if (await getAuthSession()) {
-        redirect("/tree");
+    const path = await getPostAuthPath();
+
+    if (path !== LOGIN_PATH) {
+        redirect(path);
     }
 
     const params = await searchParams;
