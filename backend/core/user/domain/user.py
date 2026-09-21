@@ -30,3 +30,21 @@ class User:
 
     def has_name(self) -> bool:
         return self.name is not None and self.name.value != ""
+
+    def update_profile(
+        self,
+        name: str,
+        avatar: str | None = None,
+        description: str | None = None,
+    ) -> None:
+        self.name = UserName(name)
+
+        avatar_value = avatar.strip() if avatar else ""
+        self.avatar = UserAvatar(avatar_value) if avatar_value else None
+
+        if description is None or not description.strip():
+            self.description = None
+        else:
+            self.description = UserDescription(description)
+
+        self.updated_at = UserUpdatedAt.now()

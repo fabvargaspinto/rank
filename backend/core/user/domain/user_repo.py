@@ -12,3 +12,6 @@ class UserRepository(Protocol):
 
     def get_user_by_name(self, name: str) -> User | None:
         pass
+
+    def update_user(self, user: User) -> User | None:
+        pass

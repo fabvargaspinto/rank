@@ -8,3 +8,11 @@ class UserResponse(BaseModel):
     name: str | None = None
     avatar: str | None = None
     description: str | None = None
+
+
+class UpdateUserRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    avatar: str | None = None
+    description: str | None = None

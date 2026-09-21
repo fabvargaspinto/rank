@@ -14,7 +14,10 @@ from core.auth.domain.auth_error import IdentityAlreadyExistsError
 from core.shared.application.application_error import ApplicationError
 from core.shared.domain.domain_error import DomainError
 from core.shared.infrastructure.infrastructure_error import InfrastructureError
-from core.user.application.application_error import UserNotFoundError
+from core.user.application.application_error import (
+    UserNameAlreadyExistsError,
+    UserNotFoundError,
+)
 
 logger = logging.getLogger("ig.errors")
 
@@ -86,6 +89,8 @@ def _status_for(exc: ApplicationError) -> int:
         return 401
     if isinstance(exc, UserNotFoundError):
         return 404
+    if isinstance(exc, UserNameAlreadyExistsError):
+        return 409
     if isinstance(exc, UnsupportedAuthProviderError):
         return 400
     return 400

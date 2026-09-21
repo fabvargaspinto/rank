@@ -1,6 +1,13 @@
+from postgrest.exceptions import APIError
+
+from core.auth.infrastructure.postgres_error import is_unique_violation
+from core.user.application.application_error import UserNameAlreadyExistsError
 from core.user.domain.user import User
 from core.user.domain.user_repo import UserRepository
-from core.user.infrastructure.error_infrastructure import UserLookupError
+from core.user.infrastructure.error_infrastructure import (
+    UserLookupError,
+    UserUpdateError,
+)
 from core.user.infrastructure.user_mapper import UserMapper
 from db.db_client import DBClient
 
@@ -36,6 +43,40 @@ class UserSupabaseRepo(UserRepository):
 
     def get_user_by_name(self, name: str) -> User | None:
         return self._find_user("users", {"name": name})
+
+    def update_user(self, user: User) -> User | None:
+        row = self.mapper.to_row(user)
+        payload = {
+            "name": row["name"],
+            "avatar_url": row["avatar_url"],
+            "description": row["description"],
+            "updated_at": row["updated_at"],
+        }
+
+        try:
+            response = (
+                self._db.table("users")
+                .update(payload)
+                .eq("id", user.id.value)
+                .execute()
+            )
+        except APIError as exc:
+            if is_unique_violation(exc):
+                raise UserNameAlreadyExistsError(
+                    "Ese nombre ya está en uso"
+                ) from exc
+            raise UserUpdateError("Error al actualizar el usuario") from exc
+        except Exception as exc:
+            raise UserUpdateError("Error al actualizar el usuario") from exc
+
+        rows = response.data or []
+        if not rows:
+            return None
+
+        updated_row = rows[0]
+        if not isinstance(updated_row, dict):
+            raise UserUpdateError("Error al actualizar el usuario")
+        return self.mapper.to_domain(updated_row)
 
     def _find_user(self, table: str, filters: dict) -> User | None:
         query = self._db.table(table).select("*")

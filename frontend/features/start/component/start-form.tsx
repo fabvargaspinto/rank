@@ -14,6 +14,7 @@ import Button from "@/components/ui/button/button";
 import Carousel from "@/components/ui/carousel/carousel";
 import Input from "@/components/ui/input/input";
 import { checkNameAvailability } from "../action/check-name-action";
+import { updateUserAction } from "../action/update-user-action";
 import styles from "./start-form.module.css";
 
 const NAME_MAX_LENGTH = 50;
@@ -58,6 +59,8 @@ export default function StartForm() {
     const [name, setName] = useState("");
     const [nameError, setNameError] = useState("");
     const [checkingName, setCheckingName] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState("");
     const [photo, setPhoto] = useState("");
     const [description, setDescription] = useState("");
     const [socials, setSocials] = useState([""]);
@@ -135,7 +138,23 @@ export default function StartForm() {
         goTo(1);
     }
 
-    function finish() {
+    async function finish() {
+        setSaving(true);
+        setSaveError("");
+
+        const result = await updateUserAction({
+            name,
+            avatar: photo,
+            description,
+        });
+
+        setSaving(false);
+
+        if (result.isError) {
+            setSaveError(result.message || "No se pudo guardar tu perfil");
+            return;
+        }
+
         router.push("/dashboard/tree");
     }
 
@@ -148,7 +167,7 @@ export default function StartForm() {
         }
 
         if (isLast) {
-            finish();
+            void finish();
             return;
         }
 
@@ -298,15 +317,35 @@ export default function StartForm() {
                 ))}
             </div>
 
+            {saveError ? (
+                <p className={styles.error} role="alert">
+                    {saveError}
+                </p>
+            ) : null}
+
             <div className={styles.actions}>
-                <Button type="submit" disabled={checkingName || (step === 0 && !name)}>
-                    {checkingName ? "Comprobando..." : isLast ? "Listo" : "Continuar"}
+                <Button
+                    type="submit"
+                    disabled={
+                        checkingName ||
+                        saving ||
+                        (step === 0 && !name)
+                    }
+                >
+                    {checkingName
+                        ? "Comprobando..."
+                        : saving
+                          ? "Guardando..."
+                          : isLast
+                            ? "Listo"
+                            : "Continuar"}
                 </Button>
                 {canSkip ? (
                     <Button
                         type="button"
                         variant="secondary"
-                        onClick={() => (isLast ? finish() : goTo(step + 1))}
+                        disabled={saving}
+                        onClick={() => (isLast ? void finish() : goTo(step + 1))}
                     >
                         Saltar
                     </Button>

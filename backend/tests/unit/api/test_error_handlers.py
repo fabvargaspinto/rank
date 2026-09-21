@@ -16,7 +16,10 @@ from core.auth.domain.auth_error import (
     InvalidEmailError,
 )
 from core.auth.infrastructure.error_infrastructure import AuthCreationError
-from core.user.application.application_error import UserNotFoundError
+from core.user.application.application_error import (
+    UserNameAlreadyExistsError,
+    UserNotFoundError,
+)
 
 
 class _Body(BaseModel):
@@ -40,6 +43,7 @@ def _client() -> TestClient:
                 "El proveedor debe ser un proveedor OAuth"
             ),
             "user": UserNotFoundError("El usuario no existe"),
+            "username": UserNameAlreadyExistsError("Ese nombre ya está en uso"),
         }
         raise errors[kind]
 
@@ -95,6 +99,12 @@ class TestErrorHandlers:
 
         assert response.status_code == 404
         assert response.json() == {"detail": "El usuario no existe"}
+
+    def test_user_name_already_exists_is_409(self):
+        response = _client().post("/raise/application?kind=username")
+
+        assert response.status_code == 409
+        assert response.json() == {"detail": "Ese nombre ya está en uso"}
 
     def test_domain_error_is_400(self):
         response = _client().post("/raise/domain?kind=email")

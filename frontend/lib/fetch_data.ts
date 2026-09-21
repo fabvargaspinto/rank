@@ -80,6 +80,24 @@ export async function fetchUserByName(
     );
 }
 
+export async function updateUser(
+    authId: string,
+    accessToken: string,
+    profile: {
+        name: string;
+        avatar: string | null;
+        description: string | null;
+    },
+): Promise<FetchDataResponse<UserResponse>> {
+    return fetchData<UserResponse>(`/users/${encodeURIComponent(authId)}`, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(profile),
+    });
+}
+
 export async function fetchData<T = unknown>(
     path: string,
     options: RequestInit = {},

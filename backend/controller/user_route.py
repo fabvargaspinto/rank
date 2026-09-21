@@ -4,11 +4,16 @@ from fastapi import APIRouter, Depends, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.schemas.auth import ErrorResponse
-from api.schemas.user import UserResponse
-from config.dependency_container import get_user_by_name_use_case, get_user_use_case
+from api.schemas.user import UpdateUserRequest, UserResponse
+from config.dependency_container import (
+    get_update_user_use_case,
+    get_user_by_name_use_case,
+    get_user_use_case,
+)
 from core.user.application.application_error import UserNotFoundError
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
+from core.user.application.update_user import UpdateUser
 from core.user.domain.user import User
 
 router = APIRouter()
@@ -64,5 +69,42 @@ def read_user_by_auth_id(
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
     return _to_response(use_case.execute(auth_id))
+
+
+@router.patch(
+    "/users/{auth_id}",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {
+            "model": ErrorResponse,
+            "description": "Token ausente o inválido",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Usuario no encontrado",
+        },
+        409: {
+            "model": ErrorResponse,
+            "description": "El nombre ya está en uso",
+        },
+    },
+)
+def update_user(
+    auth_id: str,
+    body: UpdateUserRequest,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    use_case: UpdateUser = Depends(get_update_user_use_case),
+) -> UserResponse:
+    if auth_id != current_user.auth_id:
+        raise UserNotFoundError("El usuario no existe")
+    return _to_response(
+        use_case.execute(
+            auth_id,
+            name=body.name,
+            avatar=body.avatar,
+            description=body.description,
+        )
+    )
 
 

@@ -46,3 +46,31 @@ class TestUser:
         user = create_user_with_values()
 
         assert user.has_name() is True
+
+    def test_update_profile_sets_name_and_optional_fields(self):
+        user = User.create_empty()
+        previous_updated_at = user.updated_at
+
+        user.update_profile(
+            name="luna",
+            avatar="https://example.com/avatar.jpg",
+            description="Cantautora",
+        )
+
+        assert user.name is not None
+        assert user.name.value == "luna"
+        assert user.avatar is not None
+        assert user.avatar.value == "https://example.com/avatar.jpg"
+        assert user.description is not None
+        assert user.description.value == "Cantautora"
+        assert user.updated_at != previous_updated_at
+
+    def test_update_profile_clears_optional_fields(self):
+        user = create_user_with_values()
+
+        user.update_profile(name="luna", avatar="", description="   ")
+
+        assert user.name is not None
+        assert user.name.value == "luna"
+        assert user.avatar is None
+        assert user.description is None

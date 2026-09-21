@@ -14,6 +14,11 @@ CREATE TABLE public.users (
 );
 
 
+CREATE UNIQUE INDEX IF NOT EXISTS users_name_unique
+    ON public.users (name)
+    WHERE name IS NOT NULL;
+
+
 CREATE TABLE public.auth (
     id UUID PRIMARY KEY
         REFERENCES auth.users (id)

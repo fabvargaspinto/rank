@@ -9,6 +9,7 @@ from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
+from core.user.application.update_user import UpdateUser
 from core.user.infrastructure.user_supabase_repo import UserSupabaseRepo
 from db.db_client import DBClient
 
@@ -37,6 +38,9 @@ class DependencyContainer:
     def get_user_by_name(self) -> GetUserByName:
         return GetUserByName(self.user_repository)
 
+    def update_user(self) -> UpdateUser:
+        return UpdateUser(self.user_repository)
+
 
 @lru_cache
 def get_dependency_container() -> DependencyContainer:
@@ -53,3 +57,7 @@ def get_user_use_case() -> GetUser:
 
 def get_user_by_name_use_case() -> GetUserByName:
     return get_dependency_container().get_user_by_name()
+
+
+def get_update_user_use_case() -> UpdateUser:
+    return get_dependency_container().update_user()

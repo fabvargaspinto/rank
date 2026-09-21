@@ -8,11 +8,16 @@ from api.dependencies.auth import (
     get_current_user,
     get_jwks_client,
 )
-from config.dependency_container import get_user_by_name_use_case, get_user_use_case
+from config.dependency_container import (
+    get_update_user_use_case,
+    get_user_by_name_use_case,
+    get_user_use_case,
+)
 from controller.error_handlers import register_error_handlers
 from controller.user_route import router
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
+from core.user.application.update_user import UpdateUser
 from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_description import UserDescription
@@ -47,6 +52,9 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
     app.dependency_overrides[get_user_use_case] = lambda: GetUser(fake_repo)
     app.dependency_overrides[get_user_by_name_use_case] = (
         lambda: GetUserByName(fake_repo)
+    )
+    app.dependency_overrides[get_update_user_use_case] = (
+        lambda: UpdateUser(fake_repo)
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -131,3 +139,93 @@ class TestGetUserByName:
 
         assert response.status_code == 404
         assert response.json() == {"detail": "El usuario no existe"}
+
+
+class TestUpdateUser:
+    def test_missing_authorization_returns_401(self):
+        response = _client().patch(
+            f"/users/{AUTH_ID}",
+            json={"name": "luna"},
+        )
+
+        assert response.status_code == 401
+        assert response.json() == {
+            "detail": "El token de autenticación no es válido"
+        }
+
+    def test_other_auth_id_returns_404(self):
+        app_client = _client()
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{OTHER_AUTH_ID}",
+            json={"name": "luna"},
+        )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "El usuario no existe"}
+
+    def test_updates_current_user_profile(self):
+        repo = FakeUserRepo()
+        user = User.create_empty()
+        repo.users_by_auth_id[AUTH_ID] = user
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={
+                "name": "luna",
+                "avatar": "https://example.com/avatar.jpg",
+                "description": "Cantautora",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "id": user.id.value,
+            "name": "luna",
+            "avatar": "https://example.com/avatar.jpg",
+            "description": "Cantautora",
+        }
+
+    def test_unknown_auth_id_returns_404(self):
+        app_client = _client()
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={"name": "luna"},
+        )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "El usuario no existe"}
+
+    def test_taken_name_returns_409(self):
+        repo = FakeUserRepo()
+        user = User.create_empty()
+        taken = _named_user()
+        repo.users_by_auth_id[AUTH_ID] = user
+        repo.users_by_name["Luna Reyes"] = taken
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={"name": "Luna Reyes"},
+        )
+
+        assert response.status_code == 409
+        assert response.json() == {"detail": "Ese nombre ya está en uso"}
