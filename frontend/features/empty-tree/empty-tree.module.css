@@ -1,0 +1,29 @@
+.container {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   height: 100vh;
+   width: 100%;
+   padding: var(--component-padding);
+   max-width: 500px;
+   text-align: center;
+   gap:var(--component-inner-gap);
+}
+
+.title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-black);
+}
+
+.description {
+    font-size: var(--font-size-md);
+    color: var(--color-gray-light);
+}
+
+.button {
+    width: 100%;
+    max-width: 400px;
+    margin-top: var(--component-inner-gap);
+}
