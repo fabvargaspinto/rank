@@ -20,16 +20,20 @@
 .header::after {
     content: "";
     position: absolute;
-    inset: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: var(--z-index-2);
     pointer-events: none;
+    height: 42%;
     background: linear-gradient(
         to top,
-        var(--core-on-background-color-1) 0%,
-        color-mix(in srgb, var(--core-on-background-color-1) 15%, transparent) 27%,
-        color-mix(in srgb, var(--core-on-background-color-1) 28%, transparent) 68%,
+        color-mix(in srgb, var(--color-black-0) 85%, transparent) 0%,
+        color-mix(in srgb, var(--color-black-0) 65%, transparent) 25%,
+        color-mix(in srgb, var(--color-black-0) 40%, transparent) 50%,
+        color-mix(in srgb, var(--color-black-0) 18%, transparent) 70%,
         transparent 100%
-    );
+      );
 }
 
 .headerImage {
@@ -76,7 +80,7 @@
 }
 
 .headerLinksContainer {
-    --header-link-size: 26px;
+    --header-link-size: 28px;
     --header-link-gap: var(--scale-4);
     display: flex;
     flex-direction: column;
@@ -110,7 +114,7 @@
     width: var(--header-link-size);
     height: var(--header-link-size);
     border-radius: 50%;
-    background-color: var(--color-gray-black);
+    background-color: color-mix(in srgb, var(--color-black-0) 56%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
