@@ -128,3 +128,10 @@ class TestUserLinkType:
             "x",
             "default",
         ]
+
+    def test_from_host_matches_known_network(self):
+        assert UserLinkType.from_host("www.youtube.com") == UserLinkType.YOUTUBE
+        assert UserLinkType.from_host("instagram.com") == UserLinkType.INSTAGRAM
+
+    def test_from_host_falls_back_to_default(self):
+        assert UserLinkType.from_host("example.com") == UserLinkType.DEFAULT

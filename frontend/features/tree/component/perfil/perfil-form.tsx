@@ -155,7 +155,10 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             name: result.data.name?.trim() || nextName,
             description: result.data.description ?? "",
             photo: result.data.avatar ?? "",
-            links: nextLinks,
+            links: (result.data.links ?? []).map((link) => ({
+                id: link.id,
+                url: link.url,
+            })),
         });
     }
 

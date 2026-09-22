@@ -3,6 +3,11 @@ from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_created_at import UserCreatedAt
 from core.user.domain.user_description import UserDescription
 from core.user.domain.user_id import UserId
+from core.user.domain.user_link import UserLink
+from core.user.domain.user_link_id import UserLinkId
+from core.user.domain.user_link_sort_index import UserLinkSortIndex
+from core.user.domain.user_link_type import UserLinkType
+from core.user.domain.user_link_url import UserLinkUrl
 from core.user.domain.user_name import UserName
 from core.user.domain.user_updated_at import UserUpdatedAt
 
@@ -14,7 +19,7 @@ class UserMapper:
             name=self._optional_name(row.get("name")),
             avatar=self._optional_avatar(row.get("avatar_url")),
             description=self._optional_description(row.get("description")),
-            links=[],
+            links=self._links_from_row(row.get("user_links")),
             created_at=UserCreatedAt.from_isoformat(row["created_at"]),
             updated_at=UserUpdatedAt.from_isoformat(row["updated_at"]),
         )
@@ -28,6 +33,39 @@ class UserMapper:
             "created_at": user.created_at.to_isoformat(),
             "updated_at": user.updated_at.to_isoformat(),
         }
+
+    def links_to_rows(self, user: User) -> list[dict]:
+        return [
+            {
+                "id": link.id.value,
+                "user_id": link.user_id.value,
+                "type": link.type.value,
+                "url": link.url.value,
+                "sort_index": link.sort_index.value,
+            }
+            for link in user.links
+        ]
+
+    def _links_from_row(self, value: object) -> list[UserLink]:
+        if not isinstance(value, list):
+            return []
+
+        links: list[UserLink] = []
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            links.append(self._link_to_domain(item))
+
+        return sorted(links, key=lambda link: link.sort_index.value)
+
+    def _link_to_domain(self, row: dict) -> UserLink:
+        return UserLink(
+            id=UserLinkId(row["id"]),
+            user_id=UserId(row["user_id"]),
+            type=UserLinkType.from_string(str(row["type"])),
+            url=UserLinkUrl(str(row["url"])),
+            sort_index=UserLinkSortIndex(int(row["sort_index"])),
+        )
 
     def _optional_name(self, value: object) -> UserName | None:
         if not isinstance(value, str) or not value.strip():

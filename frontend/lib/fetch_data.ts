@@ -43,11 +43,19 @@ export type SessionResponse = {
     provisioned: boolean;
 };
 
+export type UserLinkResponse = {
+    id: string;
+    type: string;
+    url: string;
+    sort_index: number;
+};
+
 export type UserResponse = {
     id: string;
     name: string | null;
     avatar: string | null;
     description: string | null;
+    links: UserLinkResponse[];
 };
 
 export async function provisionSession(
@@ -87,6 +95,7 @@ export async function updateUser(
         name: string;
         avatar: string | null;
         description: string | null;
+        links?: { url: string }[] | null;
     },
 ): Promise<FetchDataResponse<UserResponse>> {
     return fetchData<UserResponse>(`/users/${encodeURIComponent(authId)}`, {

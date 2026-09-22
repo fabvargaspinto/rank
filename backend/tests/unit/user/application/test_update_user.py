@@ -38,6 +38,34 @@ class TestUpdateUser:
         assert result.description.value == "Cantautora"
         assert self.repo.users_by_name["luna"] is result
 
+    def test_replaces_links_when_provided(self):
+        user = User.create_empty()
+        self.repo.users_by_auth_id[AUTH_ID] = user
+
+        result = self.use_case.execute(
+            AUTH_ID,
+            name="luna",
+            links=[
+                "https://www.youtube.com/@luna",
+                "https://example.com/luna",
+            ],
+        )
+
+        assert len(result.links) == 2
+        assert result.links[0].url.value == "https://www.youtube.com/@luna"
+        assert result.links[0].type.value == "youtube"
+        assert result.links[1].type.value == "default"
+
+    def test_keeps_existing_links_when_omitted(self):
+        user = User.create_empty()
+        user.add_link(url="https://www.instagram.com/luna")
+        self.repo.users_by_auth_id[AUTH_ID] = user
+
+        result = self.use_case.execute(AUTH_ID, name="luna", description="Cantautora")
+
+        assert len(result.links) == 1
+        assert result.links[0].url.value == "https://www.instagram.com/luna"
+
     def test_keeps_name_when_updating_own_profile(self):
         user = User.create_empty()
         user.name = UserName("luna")

@@ -43,6 +43,16 @@ class UserLinkType(StrEnum):
         return self is UserLinkType.DEFAULT
 
     @classmethod
+    def from_host(cls, host: str) -> "UserLinkType":
+        normalized = host.strip().lower()
+        for link_type in cls:
+            if link_type.is_default():
+                continue
+            if normalized in link_type.hosts():
+                return link_type
+        return cls.DEFAULT
+
+    @classmethod
     def from_string(cls, value: str) -> "UserLinkType":
         normalized = value.strip().lower()
         try:

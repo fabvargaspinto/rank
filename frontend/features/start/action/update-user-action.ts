@@ -50,11 +50,14 @@ export async function updateUserAction(
         };
     }
 
-    const links = (input.links ?? [])
-        .map((link) => ({ url: link.url.trim() }))
-        .filter((link) => link.url.length > 0);
+    const links =
+        input.links === undefined
+            ? undefined
+            : input.links
+                  .map((link) => ({ url: link.url.trim() }))
+                  .filter((link) => link.url.length > 0);
 
-    if (links.length > MAX_LINKS) {
+    if (links !== undefined && links.length > MAX_LINKS) {
         return {
             data: null,
             isError: true,
@@ -67,5 +70,6 @@ export async function updateUserAction(
         name,
         avatar: httpsAvatar(input.avatar),
         description: input.description?.trim() || null,
+        ...(links !== undefined ? { links } : {}),
     });
 }

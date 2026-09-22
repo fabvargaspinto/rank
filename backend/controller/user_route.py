@@ -25,6 +25,15 @@ def _to_response(user: User) -> UserResponse:
         name=user.name.value if user.name else None,
         avatar=user.avatar.value if user.avatar else None,
         description=user.description.value if user.description else None,
+        links=[
+            {
+                "id": link.id.value,
+                "type": link.type.value,
+                "url": link.url.value,
+                "sort_index": link.sort_index.value,
+            }
+            for link in user.links
+        ],
     )
 
 
@@ -104,6 +113,11 @@ def update_user(
             name=body.name,
             avatar=body.avatar,
             description=body.description,
+            links=(
+                [link.url for link in body.links]
+                if body.links is not None
+                else None
+            ),
         )
     )
 

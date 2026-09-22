@@ -39,3 +39,18 @@ class UserLink:
             url=UserLinkUrl(url),
             sort_index=UserLinkSortIndex(sort_index),
         )
+
+    @staticmethod
+    def create_from_url(
+        user_id: str,
+        url: str,
+        sort_index: int,
+    ) -> "UserLink":
+        link_url = UserLinkUrl(url)
+        return UserLink(
+            id=UserLinkId.generate(),
+            user_id=UserId(user_id),
+            type=UserLinkType.from_host(link_url.host()),
+            url=link_url,
+            sort_index=UserLinkSortIndex(sort_index),
+        )

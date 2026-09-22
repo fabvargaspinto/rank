@@ -94,7 +94,7 @@ class TestUser:
         user = User.create_empty()
         previous_updated_at = user.updated_at
 
-        link = user.add_link(type="youtube", url=YOUTUBE_URL)
+        link = user.add_link(url=YOUTUBE_URL)
 
         assert len(user.links) == 1
         assert link.user_id == user.id
@@ -106,8 +106,8 @@ class TestUser:
     def test_add_link_assigns_incremental_sort_index(self):
         user = User.create_empty()
 
-        user.add_link(type="youtube", url=YOUTUBE_URL)
-        second = user.add_link(type="instagram", url=INSTAGRAM_URL)
+        user.add_link(url=YOUTUBE_URL)
+        second = user.add_link(url=INSTAGRAM_URL)
 
         assert second.sort_index.value == 1
         assert [link.sort_index.value for link in user.links] == [0, 1]
@@ -115,16 +115,27 @@ class TestUser:
     def test_add_link_rejects_when_max_reached(self):
         user = User.create_empty()
         for index in range(User.MAX_LINKS):
-            user.add_link(type="default", url=f"{DEFAULT_URL}/{index}")
+            user.add_link(url=f"{DEFAULT_URL}/{index}")
 
         with pytest.raises(TooManyUserLinksError):
-            user.add_link(type="default", url=DEFAULT_URL)
+            user.add_link(url=DEFAULT_URL)
+
+    def test_replace_links_infers_types_from_urls(self):
+        user = User.create_empty()
+
+        user.replace_links([YOUTUBE_URL, DEFAULT_URL])
+
+        assert [link.type for link in user.links] == [
+            UserLinkType.YOUTUBE,
+            UserLinkType.DEFAULT,
+        ]
+        assert [link.sort_index.value for link in user.links] == [0, 1]
 
     def test_remove_link_reindexes_remaining(self):
         user = User.create_empty()
-        first = user.add_link(type="youtube", url=YOUTUBE_URL)
-        user.add_link(type="instagram", url=INSTAGRAM_URL)
-        third = user.add_link(type="default", url=DEFAULT_URL)
+        first = user.add_link(url=YOUTUBE_URL)
+        user.add_link(url=INSTAGRAM_URL)
+        third = user.add_link(url=DEFAULT_URL)
 
         user.remove_link(first.id.value)
 
@@ -134,16 +145,16 @@ class TestUser:
 
     def test_remove_link_rejects_unknown_id(self):
         user = User.create_empty()
-        user.add_link(type="youtube", url=YOUTUBE_URL)
+        user.add_link(url=YOUTUBE_URL)
 
         with pytest.raises(UserLinkNotFoundError):
             user.remove_link("550e8400-e29b-41d4-a716-446655440099")
 
     def test_reorder_links_updates_sort_index(self):
         user = User.create_empty()
-        first = user.add_link(type="youtube", url=YOUTUBE_URL)
-        second = user.add_link(type="instagram", url=INSTAGRAM_URL)
-        third = user.add_link(type="default", url=DEFAULT_URL)
+        first = user.add_link(url=YOUTUBE_URL)
+        second = user.add_link(url=INSTAGRAM_URL)
+        third = user.add_link(url=DEFAULT_URL)
 
         user.reorder_links([third.id.value, first.id.value, second.id.value])
 
@@ -152,8 +163,8 @@ class TestUser:
 
     def test_reorder_links_rejects_incomplete_list(self):
         user = User.create_empty()
-        first = user.add_link(type="youtube", url=YOUTUBE_URL)
-        user.add_link(type="instagram", url=INSTAGRAM_URL)
+        first = user.add_link(url=YOUTUBE_URL)
+        user.add_link(url=INSTAGRAM_URL)
 
         with pytest.raises(InvalidUserLinksReorderError):
             user.reorder_links([first.id.value])

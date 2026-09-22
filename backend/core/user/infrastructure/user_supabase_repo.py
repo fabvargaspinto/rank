@@ -11,6 +11,9 @@ from core.user.infrastructure.error_infrastructure import (
 from core.user.infrastructure.user_mapper import UserMapper
 from db.db_client import DBClient
 
+USER_WITH_LINKS_SELECT = "*, user_links(*)"
+AUTH_USER_WITH_LINKS_SELECT = "users(*, user_links(*))"
+
 
 class UserSupabaseRepo(UserRepository):
     def __init__(self, client: DBClient):
@@ -18,13 +21,13 @@ class UserSupabaseRepo(UserRepository):
         self.mapper = UserMapper()
 
     def get_user(self, user_id: str) -> User | None:
-        return self._find_user("users", {"id": user_id})
+        return self._find_user({"id": user_id})
 
     def get_user_by_auth_id(self, auth_id: str) -> User | None:
         try:
             response = (
                 self._db.table("auth")
-                .select("users(*)")
+                .select(AUTH_USER_WITH_LINKS_SELECT)
                 .eq("id", auth_id)
                 .limit(1)
                 .execute()
@@ -42,7 +45,7 @@ class UserSupabaseRepo(UserRepository):
         return self.mapper.to_domain(user_row)
 
     def get_user_by_name(self, name: str) -> User | None:
-        return self._find_user("users", {"name": name})
+        return self._find_user({"name": name})
 
     def update_user(self, user: User) -> User | None:
         row = self.mapper.to_row(user)
@@ -73,13 +76,23 @@ class UserSupabaseRepo(UserRepository):
         if not rows:
             return None
 
-        updated_row = rows[0]
-        if not isinstance(updated_row, dict):
-            raise UserUpdateError("Error al actualizar el usuario")
-        return self.mapper.to_domain(updated_row)
+        try:
+            (
+                self._db.table("user_links")
+                .delete()
+                .eq("user_id", user.id.value)
+                .execute()
+            )
+            link_rows = self.mapper.links_to_rows(user)
+            if link_rows:
+                self._db.table("user_links").insert(link_rows).execute()
+        except Exception as exc:
+            raise UserUpdateError("Error al actualizar los links") from exc
 
-    def _find_user(self, table: str, filters: dict) -> User | None:
-        query = self._db.table(table).select("*")
+        return self.get_user(user.id.value)
+
+    def _find_user(self, filters: dict) -> User | None:
+        query = self._db.table("users").select(USER_WITH_LINKS_SELECT)
         for column, value in filters.items():
             query = query.eq(column, value)
 

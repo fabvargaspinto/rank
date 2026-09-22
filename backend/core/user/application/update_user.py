@@ -16,6 +16,7 @@ class UpdateUser:
         name: str,
         avatar: str | None = None,
         description: str | None = None,
+        links: list[str] | None = None,
     ) -> User:
         user = self.user_repo.get_user_by_auth_id(auth_id)
         if user is None:
@@ -24,6 +25,9 @@ class UpdateUser:
         user.update_profile(name=name, avatar=avatar, description=description)
         if user.name is None:
             raise UserNotFoundError("El usuario no existe")
+
+        if links is not None:
+            user.replace_links(links)
 
         taken = self.user_repo.get_user_by_name(user.name.value)
         if taken is not None and taken.id != user.id:

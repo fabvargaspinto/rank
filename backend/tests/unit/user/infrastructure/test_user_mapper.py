@@ -61,7 +61,11 @@ class TestUserMapper:
 
         restored = mapper.to_domain(mapper.to_row(user))
 
-        assert restored == user
+        assert restored.id == user.id
+        assert restored.name == user.name
+        assert restored.avatar == user.avatar
+        assert restored.description == user.description
+        assert restored.links == []
 
     def test_to_domain_accepts_empty_optional_fields(self):
         user = User.create_empty()
@@ -80,3 +84,32 @@ class TestUserMapper:
         assert restored.name is None
         assert restored.avatar is None
         assert restored.description is None
+        assert restored.links == []
+
+    def test_to_domain_loads_sorted_links(self):
+        user = _full_user()
+        row = {
+            **_mapper().to_row(user),
+            "user_links": [
+                {
+                    "id": "660e8400-e29b-41d4-a716-446655440002",
+                    "user_id": USER_ID,
+                    "type": "instagram",
+                    "url": "https://www.instagram.com/luna",
+                    "sort_index": 1,
+                },
+                {
+                    "id": "660e8400-e29b-41d4-a716-446655440001",
+                    "user_id": USER_ID,
+                    "type": "youtube",
+                    "url": "https://www.youtube.com/@luna",
+                    "sort_index": 0,
+                },
+            ],
+        }
+
+        restored = _mapper().to_domain(row)
+
+        assert [link.sort_index.value for link in restored.links] == [0, 1]
+        assert restored.links[0].type.value == "youtube"
+        assert restored.links[1].url.value == "https://www.instagram.com/luna"

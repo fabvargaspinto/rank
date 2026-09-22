@@ -1,5 +1,25 @@
 -- public schema
 
+-- ============================================================
+-- RESET POLICIES
+-- ============================================================
+
+DROP POLICY IF EXISTS users_select_own ON public.users;
+DROP POLICY IF EXISTS users_update_own ON public.users;
+
+DROP POLICY IF EXISTS auth_select_own ON public.auth;
+DROP POLICY IF EXISTS auth_update_own ON public.auth;
+
+DROP POLICY IF EXISTS user_links_select_own ON public.user_links;
+DROP POLICY IF EXISTS user_links_insert_own ON public.user_links;
+DROP POLICY IF EXISTS user_links_update_own ON public.user_links;
+DROP POLICY IF EXISTS user_links_delete_own ON public.user_links;
+
+-- ============================================================
+-- RESET TABLES
+-- ============================================================
+
+DROP TABLE IF EXISTS public.user_links;
 DROP TABLE IF EXISTS public.auth;
 DROP TABLE IF EXISTS public.users;
 
@@ -55,6 +75,42 @@ CREATE TABLE public.auth (
 CREATE UNIQUE INDEX IF NOT EXISTS auth_provider_id_unique
     ON public.auth (provider, provider_id)
     WHERE provider_id IS NOT NULL;
+
+
+CREATE TABLE public.user_links (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL
+        REFERENCES public.users (id)
+        ON DELETE CASCADE,
+    type VARCHAR(32) NOT NULL
+        CHECK (
+            type IN (
+                'youtube',
+                'instagram',
+                'spotify',
+                'tiktok',
+                'twitch',
+                'kick',
+                'facebook',
+                'x',
+                'default'
+            )
+        ),
+    url VARCHAR(2048) NOT NULL,
+    sort_index SMALLINT NOT NULL
+        CHECK (sort_index >= 0 AND sort_index <= 5),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT user_links_user_sort_unique UNIQUE (user_id, sort_index)
+);
+
+
+CREATE INDEX IF NOT EXISTS user_links_user_id_idx
+    ON public.user_links (user_id);
+
+
+CREATE INDEX IF NOT EXISTS user_links_user_id_sort_idx
+    ON public.user_links (user_id, sort_index);
 
 
 DROP FUNCTION IF EXISTS public.create_user_and_auth(
@@ -135,15 +191,19 @@ GRANT EXECUTE ON FUNCTION public.create_user_and_auth(
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.auth ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_links ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.users FROM PUBLIC, anon;
 REVOKE ALL ON TABLE public.auth FROM PUBLIC, anon;
+REVOKE ALL ON TABLE public.user_links FROM PUBLIC, anon;
 
 GRANT ALL ON TABLE public.users TO service_role;
 GRANT ALL ON TABLE public.auth TO service_role;
+GRANT ALL ON TABLE public.user_links TO service_role;
 
 GRANT SELECT, UPDATE ON TABLE public.users TO authenticated;
 GRANT SELECT, UPDATE ON TABLE public.auth TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_links TO authenticated;
 
 CREATE POLICY users_select_own
 ON public.users
@@ -188,3 +248,58 @@ FOR UPDATE
 TO authenticated
 USING (id = auth.uid())
 WITH CHECK (id = auth.uid());
+
+CREATE POLICY user_links_select_own
+ON public.user_links
+FOR SELECT
+TO authenticated
+USING (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
+
+CREATE POLICY user_links_insert_own
+ON public.user_links
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
+
+CREATE POLICY user_links_update_own
+ON public.user_links
+FOR UPDATE
+TO authenticated
+USING (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+)
+WITH CHECK (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
+
+CREATE POLICY user_links_delete_own
+ON public.user_links
+FOR DELETE
+TO authenticated
+USING (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);

@@ -1,6 +1,15 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class UserLinkResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    type: str
+    url: str
+    sort_index: int
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -8,6 +17,13 @@ class UserResponse(BaseModel):
     name: str | None = None
     avatar: str | None = None
     description: str | None = None
+    links: list[UserLinkResponse] = Field(default_factory=list)
+
+
+class UpdateUserLinkRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    url: str
 
 
 class UpdateUserRequest(BaseModel):
@@ -16,3 +32,4 @@ class UpdateUserRequest(BaseModel):
     name: str
     avatar: str | None = None
     description: str | None = None
+    links: list[UpdateUserLinkRequest] | None = None

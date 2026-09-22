@@ -61,21 +61,36 @@ class User:
 
         self.updated_at = UserUpdatedAt.now()
 
-    def add_link(self, type: str, url: str) -> UserLink:
+    def add_link(self, url: str) -> UserLink:
         if len(self.links) >= self.MAX_LINKS:
             raise TooManyUserLinksError(
                 f"No se pueden agregar más de {self.MAX_LINKS} links"
             )
 
-        link = UserLink.create(
+        link = UserLink.create_from_url(
             user_id=self.id.value,
-            type=type,
             url=url,
             sort_index=len(self.links),
         )
         self.links.append(link)
         self.updated_at = UserUpdatedAt.now()
         return link
+
+    def replace_links(self, urls: list[str]) -> None:
+        if len(urls) > self.MAX_LINKS:
+            raise TooManyUserLinksError(
+                f"No se pueden agregar más de {self.MAX_LINKS} links"
+            )
+
+        self.links = [
+            UserLink.create_from_url(
+                user_id=self.id.value,
+                url=url,
+                sort_index=index,
+            )
+            for index, url in enumerate(urls)
+        ]
+        self.updated_at = UserUpdatedAt.now()
 
     def remove_link(self, link_id: str) -> None:
         target_id = UserLinkId(link_id)

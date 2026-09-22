@@ -103,6 +103,7 @@ class TestGetUserByAuthId:
             "name": "Luna Reyes",
             "avatar": "https://example.com/avatar.jpg",
             "description": "Cantautora",
+            "links": [],
         }
 
     def test_unknown_auth_id_returns_404(self):
@@ -132,6 +133,7 @@ class TestGetUserByName:
             "name": "Luna Reyes",
             "avatar": "https://example.com/avatar.jpg",
             "description": "Cantautora",
+            "links": [],
         }
 
     def test_unknown_name_returns_404(self):
@@ -193,7 +195,38 @@ class TestUpdateUser:
             "name": "luna",
             "avatar": "https://example.com/avatar.jpg",
             "description": "Cantautora",
+            "links": [],
         }
+
+    def test_updates_current_user_profile_with_links(self):
+        repo = FakeUserRepo()
+        user = User.create_empty()
+        repo.users_by_auth_id[AUTH_ID] = user
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={
+                "name": "luna",
+                "links": [
+                    {"url": "https://www.youtube.com/@luna"},
+                    {"url": "https://example.com/luna"},
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["name"] == "luna"
+        assert len(body["links"]) == 2
+        assert body["links"][0]["url"] == "https://www.youtube.com/@luna"
+        assert body["links"][0]["type"] == "youtube"
+        assert body["links"][0]["sort_index"] == 0
+        assert body["links"][1]["type"] == "default"
 
     def test_unknown_auth_id_returns_404(self):
         app_client = _client()

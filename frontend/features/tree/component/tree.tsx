@@ -21,7 +21,10 @@ function profileFromUser(user: UserResponse): Profile {
         name: user.name?.trim() || "Sin nombre",
         description: user.description ?? "",
         photo: user.avatar ?? "",
-        links: [],
+        links: (user.links ?? []).map((link) => ({
+            id: link.id,
+            url: link.url,
+        })),
     };
 }
 
