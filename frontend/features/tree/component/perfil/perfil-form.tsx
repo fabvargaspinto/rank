@@ -13,6 +13,7 @@ const MAX_LINKS = 6;
 export type ProfileLink = {
     id: string;
     url: string;
+    type?: string;
 };
 
 export type Profile = {
@@ -38,6 +39,7 @@ function linksForForm(links: ProfileLink[]): ProfileLink[] {
     return links.slice(0, MAX_LINKS).map((link) => ({
         id: link.id || crypto.randomUUID(),
         url: link.url,
+        type: link.type,
     }));
 }
 
@@ -158,6 +160,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             links: (result.data.links ?? []).map((link) => ({
                 id: link.id,
                 url: link.url,
+                type: link.type,
             })),
         });
     }

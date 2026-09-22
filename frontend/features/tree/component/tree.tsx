@@ -6,6 +6,11 @@ import type { UserResponse } from "@/lib/fetch_data";
 import Comments, { INITIAL_COMMENTS, type Comment } from "./comment/comments";
 import DrawerComment, { type CommentDraft } from "./comment/drawer-comment";
 import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";
+import SocialLinkIcon, {
+    socialLinkLabel,
+    socialLinkTypeFromUrl,
+    socialLinkTypeFromValue,
+} from "./social-link-icon";
 import Socials from "./socials/socials";
 import styles from "./tree.module.css";
 
@@ -24,18 +29,9 @@ function profileFromUser(user: UserResponse): Profile {
         links: (user.links ?? []).map((link) => ({
             id: link.id,
             url: link.url,
+            type: link.type,
         })),
     };
-}
-
-function linkLabel(url: string): string {
-    try {
-        const host = new URL(url).hostname.replace(/^www\./, "");
-        const name = host.split(".")[0] ?? host;
-        return name ? name[0].toUpperCase() + name.slice(1) : "Link";
-    } catch {
-        return "Link";
-    }
 }
 
 function hasPhoto(photo: string): boolean {
@@ -116,9 +112,9 @@ export default function Tree({
                 >
                     {tab === "comments" ? <Comments comments={feed} /> : <Socials />}
                 </div>
-                {tab === "comments" && editable ? 
+                {tab === "comments" && editable ? (
                     <DrawerComment onAdd={addComment} />
-                : null}
+                ) : null}
             </div>
         </article>
     );
@@ -155,11 +151,18 @@ function TreeHeader({
     const links = profile.links
         .filter((link) => link.url.trim().length > 0)
         .slice(0, 6)
-        .map((link) => ({
-            id: link.id,
-            label: linkLabel(link.url),
-            url: link.url,
-        }));
+        .map((link) => {
+            const type = link.type
+                ? socialLinkTypeFromValue(link.type)
+                : socialLinkTypeFromUrl(link.url);
+
+            return {
+                id: link.id,
+                type,
+                label: socialLinkLabel(type),
+                url: link.url,
+            };
+        });
     const canExpandLinks = links.length > 3;
 
     return (
@@ -215,13 +218,16 @@ function TreeHeader({
                                 .filter(Boolean)
                                 .join(" ")}
                         >
-                            {links.map(({ id, label, url }) => (
+                            {links.map(({ id, type, label, url }) => (
                                 <a
                                     key={id}
                                     href={url}
                                     className={styles.headerLink}
+                                    aria-label={label}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                 >
-                                    {label[0].toLowerCase()}
+                                    <SocialLinkIcon type={type} />
                                 </a>
                             ))}
                         </div>
