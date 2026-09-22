@@ -44,3 +44,9 @@
 .textarea:focus {
     border-color: var(--input-border-color-focus);
 }
+
+.error {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--accent-color);
+}

@@ -2,9 +2,9 @@
 
 import { useId, useState } from "react";
 import Image from "next/image";
-import type { UserResponse } from "@/lib/fetch_data";
+import type { CommentResponse, UserResponse } from "@/lib/fetch_data";
 import Comments, { INITIAL_COMMENTS, type Comment } from "./comment/comments";
-import DrawerComment, { type CommentDraft } from "./comment/drawer-comment";
+import DrawerComment from "./comment/drawer-comment";
 import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";
 import SocialLinkIcon, {
     socialLinkLabel,
@@ -54,17 +54,15 @@ export default function Tree({
     const [profile, setProfile] = useState<Profile>(() => profileFromUser(user));
     const [feed, setFeed] = useState<Comment[]>(INITIAL_COMMENTS);
 
-    function addComment(draft: CommentDraft) {
-        const today = new Date().toISOString().slice(0, 10);
-
+    function addComment(created: CommentResponse) {
         setFeed((current) => [
             {
-                id: current.reduce((max, comment) => Math.max(max, comment.id), 0) + 1,
-                avatar: "",
-                user: "",
-                date: today,
-                text: draft.text,
-                link: draft.link,
+                id: created.id,
+                avatar: profile.photo,
+                user: profile.name,
+                date: created.created_at,
+                text: created.text,
+                ...(created.link ? { link: created.link } : {}),
             },
             ...current,
         ]);

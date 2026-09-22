@@ -3,15 +3,12 @@
 import { useId, useState, type FormEvent } from "react";
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
+import { createCommentAction } from "@/features/tree/action/create-comment-action";
+import type { CommentResponse } from "@/lib/fetch_data";
 import styles from "./comment-form.module.css";
 
-export type CommentDraft = {
-    text: string;
-    link?: string;
-};
-
 type CommentFormProps = {
-    onAdd: (comment: CommentDraft) => void;
+    onAdd: (comment: CommentResponse) => void;
 };
 
 function normalizeLink(value: string): string | undefined {
@@ -37,19 +34,36 @@ export default function CommentForm({ onAdd }: CommentFormProps) {
     const linkId = useId();
     const [text, setText] = useState("");
     const [link, setLink] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
 
-    function onSubmit(event: FormEvent<HTMLFormElement>) {
+    async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const nextText = text.trim();
 
         if (!nextText) {
+            setError("El comentario es obligatorio");
             return;
         }
 
-        onAdd({
+        setSaving(true);
+        setError("");
+
+        const result = await createCommentAction({
             text: nextText,
             link: normalizeLink(link),
         });
+
+        setSaving(false);
+
+        if (result.isError || !result.data) {
+            setError(result.message || "No se pudo publicar el comentario");
+            return;
+        }
+
+        setText("");
+        setLink("");
+        onAdd(result.data);
     }
 
     return (
@@ -67,6 +81,7 @@ export default function CommentForm({ onAdd }: CommentFormProps) {
                     rows={4}
                     placeholder="Escribe un comentario"
                     required
+                    disabled={saving}
                     onChange={(event) => setText(event.target.value)}
                 />
             </div>
@@ -82,10 +97,14 @@ export default function CommentForm({ onAdd }: CommentFormProps) {
                     inputMode="url"
                     autoComplete="url"
                     placeholder="https:// (opcional)"
+                    disabled={saving}
                     onChange={(event) => setLink(event.target.value)}
                 />
             </div>
-            <Button type="submit">Publicar</Button>
+            {error ? <p className={styles.error}>{error}</p> : null}
+            <Button type="submit" disabled={saving}>
+                {saving ? "Publicando..." : "Publicar"}
+            </Button>
         </form>
     );
 }

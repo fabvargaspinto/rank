@@ -111,6 +111,34 @@ export type AvatarUploadResponse = {
     url: string;
 };
 
+export type CommentResponse = {
+    id: string;
+    user_id: string;
+    text: string;
+    link: string | null;
+    created_at: string;
+};
+
+export async function createComment(
+    authId: string,
+    accessToken: string,
+    comment: {
+        text: string;
+        link?: string | null;
+    },
+): Promise<FetchDataResponse<CommentResponse>> {
+    return fetchData<CommentResponse>(
+        `/users/${encodeURIComponent(authId)}/comments`,
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(comment),
+        },
+    );
+}
+
 export async function uploadAvatar(
     authId: string,
     accessToken: string,

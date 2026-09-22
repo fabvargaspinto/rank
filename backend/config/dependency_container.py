@@ -7,6 +7,7 @@ from core.auth.application.provision_oauth_user import ProvisionOAuthUser
 from core.auth.application.register_with_email import RegisterWithEmail
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
+from core.comment.application.create_comment import CreateComment
 from core.comment.infrastructure.comment_supabase_repo import CommentSupabaseRepo
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
@@ -49,6 +50,9 @@ class DependencyContainer:
     def upload_avatar(self) -> UploadAvatar:
         return UploadAvatar(self.user_repository, self.avatar_storage)
 
+    def create_comment(self) -> CreateComment:
+        return CreateComment(self.user_repository, self.comment_repository)
+
 
 @lru_cache
 def get_dependency_container() -> DependencyContainer:
@@ -73,3 +77,7 @@ def get_update_user_use_case() -> UpdateUser:
 
 def get_upload_avatar_use_case() -> UploadAvatar:
     return get_dependency_container().upload_avatar()
+
+
+def get_create_comment_use_case() -> CreateComment:
+    return get_dependency_container().create_comment()

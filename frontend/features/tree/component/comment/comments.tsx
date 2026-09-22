@@ -4,7 +4,7 @@ import Avatar from "@/components/ui/avatar/avatar";
 import styles from "./comments.module.css";
 
 export type Comment = {
-    id: number;
+    id: string;
     avatar: string;
     user: string;
     date: string;
@@ -14,7 +14,7 @@ export type Comment = {
 
 export const INITIAL_COMMENTS: Comment[] = [
     {
-        id: 1,
+        id: "1",
         avatar: "https://github.com/shadcn.png",
         user: "John Doe",
         date: "2021-01-01",
@@ -22,14 +22,14 @@ export const INITIAL_COMMENTS: Comment[] = [
         link: "https://www.google.com",
     },
     {
-        id: 2,
+        id: "2",
         avatar: "https://github.com/shadcn.png",
         user: "Jane Doe",
         date: "2021-01-02",
         text: "Hermosa sesión. Gracias por compartirla.",
     },
     {
-        id: 3,
+        id: "3",
         avatar: "https://github.com/shadcn.png",
         user: "John Doe",
         date: "2021-01-03",
@@ -37,14 +37,14 @@ export const INITIAL_COMMENTS: Comment[] = [
         link: "https://www.google.com",
     },
     {
-        id: 4,
+        id: "4",
         avatar: "https://github.com/shadcn.png",
         user: "María Sol",
         date: "2021-01-04",
         text: "Qué producción tan limpia. Lo escuché tres veces seguidas.",
     },
     {
-        id: 5,
+        id: "5",
         avatar: "https://github.com/shadcn.png",
         user: "Alex Ruiz",
         date: "2021-01-05",
@@ -52,7 +52,7 @@ export const INITIAL_COMMENTS: Comment[] = [
         link: "https://www.youtube.com",
     },
     {
-        id: 6,
+        id: "6",
         avatar: "https://github.com/shadcn.png",
         user: "Lucía Vega",
         date: "2021-01-06",
@@ -61,7 +61,9 @@ export const INITIAL_COMMENTS: Comment[] = [
 ];
 
 function formatCommentDate(value: string): string {
-    const date = new Date(`${value}T00:00:00`);
+    const date = value.includes("T")
+        ? new Date(value)
+        : new Date(`${value}T00:00:00`);
 
     if (Number.isNaN(date.getTime())) {
         return value;

@@ -1,13 +1,12 @@
 "use client";
 
 import Drawer from "@/components/ui/drawer/drawer";
-import CommentForm, { type CommentDraft } from "./comment-form";
+import type { CommentResponse } from "@/lib/fetch_data";
+import CommentForm from "./comment-form";
 import styles from "./drawer-comment.module.css";
 
-export type { CommentDraft };
-
 type DrawerCommentProps = {
-    onAdd: (comment: CommentDraft) => void;
+    onAdd: (comment: CommentResponse) => void;
 };
 
 function PlusIcon() {
