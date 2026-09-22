@@ -7,3 +7,7 @@ class UserNotFoundError(ApplicationError):
 
 class UserNameAlreadyExistsError(ApplicationError):
     pass
+
+
+class InvalidAvatarFileError(ApplicationError):
+    pass

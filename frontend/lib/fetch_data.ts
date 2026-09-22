@@ -93,8 +93,8 @@ export async function updateUser(
     accessToken: string,
     profile: {
         name: string;
-        avatar: string | null;
-        description: string | null;
+        avatar?: string | null;
+        description?: string | null;
         links?: { url: string }[] | null;
     },
 ): Promise<FetchDataResponse<UserResponse>> {
@@ -105,6 +105,30 @@ export async function updateUser(
         },
         body: JSON.stringify(profile),
     });
+}
+
+export type AvatarUploadResponse = {
+    url: string;
+};
+
+export async function uploadAvatar(
+    authId: string,
+    accessToken: string,
+    file: File,
+): Promise<FetchDataResponse<AvatarUploadResponse>> {
+    const body = new FormData();
+    body.append("file", file);
+
+    return fetchData<AvatarUploadResponse>(
+        `/users/${encodeURIComponent(authId)}/avatar`,
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body,
+        },
+    );
 }
 
 export async function fetchData<T = unknown>(
@@ -119,7 +143,9 @@ export async function fetchData<T = unknown>(
         const response = await fetch(url, {
             ...options,
             headers: {
-                "Content-Type": "application/json",
+                ...(options.body instanceof FormData
+                    ? {}
+                    : { "Content-Type": "application/json" }),
                 "X-Request-ID": requestId,
                 ...options.headers,
             },

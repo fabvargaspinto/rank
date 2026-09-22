@@ -80,6 +80,16 @@ class TestUser:
         assert user.description.value == "Cantautora"
         assert user.updated_at != previous_updated_at
 
+    def test_update_profile_keeps_avatar_when_omitted(self):
+        user = create_user_with_values()
+
+        user.update_profile(name="luna", description="Cantautora")
+
+        assert user.avatar is not None
+        assert user.avatar.value == "https://example.com/avatar.jpg"
+        assert user.description is not None
+        assert user.description.value == "Cantautora"
+
     def test_update_profile_clears_optional_fields(self):
         user = create_user_with_values()
 

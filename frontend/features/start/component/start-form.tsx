@@ -15,6 +15,7 @@ import Carousel from "@/components/ui/carousel/carousel";
 import Input from "@/components/ui/input/input";
 import { checkNameAvailability } from "../action/check-name-action";
 import { updateUserAction } from "../action/update-user-action";
+import { uploadAvatarAction } from "../action/upload-avatar-action";
 import styles from "./start-form.module.css";
 
 const NAME_MAX_LENGTH = 50;
@@ -22,6 +23,7 @@ const DESCRIPTION_MAX_LENGTH = 250;
 const MAX_LINKS = 6;
 const PROFILE_HOST = "sellonomada.com/";
 const STEP_COUNT = 3;
+const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 type ProfileLink = {
     id: string;
@@ -56,6 +58,7 @@ export default function StartForm() {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState("");
     const [photo, setPhoto] = useState("");
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [description, setDescription] = useState("");
     const [links, setLinks] = useState<ProfileLink[]>(() => [createEmptyLink()]);
     const photoRef = useRef(photo);
@@ -87,11 +90,12 @@ export default function StartForm() {
     function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
 
-        if (!file || !file.type.startsWith("image/")) {
+        if (!file || !AVATAR_MIME_TYPES.has(file.type)) {
             return;
         }
 
         const url = URL.createObjectURL(file);
+        setPhotoFile(file);
 
         setPhoto((current) => {
             if (isObjectUrl(current)) {
@@ -157,9 +161,23 @@ export default function StartForm() {
             .filter((link) => link.url.length > 0)
             .slice(0, MAX_LINKS);
 
+        let avatar: string | null = null;
+
+        if (photoFile) {
+            const uploaded = await uploadAvatarAction(photoFile);
+
+            if (uploaded.isError || !uploaded.data) {
+                setSaving(false);
+                setSaveError(uploaded.message || "No se pudo subir la imagen");
+                return;
+            }
+
+            avatar = uploaded.data;
+        }
+
         const result = await updateUserAction({
             name,
-            avatar: photo,
+            avatar,
             description,
             links: nextLinks,
         });
@@ -252,7 +270,7 @@ export default function StartForm() {
                         <input
                             className={styles.fileInput}
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp"
                             onChange={onPhotoChange}
                         />
                         <span className={styles.avatarHint}>

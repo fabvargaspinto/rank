@@ -10,6 +10,8 @@ from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
+from core.user.application.upload_avatar import UploadAvatar
+from core.user.infrastructure.avatar_supabase_storage import AvatarSupabaseStorage
 from core.user.infrastructure.user_supabase_repo import UserSupabaseRepo
 from db.db_client import DBClient
 
@@ -22,6 +24,7 @@ class DependencyContainer:
         self.email_crypto = EmailCrypto(self.crypto_settings)
         self.auth_repository = AuthSupabaseRepo(self.db_client, self.email_crypto)
         self.user_repository = UserSupabaseRepo(self.db_client)
+        self.avatar_storage = AvatarSupabaseStorage(self.db_client)
         self.register_with_email = RegisterWithEmail(self.auth_repository)
         self.provision_oauth_user = ProvisionOAuthUser(self.auth_repository)
 
@@ -40,6 +43,9 @@ class DependencyContainer:
 
     def update_user(self) -> UpdateUser:
         return UpdateUser(self.user_repository)
+
+    def upload_avatar(self) -> UploadAvatar:
+        return UploadAvatar(self.user_repository, self.avatar_storage)
 
 
 @lru_cache
@@ -61,3 +67,7 @@ def get_user_by_name_use_case() -> GetUserByName:
 
 def get_update_user_use_case() -> UpdateUser:
     return get_dependency_container().update_user()
+
+
+def get_upload_avatar_use_case() -> UploadAvatar:
+    return get_dependency_container().upload_avatar()

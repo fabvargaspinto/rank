@@ -1,12 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.schemas.auth import ErrorResponse
-from api.schemas.user import UpdateUserRequest, UserResponse
+from api.schemas.user import AvatarUploadResponse, UpdateUserRequest, UserResponse
 from config.dependency_container import (
     get_update_user_use_case,
+    get_upload_avatar_use_case,
     get_user_by_name_use_case,
     get_user_use_case,
 )
@@ -14,7 +15,8 @@ from core.user.application.application_error import UserNotFoundError
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
-from core.user.domain.user import User
+from core.user.application.upload_avatar import UploadAvatar
+from core.user.domain.user import UNSET, User
 
 router = APIRouter()
 
@@ -111,7 +113,11 @@ def update_user(
         use_case.execute(
             auth_id,
             name=body.name,
-            avatar=body.avatar,
+            avatar=(
+                body.avatar
+                if "avatar" in body.model_fields_set
+                else UNSET
+            ),
             description=body.description,
             links=(
                 [link.url for link in body.links]
@@ -120,5 +126,42 @@ def update_user(
             ),
         )
     )
+
+
+@router.post(
+    "/users/{auth_id}/avatar",
+    response_model=AvatarUploadResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {
+            "model": ErrorResponse,
+            "description": "Token ausente o inválido",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Archivo de imagen inválido",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Usuario no encontrado",
+        },
+    },
+)
+def upload_avatar(
+    auth_id: str,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    use_case: UploadAvatar = Depends(get_upload_avatar_use_case),
+    file: UploadFile = File(...),
+) -> AvatarUploadResponse:
+    if auth_id != current_user.auth_id:
+        raise UserNotFoundError("El usuario no existe")
+
+    content = file.file.read()
+    url = use_case.execute(
+        auth_id,
+        content=content,
+        content_type=file.content_type or "",
+    )
+    return AvatarUploadResponse(url=url)
 
 

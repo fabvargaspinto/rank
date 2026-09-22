@@ -10,6 +10,7 @@ from api.dependencies.auth import (
 )
 from config.dependency_container import (
     get_update_user_use_case,
+    get_upload_avatar_use_case,
     get_user_by_name_use_case,
     get_user_use_case,
 )
@@ -18,10 +19,12 @@ from controller.user_route import router
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
+from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_description import UserDescription
 from core.user.domain.user_name import UserName
+from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
@@ -55,6 +58,9 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
     )
     app.dependency_overrides[get_update_user_use_case] = (
         lambda: UpdateUser(fake_repo)
+    )
+    app.dependency_overrides[get_upload_avatar_use_case] = (
+        lambda: UploadAvatar(fake_repo, FakeAvatarStorage())
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -198,6 +204,27 @@ class TestUpdateUser:
             "links": [],
         }
 
+    def test_omitted_avatar_keeps_existing(self):
+        repo = FakeUserRepo()
+        user = _named_user()
+        repo.users_by_auth_id[AUTH_ID] = user
+        repo.users_by_name["Luna Reyes"] = user
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={"name": "luna", "description": "Nueva bio"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["avatar"] == "https://example.com/avatar.jpg"
+        assert response.json()["name"] == "luna"
+        assert response.json()["description"] == "Nueva bio"
+
     def test_updates_current_user_profile_with_links(self):
         repo = FakeUserRepo()
         user = User.create_empty()
@@ -262,3 +289,70 @@ class TestUpdateUser:
 
         assert response.status_code == 409
         assert response.json() == {"detail": "Ese nombre ya está en uso"}
+
+
+class TestUploadAvatar:
+    def test_missing_authorization_returns_401(self):
+        response = _client().post(
+            f"/users/{AUTH_ID}/avatar",
+            files={"file": ("avatar.jpg", b"jpeg-bytes", "image/jpeg")},
+        )
+
+        assert response.status_code == 401
+
+    def test_other_auth_id_returns_404(self):
+        app_client = _client()
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.post(
+            f"/users/{OTHER_AUTH_ID}/avatar",
+            files={"file": ("avatar.jpg", b"jpeg-bytes", "image/jpeg")},
+        )
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "El usuario no existe"}
+
+    def test_uploads_avatar_for_current_user(self):
+        repo = FakeUserRepo()
+        user = User.create_empty()
+        repo.users_by_auth_id[AUTH_ID] = user
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.post(
+            f"/users/{AUTH_ID}/avatar",
+            files={"file": ("avatar.jpg", b"jpeg-bytes", "image/jpeg")},
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "url": (
+                "https://example.supabase.co/storage/v1/object/public/"
+                "avatars/user/avatar.jpg"
+            )
+        }
+
+    def test_rejects_unsupported_type(self):
+        repo = FakeUserRepo()
+        repo.users_by_auth_id[AUTH_ID] = User.create_empty()
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.post(
+            f"/users/{AUTH_ID}/avatar",
+            files={"file": ("avatar.gif", b"gif-bytes", "image/gif")},
+        )
+
+        assert response.status_code == 400
+        assert response.json() == {
+            "detail": "La imagen debe ser JPEG, PNG o WebP"
+        }

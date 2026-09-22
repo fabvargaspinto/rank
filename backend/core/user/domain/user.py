@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_created_at import UserCreatedAt
@@ -14,6 +15,8 @@ from core.user.domain.user_link_id import UserLinkId
 from core.user.domain.user_link_sort_index import UserLinkSortIndex
 from core.user.domain.user_name import UserName
 from core.user.domain.user_updated_at import UserUpdatedAt
+
+UNSET: Any = object()
 
 
 @dataclass
@@ -46,13 +49,14 @@ class User:
     def update_profile(
         self,
         name: str,
-        avatar: str | None = None,
+        avatar: str | None | object = UNSET,
         description: str | None = None,
     ) -> None:
         self.name = UserName(name)
 
-        avatar_value = avatar.strip() if avatar else ""
-        self.avatar = UserAvatar(avatar_value) if avatar_value else None
+        if avatar is not UNSET:
+            avatar_value = avatar.strip() if isinstance(avatar, str) else ""
+            self.avatar = UserAvatar(avatar_value) if avatar_value else None
 
         if description is None or not description.strip():
             self.description = None

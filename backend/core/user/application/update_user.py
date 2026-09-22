@@ -2,7 +2,7 @@ from core.user.application.application_error import (
     UserNameAlreadyExistsError,
     UserNotFoundError,
 )
-from core.user.domain.user import User
+from core.user.domain.user import UNSET, User
 from core.user.domain.user_repo import UserRepository
 
 
@@ -14,7 +14,7 @@ class UpdateUser:
         self,
         auth_id: str,
         name: str,
-        avatar: str | None = None,
+        avatar: str | None | object = UNSET,
         description: str | None = None,
         links: list[str] | None = None,
     ) -> User:

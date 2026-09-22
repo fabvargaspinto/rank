@@ -56,6 +56,24 @@ class TestUpdateUser:
         assert result.links[0].type.value == "youtube"
         assert result.links[1].type.value == "default"
 
+    def test_keeps_existing_avatar_when_omitted(self):
+        user = User.create_empty()
+        user.update_profile(
+            name="luna",
+            avatar="https://example.com/avatar.jpg",
+        )
+        self.repo.users_by_auth_id[AUTH_ID] = user
+        self.repo.users_by_name["luna"] = user
+
+        result = self.use_case.execute(
+            AUTH_ID,
+            name="luna",
+            description="Cantautora",
+        )
+
+        assert result.avatar is not None
+        assert result.avatar.value == "https://example.com/avatar.jpg"
+
     def test_keeps_existing_links_when_omitted(self):
         user = User.create_empty()
         user.add_link(url="https://www.instagram.com/luna")

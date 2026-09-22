@@ -68,8 +68,10 @@ export async function updateUserAction(
 
     return updateUser(session.authId, session.accessToken, {
         name,
-        avatar: httpsAvatar(input.avatar),
         description: input.description?.trim() || null,
+        ...(input.avatar !== undefined
+            ? { avatar: httpsAvatar(input.avatar) }
+            : {}),
         ...(links !== undefined ? { links } : {}),
     });
 }

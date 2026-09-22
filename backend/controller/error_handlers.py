@@ -17,6 +17,7 @@ from core.shared.infrastructure.infrastructure_error import InfrastructureError
 from core.user.application.application_error import (
     UserNameAlreadyExistsError,
     UserNotFoundError,
+    InvalidAvatarFileError,
 )
 
 logger = logging.getLogger("ig.errors")
@@ -91,6 +92,8 @@ def _status_for(exc: ApplicationError) -> int:
         return 404
     if isinstance(exc, UserNameAlreadyExistsError):
         return 409
+    if isinstance(exc, InvalidAvatarFileError):
+        return 400
     if isinstance(exc, UnsupportedAuthProviderError):
         return 400
     return 400

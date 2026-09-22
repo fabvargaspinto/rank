@@ -7,3 +7,7 @@ class UserLookupError(InfrastructureError):
 
 class UserUpdateError(InfrastructureError):
     pass
+
+
+class AvatarUploadError(InfrastructureError):
+    pass

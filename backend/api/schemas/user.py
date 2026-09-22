@@ -33,3 +33,9 @@ class UpdateUserRequest(BaseModel):
     avatar: str | None = None
     description: str | None = None
     links: list[UpdateUserLinkRequest] | None = None
+
+
+class AvatarUploadResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    url: str

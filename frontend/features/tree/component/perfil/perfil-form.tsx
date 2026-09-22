@@ -4,11 +4,13 @@ import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } 
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
 import { updateUserAction } from "@/features/start/action/update-user-action";
+import { uploadAvatarAction } from "@/features/start/action/upload-avatar-action";
 import styles from "./perfil-form.module.css";
 
 const NAME_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 250;
 const MAX_LINKS = 6;
+const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export type ProfileLink = {
     id: string;
@@ -55,6 +57,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     const [name, setName] = useState(profile.name);
     const [description, setDescription] = useState(profile.description);
     const [photo, setPhoto] = useState(profile.photo);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [links, setLinks] = useState<ProfileLink[]>(() => linksForForm(profile.links));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -77,11 +80,12 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
 
-        if (!file || !file.type.startsWith("image/")) {
+        if (!file || !AVATAR_MIME_TYPES.has(file.type)) {
             return;
         }
 
         const url = URL.createObjectURL(file);
+        setPhotoFile(file);
 
         setPhoto((current) => {
             if (isObjectUrl(current) && current !== profile.photo) {
@@ -135,11 +139,25 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         setSaving(true);
         setError("");
 
+        let avatar: string | undefined;
+
+        if (photoFile) {
+            const uploaded = await uploadAvatarAction(photoFile);
+
+            if (uploaded.isError || !uploaded.data) {
+                setSaving(false);
+                setError(uploaded.message || "No se pudo subir la imagen");
+                return;
+            }
+
+            avatar = uploaded.data;
+        }
+
         const result = await updateUserAction({
             name: nextName,
-            avatar: isObjectUrl(photo) ? profile.photo : photo,
             description: description.trim(),
             links: nextLinks.map((link) => ({ url: link.url })),
+            ...(avatar !== undefined ? { avatar } : {}),
         });
 
         setSaving(false);
@@ -152,6 +170,8 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         if (isObjectUrl(photo) && photo !== profile.photo) {
             URL.revokeObjectURL(photo);
         }
+
+        setPhotoFile(null);
 
         onSave({
             name: result.data.name?.trim() || nextName,
@@ -182,7 +202,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         <input
                             className={styles.photoInput}
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp"
                             aria-labelledby={`${nameId}-photo`}
                             onChange={onPhotoChange}
                         />

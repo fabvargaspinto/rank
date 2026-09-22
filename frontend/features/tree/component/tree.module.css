@@ -26,9 +26,9 @@
     background: linear-gradient(
         to top,
         var(--core-on-background-color-1) 0%,
-        color-mix(in srgb, var(--core-on-background-color-1) 88%, transparent) 32%,
-        color-mix(in srgb, var(--core-on-background-color-1) 28%, transparent) 58%,
-        transparent 82%
+        color-mix(in srgb, var(--core-on-background-color-1) 15%, transparent) 27%,
+        color-mix(in srgb, var(--core-on-background-color-1) 28%, transparent) 68%,
+        transparent 100%
     );
 }
 
