@@ -18,3 +18,12 @@ class InvalidUserLinkUrlError(DomainError):
 
 class InvalidUserLinkSortIndexError(DomainError):
     pass
+
+class TooManyUserLinksError(DomainError):
+    pass
+
+class UserLinkNotFoundError(DomainError):
+    pass
+
+class InvalidUserLinksReorderError(DomainError):
+    pass

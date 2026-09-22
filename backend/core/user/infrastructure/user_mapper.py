@@ -14,6 +14,7 @@ class UserMapper:
             name=self._optional_name(row.get("name")),
             avatar=self._optional_avatar(row.get("avatar_url")),
             description=self._optional_description(row.get("description")),
+            links=[],
             created_at=UserCreatedAt.from_isoformat(row["created_at"]),
             updated_at=UserUpdatedAt.from_isoformat(row["updated_at"]),
         )

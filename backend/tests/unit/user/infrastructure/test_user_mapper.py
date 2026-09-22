@@ -24,6 +24,7 @@ def _full_user() -> User:
         name=UserName("Luna Reyes"),
         avatar=UserAvatar("https://example.com/avatar.jpg"),
         description=UserDescription("Cantautora"),
+        links=[],
         created_at=UserCreatedAt(CREATED_AT),
         updated_at=UserUpdatedAt(UPDATED_AT),
     )
