@@ -21,7 +21,18 @@ function profileFromUser(user: UserResponse): Profile {
         name: user.name?.trim() || "Sin nombre",
         description: user.description ?? "",
         photo: user.avatar ?? "",
+        links: [],
     };
+}
+
+function linkLabel(url: string): string {
+    try {
+        const host = new URL(url).hostname.replace(/^www\./, "");
+        const name = host.split(".")[0] ?? host;
+        return name ? name[0].toUpperCase() + name.slice(1) : "Link";
+    } catch {
+        return "Link";
+    }
 }
 
 function hasPhoto(photo: string): boolean {
@@ -138,32 +149,14 @@ function TreeHeader({
     onSaveProfile: (next: Profile) => void;
 }) {
     const [linksExpanded, setLinksExpanded] = useState(false);
-    const links = [
-        {
-            label: "Facebook",
-            url: "https://www.facebook.com/profile.php?id=100000000000000",
-        },
-        {
-            label: "Twitter",
-            url: "https://www.twitter.com/profile.php?id=100000000000000",
-        },
-        {
-            label: "Instagram",
-            url: "https://www.instagram.com/profile.php?id=100000000000000",
-        },
-        {
-            label: "Linkedin",
-            url: "https://www.linkedin.com/profile.php?id=100000000000000",
-        },
-        {
-            label: "GitHub",
-            url: "https://www.github.com/profile.php?id=100000000000000",
-        },
-        {
-            label: "YouTube",
-            url: "https://www.youtube.com/profile.php?id=100000000000000",
-        },
-    ].slice(0, 6);
+    const links = profile.links
+        .filter((link) => link.url.trim().length > 0)
+        .slice(0, 6)
+        .map((link) => ({
+            id: link.id,
+            label: linkLabel(link.url),
+            url: link.url,
+        }));
     const canExpandLinks = links.length > 3;
 
     return (
@@ -190,45 +183,47 @@ function TreeHeader({
                 <DrawerPerfil profile={profile} onSave={onSaveProfile} />
             ) : null}
             <div className={styles.headerContent}>
-                <div className={styles.headerLinksWrap}>
-                    {canExpandLinks ? (
-                        <button
-                            type="button"
-                            className={styles.headerLinksToggle}
-                            aria-expanded={linksExpanded}
-                            aria-label={
-                                linksExpanded
-                                    ? "Mostrar menos redes"
-                                    : "Mostrar más redes"
-                            }
-                            onClick={() => setLinksExpanded((open) => !open)}
-                        >
-                            <ChevronIcon up={!linksExpanded} />
-                        </button>
-                    ) : null}
-                    <div
-                        className={[
-                            styles.headerLinksContainer,
-                            canExpandLinks
-                                ? linksExpanded
-                                    ? styles.headerLinksExpanded
-                                    : styles.headerLinksCollapsed
-                                : "",
-                        ]
-                            .filter(Boolean)
-                            .join(" ")}
-                    >
-                        {links.map(({ label, url }) => (
-                            <a
-                                key={label}
-                                href={url}
-                                className={styles.headerLink}
+                {links.length > 0 ? (
+                    <div className={styles.headerLinksWrap}>
+                        {canExpandLinks ? (
+                            <button
+                                type="button"
+                                className={styles.headerLinksToggle}
+                                aria-expanded={linksExpanded}
+                                aria-label={
+                                    linksExpanded
+                                        ? "Mostrar menos redes"
+                                        : "Mostrar más redes"
+                                }
+                                onClick={() => setLinksExpanded((open) => !open)}
                             >
-                                {label[0].toLowerCase()}
-                            </a>
-                        ))}
+                                <ChevronIcon up={!linksExpanded} />
+                            </button>
+                        ) : null}
+                        <div
+                            className={[
+                                styles.headerLinksContainer,
+                                canExpandLinks
+                                    ? linksExpanded
+                                        ? styles.headerLinksExpanded
+                                        : styles.headerLinksCollapsed
+                                    : "",
+                            ]
+                                .filter(Boolean)
+                                .join(" ")}
+                        >
+                            {links.map(({ id, label, url }) => (
+                                <a
+                                    key={id}
+                                    href={url}
+                                    className={styles.headerLink}
+                                >
+                                    {label[0].toLowerCase()}
+                                </a>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                ) : null}
                 <h1 className={styles.headerTitle}>{profile.name}</h1>
                 {profile.description ? (
                     <p className={styles.headerDescription}>{profile.description}</p>

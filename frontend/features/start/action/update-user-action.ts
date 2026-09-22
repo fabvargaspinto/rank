@@ -7,10 +7,17 @@ import {
 } from "@/lib/fetch_data";
 import { getAuthSession } from "@/lib/supabase/session";
 
+const MAX_LINKS = 6;
+
+export type UpdateUserLinkInput = {
+    url: string;
+};
+
 export type UpdateUserInput = {
     name: string;
     avatar?: string | null;
     description?: string | null;
+    links?: UpdateUserLinkInput[];
 };
 
 function httpsAvatar(value: string | null | undefined) {
@@ -39,6 +46,19 @@ export async function updateUserAction(
             data: null,
             isError: true,
             message: "El nombre es obligatorio",
+            status: 400,
+        };
+    }
+
+    const links = (input.links ?? [])
+        .map((link) => ({ url: link.url.trim() }))
+        .filter((link) => link.url.length > 0);
+
+    if (links.length > MAX_LINKS) {
+        return {
+            data: null,
+            isError: true,
+            message: `No se pueden agregar más de ${MAX_LINKS} links`,
             status: 400,
         };
     }

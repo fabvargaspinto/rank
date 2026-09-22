@@ -146,17 +146,11 @@
 }
 
 .content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     min-height: 0;
-    overflow-y: auto;
-}
-
-.content:hover::-webkit-scrollbar-thumb,
-.content:focus-within::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb-color);
-}
-
-.content:hover::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-color-hover);
+    overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
