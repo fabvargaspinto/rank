@@ -114,7 +114,7 @@
     width: var(--header-link-size);
     height: var(--header-link-size);
     border-radius: 50%;
-    background-color: color-mix(in srgb, var(--color-black-0) 56%, transparent);
+    background-color: color-mix(in srgb, var(--color-black-0) 56%, transparent); 
     display: flex;
     align-items: center;
     justify-content: center;
