@@ -19,8 +19,14 @@ import styles from "./start-form.module.css";
 
 const NAME_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 250;
+const MAX_LINKS = 6;
 const PROFILE_HOST = "sellonomada.com/";
 const STEP_COUNT = 3;
+
+type ProfileLink = {
+    id: string;
+    url: string;
+};
 
 function sanitizeName(value: string) {
     return value
@@ -34,27 +40,15 @@ function isObjectUrl(value: string) {
     return value.startsWith("blob:") || value.startsWith("data:");
 }
 
-function PlusIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            aria-hidden="true"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-        >
-            <path d="M12 5v14M5 12h14" />
-        </svg>
-    );
+function createEmptyLink(): ProfileLink {
+    return { id: crypto.randomUUID(), url: "" };
 }
 
 export default function StartForm() {
     const router = useRouter();
     const nameId = useId();
     const descriptionId = useId();
+    const linksId = useId();
     const [step, setStep] = useState(0);
     const [name, setName] = useState("");
     const [nameError, setNameError] = useState("");
@@ -63,7 +57,7 @@ export default function StartForm() {
     const [saveError, setSaveError] = useState("");
     const [photo, setPhoto] = useState("");
     const [description, setDescription] = useState("");
-    const [socials, setSocials] = useState([""]);
+    const [links, setLinks] = useState<ProfileLink[]>(() => [createEmptyLink()]);
     const photoRef = useRef(photo);
 
     photoRef.current = photo;
@@ -78,6 +72,8 @@ export default function StartForm() {
 
     const canSkip = step > 0;
     const isLast = step === STEP_COUNT - 1;
+    const canAddLink = links.length < MAX_LINKS;
+    const canRemoveLink = links.length > 1;
 
     function goTo(next: number) {
         setStep(Math.min(Math.max(next, 0), STEP_COUNT - 1));
@@ -106,16 +102,30 @@ export default function StartForm() {
         });
     }
 
-    function addSocial() {
-        setSocials((current) => [...current, ""]);
+    function onLinkChange(id: string, url: string) {
+        setLinks((current) =>
+            current.map((link) => (link.id === id ? { ...link, url } : link)),
+        );
     }
 
-    function updateSocial(index: number, value: string) {
-        setSocials((current) =>
-            current.map((item, itemIndex) =>
-                itemIndex === index ? value : item,
-            ),
-        );
+    function addLink() {
+        setLinks((current) => {
+            if (current.length >= MAX_LINKS) {
+                return current;
+            }
+
+            return [...current, createEmptyLink()];
+        });
+    }
+
+    function removeLink(id: string) {
+        setLinks((current) => {
+            if (current.length <= 1) {
+                return current;
+            }
+
+            return current.filter((link) => link.id !== id);
+        });
     }
 
     async function continueFromName() {
@@ -142,10 +152,16 @@ export default function StartForm() {
         setSaving(true);
         setSaveError("");
 
+        const nextLinks = links
+            .map((link) => ({ url: link.url.trim() }))
+            .filter((link) => link.url.length > 0)
+            .slice(0, MAX_LINKS);
+
         const result = await updateUserAction({
             name,
             avatar: photo,
             description,
+            links: nextLinks,
         });
 
         setSaving(false);
@@ -250,7 +266,7 @@ export default function StartForm() {
                         <h1 className={styles.title}>Sobre vos</h1>
                         <p className={styles.description}>
                             Contá quién sos y dejá los links de tus redes. Podés
-                            agregar tantos como quieras.
+                            agregar hasta {MAX_LINKS}.
                         </p>
                     </div>
                     <div className={styles.field}>
@@ -269,36 +285,57 @@ export default function StartForm() {
                         />
                     </div>
                     <div className={styles.field}>
-                        <span className={styles.fieldLabel} id={`${nameId}-socials`}>
-                            Redes sociales
-                        </span>
-                        <ul className={styles.socials} aria-labelledby={`${nameId}-socials`}>
-                            {socials.map((social, index) => (
-                                <li key={index} className={styles.socialRow}>
-                                    <Input
-                                        type="url"
-                                        inputMode="url"
-                                        autoComplete="url"
-                                        placeholder="https://instagram.com/tu-perfil"
-                                        value={social}
-                                        aria-label={`Link de red social ${index + 1}`}
-                                        onChange={(event) =>
-                                            updateSocial(index, event.target.value)
-                                        }
-                                    />
-                                    {index === socials.length - 1 ? (
-                                        <button
-                                            type="button"
-                                            className={styles.addSocial}
-                                            onClick={addSocial}
-                                            aria-label="Añadir otro link"
-                                        >
-                                            <PlusIcon />
-                                        </button>
-                                    ) : null}
-                                </li>
-                            ))}
+                        <div className={styles.linksHeader}>
+                            <span className={styles.fieldLabel} id={linksId}>
+                                Links
+                            </span>
+                            <span className={styles.linksCounter} aria-live="polite">
+                                {links.length}/{MAX_LINKS}
+                            </span>
+                        </div>
+                        <ul className={styles.linksList} aria-labelledby={linksId}>
+                            {links.map((link, index) => {
+                                const inputId = `${linksId}-${link.id}`;
+
+                                return (
+                                    <li key={link.id} className={styles.linkRow}>
+                                        <Input
+                                            id={inputId}
+                                            name={`link-${index}`}
+                                            type="url"
+                                            value={link.url}
+                                            inputMode="url"
+                                            autoComplete="url"
+                                            placeholder="https://"
+                                            aria-label={`Link ${index + 1}`}
+                                            onChange={(event) =>
+                                                onLinkChange(link.id, event.target.value)
+                                            }
+                                        />
+                                        {canRemoveLink ? (
+                                            <button
+                                                type="button"
+                                                className={styles.removeLink}
+                                                aria-label={`Quitar link ${index + 1}`}
+                                                onClick={() => removeLink(link.id)}
+                                            >
+                                                ×
+                                            </button>
+                                        ) : null}
+                                    </li>
+                                );
+                            })}
                         </ul>
+                        {canAddLink ? (
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                className={styles.addLink}
+                                onClick={addLink}
+                            >
+                                Añadir link
+                            </Button>
+                        ) : null}
                     </div>
                 </section>
             </Carousel>
