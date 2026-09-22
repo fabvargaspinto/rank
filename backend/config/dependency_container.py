@@ -7,6 +7,7 @@ from core.auth.application.provision_oauth_user import ProvisionOAuthUser
 from core.auth.application.register_with_email import RegisterWithEmail
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
+from core.comment.infrastructure.comment_supabase_repo import CommentSupabaseRepo
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
@@ -24,6 +25,7 @@ class DependencyContainer:
         self.email_crypto = EmailCrypto(self.crypto_settings)
         self.auth_repository = AuthSupabaseRepo(self.db_client, self.email_crypto)
         self.user_repository = UserSupabaseRepo(self.db_client)
+        self.comment_repository = CommentSupabaseRepo(self.db_client)
         self.avatar_storage = AvatarSupabaseStorage(self.db_client)
         self.register_with_email = RegisterWithEmail(self.auth_repository)
         self.provision_oauth_user = ProvisionOAuthUser(self.auth_repository)

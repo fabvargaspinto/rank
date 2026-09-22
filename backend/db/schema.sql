@@ -15,10 +15,16 @@ DROP POLICY IF EXISTS user_links_insert_own ON public.user_links;
 DROP POLICY IF EXISTS user_links_update_own ON public.user_links;
 DROP POLICY IF EXISTS user_links_delete_own ON public.user_links;
 
+DROP POLICY IF EXISTS comments_select_own ON public.comments;
+DROP POLICY IF EXISTS comments_insert_own ON public.comments;
+DROP POLICY IF EXISTS comments_update_own ON public.comments;
+DROP POLICY IF EXISTS comments_delete_own ON public.comments;
+
 -- ============================================================
 -- RESET TABLES
 -- ============================================================
 
+DROP TABLE IF EXISTS public.comments;
 DROP TABLE IF EXISTS public.user_links;
 DROP TABLE IF EXISTS public.auth;
 DROP TABLE IF EXISTS public.users;
@@ -113,6 +119,26 @@ CREATE INDEX IF NOT EXISTS user_links_user_id_sort_idx
     ON public.user_links (user_id, sort_index);
 
 
+CREATE TABLE public.comments (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL
+        REFERENCES public.users (id)
+        ON DELETE CASCADE,
+    text VARCHAR(280) NOT NULL
+        CHECK (char_length(text) >= 1 AND char_length(text) <= 280),
+    link VARCHAR(2048),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE INDEX IF NOT EXISTS comments_user_id_idx
+    ON public.comments (user_id);
+
+
+CREATE INDEX IF NOT EXISTS comments_user_id_created_at_idx
+    ON public.comments (user_id, created_at DESC);
+
+
 DROP FUNCTION IF EXISTS public.create_user_and_auth(
     uuid,
     uuid,
@@ -192,18 +218,22 @@ GRANT EXECUTE ON FUNCTION public.create_user_and_auth(
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.auth ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.users FROM PUBLIC, anon;
 REVOKE ALL ON TABLE public.auth FROM PUBLIC, anon;
 REVOKE ALL ON TABLE public.user_links FROM PUBLIC, anon;
+REVOKE ALL ON TABLE public.comments FROM PUBLIC, anon;
 
 GRANT ALL ON TABLE public.users TO service_role;
 GRANT ALL ON TABLE public.auth TO service_role;
 GRANT ALL ON TABLE public.user_links TO service_role;
+GRANT ALL ON TABLE public.comments TO service_role;
 
 GRANT SELECT, UPDATE ON TABLE public.users TO authenticated;
 GRANT SELECT, UPDATE ON TABLE public.auth TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.user_links TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.comments TO authenticated;
 
 CREATE POLICY users_select_own
 ON public.users
@@ -304,6 +334,60 @@ USING (
     )
 );
 
+CREATE POLICY comments_select_own
+ON public.comments
+FOR SELECT
+TO authenticated
+USING (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
+
+CREATE POLICY comments_insert_own
+ON public.comments
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
+
+CREATE POLICY comments_update_own
+ON public.comments
+FOR UPDATE
+TO authenticated
+USING (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+)
+WITH CHECK (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
+
+CREATE POLICY comments_delete_own
+ON public.comments
+FOR DELETE
+TO authenticated
+USING (
+    user_id IN (
+        SELECT user_id
+        FROM public.auth
+        WHERE id = auth.uid()
+    )
+);
 
 
 -- public avatars bucket: one object per user at {auth.uid()}/avatar.{ext}
