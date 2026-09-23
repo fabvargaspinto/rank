@@ -119,6 +119,28 @@ export type CommentResponse = {
     created_at: string;
 };
 
+export type CommentListResponse = {
+    items: CommentResponse[];
+};
+
+export async function fetchCommentsByUserId(
+    userId: string,
+    options: { limit?: number; offset?: number } = {},
+): Promise<FetchDataResponse<CommentListResponse>> {
+    const params = new URLSearchParams();
+    if (options.limit !== undefined) {
+        params.set("limit", String(options.limit));
+    }
+    if (options.offset !== undefined) {
+        params.set("offset", String(options.offset));
+    }
+    const query = params.toString();
+
+    return fetchData<CommentListResponse>(
+        `/users/id/${encodeURIComponent(userId)}/comments${query ? `?${query}` : ""}`,
+    );
+}
+
 export async function createComment(
     authId: string,
     accessToken: string,

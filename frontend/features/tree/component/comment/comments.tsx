@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, type RefObject } from "react";
 import Avatar from "@/components/ui/avatar/avatar";
 import styles from "./comments.module.css";
 
@@ -12,53 +13,13 @@ export type Comment = {
     link?: string;
 };
 
-export const INITIAL_COMMENTS: Comment[] = [
-    {
-        id: "1",
-        avatar: "https://github.com/shadcn.png",
-        user: "John Doe",
-        date: "2021-01-01",
-        text: "Me encantó el último tema. ¿Vas a pasar por Madrid este verano?",
-        link: "https://www.google.com",
-    },
-    {
-        id: "2",
-        avatar: "https://github.com/shadcn.png",
-        user: "Jane Doe",
-        date: "2021-01-02",
-        text: "Hermosa sesión. Gracias por compartirla.",
-    },
-    {
-        id: "3",
-        avatar: "https://github.com/shadcn.png",
-        user: "John Doe",
-        date: "2021-01-03",
-        text: "Me encantó el último tema. ¿Vas a pasar por Madrid este verano?",
-        link: "https://www.google.com",
-    },
-    {
-        id: "4",
-        avatar: "https://github.com/shadcn.png",
-        user: "María Sol",
-        date: "2021-01-04",
-        text: "Qué producción tan limpia. Lo escuché tres veces seguidas.",
-    },
-    {
-        id: "5",
-        avatar: "https://github.com/shadcn.png",
-        user: "Alex Ruiz",
-        date: "2021-01-05",
-        text: "Las armonías del estribillo se quedan en la cabeza.",
-        link: "https://www.youtube.com",
-    },
-    {
-        id: "6",
-        avatar: "https://github.com/shadcn.png",
-        user: "Lucía Vega",
-        date: "2021-01-06",
-        text: "Ojalá pases por Barcelona también. Un abrazo.",
-    },
-];
+type CommentsProps = {
+    comments: Comment[];
+    scrollRootRef: RefObject<HTMLElement | null>;
+    hasMore: boolean;
+    loadingMore: boolean;
+    onLoadMore: () => void;
+};
 
 function formatCommentDate(value: string): string {
     const date = value.includes("T")
@@ -84,9 +45,45 @@ function hostnameFromUrl(url: string): string {
     }
 }
 
-export default function Comments({ comments }: { comments: Comment[] }) {
-    if (comments.length === 0) {
-        return <p className={styles.empty}>Todavía no hay comentarios.</p>;
+export default function Comments({
+    comments,
+    scrollRootRef,
+    hasMore,
+    loadingMore,
+    onLoadMore,
+}: CommentsProps) {
+    const sentinelRef = useRef<HTMLLIElement>(null);
+
+    useEffect(() => {
+        const root = scrollRootRef.current;
+        const sentinel = sentinelRef.current;
+
+        if (!root || !sentinel || !hasMore) {
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) {
+                    onLoadMore();
+                }
+            },
+            {
+                root,
+                rootMargin: "120px 0px",
+            },
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, onLoadMore, scrollRootRef, comments.length]);
+
+    if (comments.length === 0 && !loadingMore) {
+        return (
+            <p className={styles.empty} role="status">
+                No hay comentarios
+            </p>
+        );
     }
 
     return (
@@ -96,6 +93,13 @@ export default function Comments({ comments }: { comments: Comment[] }) {
                     <CommentItem {...comment} />
                 </li>
             ))}
+            {hasMore ? (
+                <li ref={sentinelRef} className={styles.sentinel} aria-hidden={!loadingMore}>
+                    {loadingMore ? (
+                        <p className={styles.loading}>Cargando más...</p>
+                    ) : null}
+                </li>
+            ) : null}
         </ul>
     );
 }
@@ -103,7 +107,7 @@ export default function Comments({ comments }: { comments: Comment[] }) {
 function CommentItem({ avatar, user, date, text, link }: Omit<Comment, "id">) {
     return (
         <article className={styles.comment}>
-            <Avatar src={avatar} name={user} size="sm" />
+            <Avatar src={avatar || null} name={user} size="sm" />
             <div className={styles.body}>
                 <div className={styles.meta}>
                     <p className={styles.user}>{user}</p>

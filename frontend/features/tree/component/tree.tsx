@@ -1,9 +1,11 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import Image from "next/image";
+import { COMMENTS_PAGE_SIZE } from "@/features/tree/comment-constants";
+import { getCommentsAction } from "@/features/tree/action/get-comments-action";
 import type { CommentResponse, UserResponse } from "@/lib/fetch_data";
-import Comments, { INITIAL_COMMENTS, type Comment } from "./comment/comments";
+import Comments, { type Comment } from "./comment/comments";
 import DrawerComment from "./comment/drawer-comment";
 import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";
 import SocialLinkIcon, {
@@ -34,6 +36,20 @@ function profileFromUser(user: UserResponse): Profile {
     };
 }
 
+function commentFromResponse(
+    created: CommentResponse,
+    profile: Profile,
+): Comment {
+    return {
+        id: created.id,
+        avatar: profile.photo,
+        user: profile.name,
+        date: created.created_at,
+        text: created.text,
+        ...(created.link ? { link: created.link } : {}),
+    };
+}
+
 function hasPhoto(photo: string): boolean {
     return photo.trim().length > 0;
 }
@@ -44,36 +60,76 @@ function isExternalPhoto(photo: string): boolean {
 
 export default function Tree({
     user,
+    initialComments,
     editable = false,
 }: {
     user: UserResponse;
+    initialComments: CommentResponse[];
     editable?: boolean;
 }) {
     const tabsId = useId();
+    const panelRef = useRef<HTMLDivElement>(null);
+    const loadingMoreRef = useRef(false);
     const [tab, setTab] = useState<TabId>("comments");
     const [profile, setProfile] = useState<Profile>(() => profileFromUser(user));
-    const [feed, setFeed] = useState<Comment[]>(INITIAL_COMMENTS);
+    const [feed, setFeed] = useState<Comment[]>(() =>
+        initialComments.map((comment) =>
+            commentFromResponse(comment, profileFromUser(user)),
+        ),
+    );
+    const [hasMore, setHasMore] = useState(
+        () => initialComments.length >= COMMENTS_PAGE_SIZE,
+    );
+    const [loadingMore, setLoadingMore] = useState(false);
 
     function addComment(created: CommentResponse) {
-        setFeed((current) => [
-            {
-                id: created.id,
-                avatar: profile.photo,
-                user: profile.name,
-                date: created.created_at,
-                text: created.text,
-                ...(created.link ? { link: created.link } : {}),
-            },
-            ...current,
-        ]);
+        setFeed((current) => [commentFromResponse(created, profile), ...current]);
     }
+
+    function onSaveProfile(next: Profile) {
+        setProfile(next);
+        setFeed((current) =>
+            current.map((comment) => ({
+                ...comment,
+                user: next.name,
+                avatar: next.photo,
+            })),
+        );
+    }
+
+    const loadMore = useCallback(async () => {
+        if (loadingMoreRef.current || !hasMore) {
+            return;
+        }
+
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+
+        const result = await getCommentsAction(user.id, {
+            limit: COMMENTS_PAGE_SIZE,
+            offset: feed.length,
+        });
+
+        if (!result.isError && result.data) {
+            const next = result.data.items.map((comment) =>
+                commentFromResponse(comment, profile),
+            );
+            setFeed((current) => [...current, ...next]);
+            setHasMore(result.data.items.length >= COMMENTS_PAGE_SIZE);
+        } else {
+            setHasMore(false);
+        }
+
+        setLoadingMore(false);
+        loadingMoreRef.current = false;
+    }, [feed.length, hasMore, profile, user.id]);
 
     return (
         <article className={styles.container}>
             <TreeHeader
                 profile={profile}
                 editable={editable}
-                onSaveProfile={setProfile}
+                onSaveProfile={onSaveProfile}
             />
             <div
                 className={styles.tabs}
@@ -103,12 +159,25 @@ export default function Tree({
             </div>
             <div className={styles.panelWrap}>
                 <div
+                    ref={panelRef}
                     className={styles.panel}
                     role="tabpanel"
                     id={`${tabsId}-${tab}-panel`}
                     aria-labelledby={`${tabsId}-${tab}`}
                 >
-                    {tab === "comments" ? <Comments comments={feed} /> : <Socials />}
+                    {tab === "comments" ? (
+                        <Comments
+                            comments={feed}
+                            scrollRootRef={panelRef}
+                            hasMore={hasMore}
+                            loadingMore={loadingMore}
+                            onLoadMore={() => {
+                                void loadMore();
+                            }}
+                        />
+                    ) : (
+                        <Socials />
+                    )}
                 </div>
                 {tab === "comments" && editable ? (
                     <DrawerComment onAdd={addComment} />
