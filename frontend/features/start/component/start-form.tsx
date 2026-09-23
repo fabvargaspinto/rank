@@ -23,6 +23,7 @@ const DESCRIPTION_MAX_LENGTH = 250;
 const MAX_LINKS = 6;
 const PROFILE_HOST = "sellonomada.com/";
 const STEP_COUNT = 3;
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 type ProfileLink = {
@@ -89,11 +90,23 @@ export default function StartForm() {
 
     function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
+        event.target.value = "";
 
-        if (!file || !AVATAR_MIME_TYPES.has(file.type)) {
+        if (!file) {
             return;
         }
 
+        if (!AVATAR_MIME_TYPES.has(file.type)) {
+            setSaveError("La imagen debe ser JPEG, PNG o WebP");
+            return;
+        }
+
+        if (file.size > MAX_AVATAR_BYTES) {
+            setSaveError("La imagen no puede superar 2 MB");
+            return;
+        }
+
+        setSaveError("");
         const url = URL.createObjectURL(file);
         setPhotoFile(file);
 
