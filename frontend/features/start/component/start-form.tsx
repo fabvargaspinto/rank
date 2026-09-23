@@ -43,8 +43,8 @@ function isObjectUrl(value: string) {
     return value.startsWith("blob:") || value.startsWith("data:");
 }
 
-function createEmptyLink(): ProfileLink {
-    return { id: crypto.randomUUID(), url: "" };
+function createEmptyLink(id = crypto.randomUUID()): ProfileLink {
+    return { id, url: "" };
 }
 
 export default function StartForm() {
@@ -61,7 +61,9 @@ export default function StartForm() {
     const [photo, setPhoto] = useState("");
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [description, setDescription] = useState("");
-    const [links, setLinks] = useState<ProfileLink[]>(() => [createEmptyLink()]);
+    const [links, setLinks] = useState<ProfileLink[]>(() => [
+        createEmptyLink("link-0"),
+    ]);
     const photoRef = useRef(photo);
 
     photoRef.current = photo;

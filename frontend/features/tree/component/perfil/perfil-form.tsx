@@ -30,17 +30,17 @@ export function isObjectUrl(value: string): boolean {
     return value.startsWith("blob:") || value.startsWith("data:");
 }
 
-export function createEmptyLink(): ProfileLink {
-    return { id: crypto.randomUUID(), url: "" };
+export function createEmptyLink(id = crypto.randomUUID()): ProfileLink {
+    return { id, url: "" };
 }
 
 function linksForForm(links: ProfileLink[]): ProfileLink[] {
     if (links.length === 0) {
-        return [createEmptyLink()];
+        return [createEmptyLink("link-0")];
     }
 
-    return links.slice(0, MAX_LINKS).map((link) => ({
-        id: link.id || crypto.randomUUID(),
+    return links.slice(0, MAX_LINKS).map((link, index) => ({
+        id: link.id || `link-${index}`,
         url: link.url,
         type: link.type,
     }));
