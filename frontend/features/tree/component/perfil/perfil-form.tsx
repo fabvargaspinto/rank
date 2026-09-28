@@ -6,6 +6,7 @@ import Input from "@/components/ui/input/input";
 import { updateUserAction } from "@/features/start/action/update-user-action";
 import { uploadAvatarAction } from "@/features/start/action/upload-avatar-action";
 import { isUsernameFieldError } from "@/lib/fetch_data";
+import { prepareAvatar } from "@/lib/prepare-avatar";
 import styles from "./perfil-form.module.css";
 
 const DESCRIPTION_MAX_LENGTH = 250;
@@ -80,7 +81,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         };
     }, []);
 
-    function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
         event.target.value = "";
 
@@ -93,14 +94,16 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             return;
         }
 
-        if (file.size > MAX_AVATAR_BYTES) {
+        const prepared = await prepareAvatar(file);
+
+        if (prepared.size > MAX_AVATAR_BYTES) {
             setError("La imagen no puede superar 2 MB");
             return;
         }
 
         setError("");
-        const url = URL.createObjectURL(file);
-        setPhotoFile(file);
+        const url = URL.createObjectURL(prepared);
+        setPhotoFile(prepared);
 
         setPhoto((current) => {
             if (isObjectUrl(current) && current !== profile.photo) {
@@ -155,55 +158,58 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         setError("");
         setNameError("");
 
-        let avatar: string | undefined;
+        try {
+            let avatar: string | undefined;
 
-        if (photoFile) {
-            const uploaded = await uploadAvatarAction(photoFile);
+            if (photoFile) {
+                const uploaded = await uploadAvatarAction(photoFile);
 
-            if (uploaded.isError || !uploaded.data) {
-                setSaving(false);
-                setError(uploaded.message || "No se pudo subir la imagen");
+                if (uploaded.isError || !uploaded.data) {
+                    setError(uploaded.message || "No se pudo subir la imagen");
+                    return;
+                }
+
+                avatar = uploaded.data;
+            }
+
+            const result = await updateUserAction({
+                name: nextName,
+                description: description.trim(),
+                links: nextLinks.map((link) => ({ url: link.url })),
+                ...(avatar !== undefined ? { avatar } : {}),
+            });
+
+            if (result.isError || !result.data) {
+                if (isUsernameFieldError(result)) {
+                    setNameError(result.message || "Ese usuario no es válido");
+                    return;
+                }
+
+                setError(result.message || "No se pudo guardar tu perfil");
                 return;
             }
 
-            avatar = uploaded.data;
-        }
-
-        const result = await updateUserAction({
-            name: nextName,
-            description: description.trim(),
-            links: nextLinks.map((link) => ({ url: link.url })),
-            ...(avatar !== undefined ? { avatar } : {}),
-        });
-
-        setSaving(false);
-
-        if (result.isError || !result.data) {
-            if (isUsernameFieldError(result)) {
-                setNameError(result.message || "Ese usuario no es válido");
-                return;
+            if (isObjectUrl(photo) && photo !== profile.photo) {
+                URL.revokeObjectURL(photo);
             }
 
-            setError(result.message || "No se pudo guardar tu perfil");
-            return;
+            setPhotoFile(null);
+
+            onSave({
+                name: result.data.name?.trim() || nextName,
+                description: result.data.description ?? "",
+                photo: result.data.avatar ?? "",
+                links: (result.data.links ?? []).map((link) => ({
+                    id: link.id,
+                    url: link.url,
+                    type: link.type,
+                })),
+            });
+        } catch {
+            setError("No se pudo guardar tu perfil");
+        } finally {
+            setSaving(false);
         }
-
-        if (isObjectUrl(photo) && photo !== profile.photo) {
-            URL.revokeObjectURL(photo);
-        }
-
-        setPhotoFile(null);
-
-        onSave({
-            name: result.data.name?.trim() || nextName,
-            description: result.data.description ?? "",
-            photo: result.data.avatar ?? "",
-            links: (result.data.links ?? []).map((link) => ({
-                id: link.id,
-                url: link.url,
-                type: link.type,
-            })),
-        });
     }
 
     const canAddLink = links.length < MAX_LINKS;

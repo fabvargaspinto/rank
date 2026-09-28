@@ -14,6 +14,7 @@ import Button from "@/components/ui/button/button";
 import Carousel from "@/components/ui/carousel/carousel";
 import Input from "@/components/ui/input/input";
 import { isUsernameFieldError } from "@/lib/fetch_data";
+import { prepareAvatar } from "@/lib/prepare-avatar";
 import { checkNameAvailability } from "../action/check-name-action";
 import { updateUserAction } from "../action/update-user-action";
 import { uploadAvatarAction } from "../action/upload-avatar-action";
@@ -88,7 +89,7 @@ export default function StartForm() {
         setNameError("");
     }
 
-    function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
         event.target.value = "";
 
@@ -101,14 +102,16 @@ export default function StartForm() {
             return;
         }
 
-        if (file.size > MAX_AVATAR_BYTES) {
+        const prepared = await prepareAvatar(file);
+
+        if (prepared.size > MAX_AVATAR_BYTES) {
             setSaveError("La imagen no puede superar 2 MB");
             return;
         }
 
         setSaveError("");
-        const url = URL.createObjectURL(file);
-        setPhotoFile(file);
+        const url = URL.createObjectURL(prepared);
+        setPhotoFile(prepared);
 
         setPhoto((current) => {
             if (isObjectUrl(current)) {
@@ -169,46 +172,49 @@ export default function StartForm() {
         setSaving(true);
         setSaveError("");
 
-        const nextLinks = links
-            .map((link) => ({ url: link.url.trim() }))
-            .filter((link) => link.url.length > 0)
-            .slice(0, MAX_LINKS);
+        try {
+            const nextLinks = links
+                .map((link) => ({ url: link.url.trim() }))
+                .filter((link) => link.url.length > 0)
+                .slice(0, MAX_LINKS);
 
-        let avatar: string | null = null;
+            let avatar: string | null = null;
 
-        if (photoFile) {
-            const uploaded = await uploadAvatarAction(photoFile);
+            if (photoFile) {
+                const uploaded = await uploadAvatarAction(photoFile);
 
-            if (uploaded.isError || !uploaded.data) {
-                setSaving(false);
-                setSaveError(uploaded.message || "No se pudo subir la imagen");
+                if (uploaded.isError || !uploaded.data) {
+                    setSaveError(uploaded.message || "No se pudo subir la imagen");
+                    return;
+                }
+
+                avatar = uploaded.data;
+            }
+
+            const result = await updateUserAction({
+                name,
+                avatar,
+                description,
+                links: nextLinks,
+            });
+
+            if (result.isError) {
+                if (isUsernameFieldError(result)) {
+                    setNameError(result.message || "Ese usuario no es válido");
+                    goTo(0);
+                    return;
+                }
+
+                setSaveError(result.message || "No se pudo guardar tu perfil");
                 return;
             }
 
-            avatar = uploaded.data;
+            router.push("/dashboard/tree");
+        } catch {
+            setSaveError("No se pudo guardar tu perfil");
+        } finally {
+            setSaving(false);
         }
-
-        const result = await updateUserAction({
-            name,
-            avatar,
-            description,
-            links: nextLinks,
-        });
-
-        setSaving(false);
-
-        if (result.isError) {
-            if (isUsernameFieldError(result)) {
-                setNameError(result.message || "Ese usuario no es válido");
-                goTo(0);
-                return;
-            }
-
-            setSaveError(result.message || "No se pudo guardar tu perfil");
-            return;
-        }
-
-        router.push("/dashboard/tree");
     }
 
     function onSubmit(event: FormEvent<HTMLFormElement>) {

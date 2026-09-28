@@ -121,7 +121,7 @@ Se usa la numeración del backlog anotado al final de `ARCHITECTURE_AUDIT.md`. S
 
 Cada bloqueante incluye el test que conviene escribir **antes** del arreglo, para verlo fallar y asegurar que el problema no vuelva.
 
-### 4.1 Las migraciones no crean la base que usa el código [verificado]
+###  4.1 Las migraciones no crean la base que usa el código [verificado]
 
 `supabase/migrations/` tiene tres archivos: `20260915120000_init.sql`, `20260922120000_user_links.sql` y `20260922140000_avatars_bucket.sql`. Estas piezas solo existen en `backend/db/schema.sql`:
 
@@ -245,7 +245,7 @@ Después:
 - `PATCH /users/{auth_id}` con `name: "Login"` responde 400.
 - Integración: `luna` y `Luna` no pueden coexistir.
 
-### 4.4 Subir un avatar de más de 1 MB falla y deja el formulario bloqueado
+###  ✅ 4.4 Subir un avatar de más de 1 MB falla y deja el formulario bloqueado
 
 El avatar se sube con la Server Action `uploadAvatarAction(photoFile)`: `start-form.tsx:182` en el onboarding y `perfil-form.tsx:158` al editar. Según la documentación de Next 16 incluida en el repo (`frontend/node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/serverActions.md`), **el body de una Server Action tiene un límite de 1 MB por defecto**, y `frontend/next.config.ts` no lo cambia. El cliente y el backend permiten 2 MB, así que una foto de 1,5 MB, habitual si sale del celular, se rechaza antes de llegar al código de la acción.
 
