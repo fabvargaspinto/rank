@@ -1,0 +1,87 @@
+.block {
+    background-color: var(--color-black-3);
+    border-radius: var(--input-border-radius);
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.title {
+    composes: block;
+    width: 68%;
+    height: var(--font-hero-title);
+}
+
+.line {
+    composes: block;
+    width: 92%;
+    height: var(--font-size-sm);
+}
+
+.field {
+    composes: block;
+    width: 100%;
+    min-height: calc(var(--scale-5) * 2 + var(--font-size-md));
+}
+
+.button {
+    composes: block;
+    width: 100%;
+    min-height: calc(var(--scale-5) * 2 + var(--font-size-sm));
+    border-radius: var(--button-border-radius);
+}
+
+.footer {
+    composes: block;
+    align-self: flex-start;
+    width: 46%;
+    height: var(--font-size-xs);
+    margin: var(--scale-2) var(--scale-4);
+}
+
+.headerFill {
+    background-color: var(--color-black-3);
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.tab {
+    composes: block;
+    flex: 1;
+    height: calc(var(--scale-5) * 2 + var(--font-size-sm));
+    margin: var(--scale-4);
+    border-radius: var(--scale-2);
+}
+
+.comments {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-5);
+}
+
+.comment {
+    composes: block;
+    width: 100%;
+    height: calc(var(--scale-6) + var(--scale-4));
+}
+
+.commentShort {
+    composes: block;
+    width: 64%;
+    height: calc(var(--scale-6) + var(--scale-4));
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .block,
+    .headerFill {
+        animation: none;
+    }
+}
