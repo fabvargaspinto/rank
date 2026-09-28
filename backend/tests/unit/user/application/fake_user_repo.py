@@ -15,7 +15,11 @@ class FakeUserRepo(UserRepository):
         return self.users_by_auth_id.get(auth_id)
 
     def get_user_by_name(self, name: str) -> User | None:
-        return self.users_by_name.get(name)
+        folded = name.strip().lower()
+        for stored_name, user in self.users_by_name.items():
+            if stored_name.strip().lower() == folded:
+                return user
+        return None
 
     def update_user(self, user: User) -> User | None:
         auth_id = next(

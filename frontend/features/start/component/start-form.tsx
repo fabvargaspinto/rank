@@ -13,12 +13,12 @@ import Avatar from "@/components/ui/avatar/avatar";
 import Button from "@/components/ui/button/button";
 import Carousel from "@/components/ui/carousel/carousel";
 import Input from "@/components/ui/input/input";
+import { isUsernameFieldError } from "@/lib/fetch_data";
 import { checkNameAvailability } from "../action/check-name-action";
 import { updateUserAction } from "../action/update-user-action";
 import { uploadAvatarAction } from "../action/upload-avatar-action";
 import styles from "./start-form.module.css";
 
-const NAME_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 250;
 const MAX_LINKS = 6;
 const PROFILE_HOST = "sellonomada.com/";
@@ -30,14 +30,6 @@ type ProfileLink = {
     id: string;
     url: string;
 };
-
-function sanitizeName(value: string) {
-    return value
-        .toLowerCase()
-        .replace(/\s+/g, "")
-        .replace(/[^a-z0-9._-]/g, "")
-        .slice(0, NAME_MAX_LENGTH);
-}
 
 function isObjectUrl(value: string) {
     return value.startsWith("blob:") || value.startsWith("data:");
@@ -76,6 +68,12 @@ export default function StartForm() {
         };
     }, []);
 
+    const trimmedName = name.trim();
+    const savedUsername = trimmedName.toLowerCase();
+    const lowercaseHint =
+        trimmedName && trimmedName !== savedUsername
+            ? `Se guarda en minúsculas: ${savedUsername}`
+            : "";
     const canSkip = step > 0;
     const isLast = step === STEP_COUNT - 1;
     const canAddLink = links.length < MAX_LINKS;
@@ -86,7 +84,7 @@ export default function StartForm() {
     }
 
     function onNameChange(event: ChangeEvent<HTMLInputElement>) {
-        setName(sanitizeName(event.target.value));
+        setName(event.target.value);
         setNameError("");
     }
 
@@ -151,7 +149,7 @@ export default function StartForm() {
         const username = name.trim();
 
         if (!username) {
-            setNameError("El nombre es obligatorio");
+            setNameError("El usuario es obligatorio");
             return;
         }
 
@@ -200,6 +198,12 @@ export default function StartForm() {
         setSaving(false);
 
         if (result.isError) {
+            if (isUsernameFieldError(result)) {
+                setNameError(result.message || "Ese usuario no es válido");
+                goTo(0);
+                return;
+            }
+
             setSaveError(result.message || "No se pudo guardar tu perfil");
             return;
         }
@@ -229,16 +233,16 @@ export default function StartForm() {
                 <section className={styles.slide} aria-labelledby={`${nameId}-title`}>
                     <div className={styles.header}>
                         <h1 id={`${nameId}-title`} className={styles.title}>
-                            Elegí tu nombre
+                            Elegí tu usuario
                         </h1>
                         <p className={styles.description}>
-                            Tiene que ser único: es la URL de tu perfil y no se
-                            puede repetir.
+                            Tiene que ser único: es la URL de tu perfil y se
+                            guarda en minúsculas.
                         </p>
                     </div>
                     <div className={styles.field}>
                         <label className={styles.fieldLabel} htmlFor={nameId}>
-                            Nombre
+                            Usuario
                         </label>
                         <div className={styles.urlField}>
                             <span className={styles.urlPrefix}>{PROFILE_HOST}</span>
@@ -249,15 +253,24 @@ export default function StartForm() {
                                 className={styles.urlInput}
                                 autoComplete="username"
                                 spellCheck={false}
-                                maxLength={NAME_MAX_LENGTH}
-                                placeholder="nombre"
+                                placeholder="usuario"
                                 aria-invalid={Boolean(nameError)}
                                 aria-describedby={
-                                    nameError ? `${nameId}-error` : undefined
+                                    [
+                                        lowercaseHint ? `${nameId}-hint` : "",
+                                        nameError ? `${nameId}-error` : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ") || undefined
                                 }
                                 onChange={onNameChange}
                             />
                         </div>
+                        {lowercaseHint ? (
+                            <p id={`${nameId}-hint`} className={styles.hint}>
+                                {lowercaseHint}
+                            </p>
+                        ) : null}
                         {nameError ? (
                             <p id={`${nameId}-error`} className={styles.error}>
                                 {nameError}

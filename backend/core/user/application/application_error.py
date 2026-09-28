@@ -6,7 +6,8 @@ class UserNotFoundError(ApplicationError):
 
 
 class UserNameAlreadyExistsError(ApplicationError):
-    pass
+    code = "USERNAME_TAKEN"
+    field = "name"
 
 
 class InvalidAvatarFileError(ApplicationError):

@@ -22,7 +22,7 @@ def create_user_with_values():
 
     return User(
         id=empty_user.id,
-        name=UserName("John Doe"),
+        name=UserName("johndoe"),
         avatar=UserAvatar("https://example.com/avatar.jpg"),
         description=UserDescription("My description"),
         links=[],
@@ -47,7 +47,7 @@ class TestUser:
     def test_should_create_user_with_values(self):
         user = create_user_with_values()
 
-        assert user.name.value == "John Doe"
+        assert user.name.value == "johndoe"
         assert user.avatar.value == "https://example.com/avatar.jpg"
         assert user.description.value == "My description"
         assert user.links == []

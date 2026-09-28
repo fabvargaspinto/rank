@@ -5,10 +5,11 @@ import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
 import { updateUserAction } from "@/features/start/action/update-user-action";
 import { uploadAvatarAction } from "@/features/start/action/upload-avatar-action";
+import { isUsernameFieldError } from "@/lib/fetch_data";
 import styles from "./perfil-form.module.css";
 
-const NAME_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 250;
+const PROFILE_HOST = "sellonomada.com/";
 const MAX_LINKS = 6;
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -62,6 +63,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     const [links, setLinks] = useState<ProfileLink[]>(() => linksForForm(profile.links));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [nameError, setNameError] = useState("");
     const photoRef = useRef(photo);
     const savedPhotoRef = useRef(profile.photo);
 
@@ -140,7 +142,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         const nextName = name.trim() || profile.name;
 
         if (!nextName) {
-            setError("El nombre es obligatorio");
+            setNameError("El usuario es obligatorio");
             return;
         }
 
@@ -151,6 +153,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
         setSaving(true);
         setError("");
+        setNameError("");
 
         let avatar: string | undefined;
 
@@ -176,6 +179,11 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         setSaving(false);
 
         if (result.isError || !result.data) {
+            if (isUsernameFieldError(result)) {
+                setNameError(result.message || "Ese usuario no es válido");
+                return;
+            }
+
             setError(result.message || "No se pudo guardar tu perfil");
             return;
         }
@@ -200,6 +208,21 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
     const canAddLink = links.length < MAX_LINKS;
     const canRemoveLink = links.length > 1;
+    const trimmedName = name.trim();
+    const savedUsername = trimmedName.toLowerCase();
+    const lowercaseHint =
+        trimmedName && trimmedName !== savedUsername
+            ? `Se guarda en minúsculas: ${savedUsername}`
+            : "";
+    const usernameChanged = savedUsername !== profile.name.trim().toLowerCase();
+    const nameDescribedBy = [
+        `${nameId}-url`,
+        lowercaseHint ? `${nameId}-hint` : "",
+        usernameChanged ? `${nameId}-warning` : "",
+        nameError ? `${nameId}-error` : "",
+    ]
+        .filter(Boolean)
+        .join(" ");
 
     return (
         <form className={styles.form} onSubmit={onSubmit}>
@@ -224,17 +247,42 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                 </div>
                 <div className={styles.field}>
                     <label className={styles.fieldLabel} htmlFor={nameId}>
-                        Nombre
+                        Usuario
                     </label>
                     <Input
                         id={nameId}
                         name="name"
                         value={name}
-                        maxLength={NAME_MAX_LENGTH}
-                        autoComplete="name"
-                        placeholder="Nombre"
-                        onChange={(event) => setName(event.target.value)}
+                        autoComplete="username"
+                        spellCheck={false}
+                        placeholder="usuario"
+                        aria-invalid={Boolean(nameError)}
+                        aria-describedby={nameDescribedBy}
+                        onChange={(event) => {
+                            setName(event.target.value);
+                            setNameError("");
+                        }}
                     />
+                    {lowercaseHint ? (
+                        <p id={`${nameId}-hint`} className={styles.hint}>
+                            {lowercaseHint}
+                        </p>
+                    ) : null}
+                    <p id={`${nameId}-url`} className={styles.hint}>
+                        Tu URL pública es {PROFILE_HOST}
+                        {profile.name}
+                    </p>
+                    {usernameChanged ? (
+                        <p id={`${nameId}-warning`} className={styles.hint}>
+                            Si lo cambiás, esa URL deja de funcionar y los
+                            enlaces que ya compartiste también.
+                        </p>
+                    ) : null}
+                    {nameError ? (
+                        <p id={`${nameId}-error`} className={styles.error}>
+                            {nameError}
+                        </p>
+                    ) : null}
                 </div>
                 <div className={styles.field}>
                     <label className={styles.fieldLabel} htmlFor={descriptionId}>

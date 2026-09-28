@@ -3,6 +3,7 @@ import pytest
 from core.user.application.application_error import UserNotFoundError
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.domain.user import User
+from core.user.domain.user_error import InvalidUserNameError
 from core.user.domain.user_name import UserName
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
@@ -32,6 +33,17 @@ class TestGetUserByName:
         with pytest.raises(UserNotFoundError, match="El usuario no existe"):
             self.use_case.execute(USERNAME)
 
+    def test_matches_name_without_regarding_case(self):
+        user = _named_user()
+        self.repo.users_by_name[USERNAME] = user
+
+        assert self.use_case.execute("  Luna ") is user
+        assert self.use_case.execute("lUnA") is user
+
     def test_raises_when_name_is_blank(self):
-        with pytest.raises(UserNotFoundError, match="El usuario no existe"):
+        with pytest.raises(InvalidUserNameError):
             self.use_case.execute("   ")
+
+    def test_raises_when_name_is_reserved(self):
+        with pytest.raises(InvalidUserNameError):
+            self.use_case.execute("login")

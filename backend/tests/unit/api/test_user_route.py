@@ -40,7 +40,7 @@ class _UnusedJwksClient:
 
 def _named_user() -> User:
     user = User.create_empty()
-    user.name = UserName("Luna Reyes")
+    user.name = UserName("lunareyes")
     user.avatar = UserAvatar("https://example.com/avatar.jpg")
     user.description = UserDescription("Cantautora")
     return user
@@ -53,14 +53,12 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
 
     fake_repo = repo or FakeUserRepo()
     app.dependency_overrides[get_user_use_case] = lambda: GetUser(fake_repo)
-    app.dependency_overrides[get_user_by_name_use_case] = (
-        lambda: GetUserByName(fake_repo)
+    app.dependency_overrides[get_user_by_name_use_case] = lambda: GetUserByName(
+        fake_repo
     )
-    app.dependency_overrides[get_update_user_use_case] = (
-        lambda: UpdateUser(fake_repo)
-    )
-    app.dependency_overrides[get_upload_avatar_use_case] = (
-        lambda: UploadAvatar(fake_repo, FakeAvatarStorage())
+    app.dependency_overrides[get_update_user_use_case] = lambda: UpdateUser(fake_repo)
+    app.dependency_overrides[get_upload_avatar_use_case] = lambda: UploadAvatar(
+        fake_repo, FakeAvatarStorage()
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -75,9 +73,7 @@ class TestGetUserByAuthId:
         response = _client().get(f"/users/{AUTH_ID}")
 
         assert response.status_code == 401
-        assert response.json() == {
-            "detail": "El token de autenticación no es válido"
-        }
+        assert response.json() == {"detail": "El token de autenticación no es válido"}
 
     def test_other_auth_id_returns_404(self):
         app_client = _client()
@@ -106,7 +102,7 @@ class TestGetUserByAuthId:
         assert response.status_code == 200
         assert response.json() == {
             "id": user.id.value,
-            "name": "Luna Reyes",
+            "name": "lunareyes",
             "avatar": "https://example.com/avatar.jpg",
             "description": "Cantautora",
             "links": [],
@@ -136,7 +132,7 @@ class TestGetUserByName:
         assert response.status_code == 200
         assert response.json() == {
             "id": user.id.value,
-            "name": "Luna Reyes",
+            "name": "lunareyes",
             "avatar": "https://example.com/avatar.jpg",
             "description": "Cantautora",
             "links": [],
@@ -157,9 +153,7 @@ class TestUpdateUser:
         )
 
         assert response.status_code == 401
-        assert response.json() == {
-            "detail": "El token de autenticación no es válido"
-        }
+        assert response.json() == {"detail": "El token de autenticación no es válido"}
 
     def test_other_auth_id_returns_404(self):
         app_client = _client()
@@ -208,7 +202,7 @@ class TestUpdateUser:
         repo = FakeUserRepo()
         user = _named_user()
         repo.users_by_auth_id[AUTH_ID] = user
-        repo.users_by_name["Luna Reyes"] = user
+        repo.users_by_name["lunareyes"] = user
         app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
             auth_id=AUTH_ID,
@@ -275,7 +269,7 @@ class TestUpdateUser:
         user = User.create_empty()
         taken = _named_user()
         repo.users_by_auth_id[AUTH_ID] = user
-        repo.users_by_name["Luna Reyes"] = taken
+        repo.users_by_name["lunareyes"] = taken
         app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
             auth_id=AUTH_ID,
@@ -284,11 +278,33 @@ class TestUpdateUser:
 
         response = app_client.patch(
             f"/users/{AUTH_ID}",
-            json={"name": "Luna Reyes"},
+            json={"name": "LunaReyes"},
         )
 
         assert response.status_code == 409
-        assert response.json() == {"detail": "Ese nombre ya está en uso"}
+        assert response.json() == {
+            "detail": "Ese nombre ya está en uso",
+            "code": "USERNAME_TAKEN",
+            "field": "name",
+        }
+
+    def test_reserved_name_returns_400(self):
+        repo = FakeUserRepo()
+        repo.users_by_auth_id[AUTH_ID] = User.create_empty()
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={"name": "Login"},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["code"] == "INVALID_USERNAME"
+        assert response.json()["field"] == "name"
 
 
 class TestUploadAvatar:
@@ -353,6 +369,4 @@ class TestUploadAvatar:
         )
 
         assert response.status_code == 400
-        assert response.json() == {
-            "detail": "La imagen debe ser JPEG, PNG o WebP"
-        }
+        assert response.json() == {"detail": "La imagen debe ser JPEG, PNG o WebP"}

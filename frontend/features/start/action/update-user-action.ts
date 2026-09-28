@@ -45,8 +45,9 @@ export async function updateUserAction(
         return {
             data: null,
             isError: true,
-            message: "El nombre es obligatorio",
+            message: "El usuario es obligatorio",
             status: 400,
+            field: "name",
         };
     }
 

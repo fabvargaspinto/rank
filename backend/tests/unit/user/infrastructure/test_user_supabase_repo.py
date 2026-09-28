@@ -10,7 +10,7 @@ CREATED_AT = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC).isoformat()
 def _user_row(links: list[dict] | None = None) -> dict:
     return {
         "id": USER_ID,
-        "name": "Luna Reyes",
+        "name": "lunareyes",
         "avatar_url": "https://example.com/avatar.jpg",
         "description": "Cantautora",
         "created_at": CREATED_AT,
@@ -37,6 +37,10 @@ class _Query:
         return self
 
     def eq(self, column, value):
+        self._filters[column] = value
+        return self
+
+    def ilike(self, column, value):
         self._filters[column] = value
         return self
 
@@ -78,7 +82,9 @@ class _FakeSupabase:
         self._tables = {
             "users": list(users_data),
             "auth": [{"users": users_data[0]}] if users_data else [],
-            "user_links": list(users_data[0].get("user_links", [])) if users_data else [],
+            "user_links": (
+                list(users_data[0].get("user_links", [])) if users_data else []
+            ),
         }
         self.updated: dict = {}
         self.deleted: dict = {}
@@ -116,24 +122,20 @@ class _FakeDBClient:
 
 class TestUserSupabaseRepoJoin:
     def test_get_user_by_auth_id_reads_embedded_user(self):
-        repo = UserSupabaseRepo(
-            _FakeDBClient([_user_row()])
-        )
+        repo = UserSupabaseRepo(_FakeDBClient([_user_row()]))
 
         user = repo.get_user_by_auth_id("auth-id")
 
         assert user is not None
         assert user.id.value == USER_ID
         assert user.name is not None
-        assert user.name.value == "Luna Reyes"
+        assert user.name.value == "lunareyes"
         assert user.avatar is not None
         assert user.avatar.value == "https://example.com/avatar.jpg"
         assert user.links == []
 
     def test_get_user_by_auth_id_reads_embedded_user_list(self):
-        repo = UserSupabaseRepo(
-            _FakeDBClient([_user_row()])
-        )
+        repo = UserSupabaseRepo(_FakeDBClient([_user_row()]))
         # list form still supported via mapper path on auth embed
         client = _FakeDBClient([])
         client._client._tables["auth"] = [{"users": [_user_row()]}]

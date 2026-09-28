@@ -45,7 +45,30 @@ class UserSupabaseRepo(UserRepository):
         return self.mapper.to_domain(user_row)
 
     def get_user_by_name(self, name: str) -> User | None:
-        return self._find_user({"name": name})
+        folded = name.strip().lower()
+        pattern = (
+            folded.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        )
+        query = (
+            self._db.table("users")
+            .select(USER_WITH_LINKS_SELECT)
+            .ilike("name", pattern)
+            .limit(1)
+        )
+
+        try:
+            response = query.execute()
+        except Exception as exc:
+            raise UserLookupError("Error al buscar el usuario") from exc
+
+        rows = response.data or []
+        if not rows:
+            return None
+
+        row = rows[0]
+        if not isinstance(row, dict):
+            raise UserLookupError("Error al buscar el usuario")
+        return self.mapper.to_domain(row)
 
     def update_user(self, user: User) -> User | None:
         row = self.mapper.to_row(user)

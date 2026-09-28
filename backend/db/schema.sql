@@ -36,12 +36,31 @@ CREATE TABLE public.users (
     avatar_url VARCHAR(2048),
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT users_name_format CHECK (
+        name IS NULL
+        OR (
+            name ~ '^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$'
+            AND name NOT IN (
+                'admin',
+                'api',
+                'auth',
+                'dashboard',
+                'first',
+                'login',
+                'register',
+                'settings',
+                'robots.txt',
+                'sitemap.xml',
+                'favicon.ico'
+            )
+        )
+    )
 );
 
 
-CREATE UNIQUE INDEX IF NOT EXISTS users_name_unique
-    ON public.users (name)
+CREATE UNIQUE INDEX IF NOT EXISTS users_name_lower_unique
+    ON public.users (lower(name))
     WHERE name IS NOT NULL;
 
 

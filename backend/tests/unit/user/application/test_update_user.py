@@ -113,8 +113,10 @@ class TestUpdateUser:
         self.repo.users_by_auth_id[OTHER_AUTH_ID] = taken
         self.repo.users_by_name["luna"] = taken
 
-        with pytest.raises(UserNameAlreadyExistsError, match="Ese nombre ya está en uso"):
-            self.use_case.execute(AUTH_ID, name="luna")
+        with pytest.raises(
+            UserNameAlreadyExistsError, match="Ese nombre ya está en uso"
+        ):
+            self.use_case.execute(AUTH_ID, name="Luna")
 
     def test_raises_when_name_is_invalid(self):
         user = User.create_empty()

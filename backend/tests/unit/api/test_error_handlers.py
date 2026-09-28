@@ -85,9 +85,7 @@ class TestErrorHandlers:
         response = _client().post("/raise/application?kind=credentials")
 
         assert response.status_code == 401
-        assert response.json() == {
-            "detail": "El token de autenticación no es válido"
-        }
+        assert response.json() == {"detail": "El token de autenticación no es válido"}
 
     def test_unsupported_provider_is_400(self):
         response = _client().post("/raise/application?kind=provider")
@@ -104,7 +102,11 @@ class TestErrorHandlers:
         response = _client().post("/raise/application?kind=username")
 
         assert response.status_code == 409
-        assert response.json() == {"detail": "Ese nombre ya está en uso"}
+        assert response.json() == {
+            "detail": "Ese nombre ya está en uso",
+            "code": "USERNAME_TAKEN",
+            "field": "name",
+        }
 
     def test_domain_error_is_400(self):
         response = _client().post("/raise/domain?kind=email")

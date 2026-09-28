@@ -1,24 +1,43 @@
+import re
 from dataclasses import dataclass
+from typing import ClassVar
 
-from core.shared.domain.string import String
 from core.user.domain.user_error import InvalidUserNameError
 
 
-@dataclass
-class UserName(String):
+@dataclass(frozen=True)
+class UserName:
     value: str
-    MIN_LENGTH = 1
-    MAX_LENGTH = 50
+
+    PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$"
+    )
+    RESERVED: ClassVar[frozenset[str]] = frozenset(
+        {
+            "admin",
+            "api",
+            "auth",
+            "dashboard",
+            "first",
+            "login",
+            "register",
+            "settings",
+            "robots.txt",
+            "sitemap.xml",
+            "favicon.ico",
+        }
+    )
+    MESSAGE: ClassVar[str] = (
+        "Usá entre 3 y 30 letras minúsculas, números, puntos, "
+        "guiones o guiones bajos"
+    )
 
     def __post_init__(self) -> None:
-        self.validate()
+        if not isinstance(self.value, str):
+            raise InvalidUserNameError("El usuario es obligatorio")
 
-    def validate(self) -> None:
+        normalized = self.value.strip().lower()
+        if not self.PATTERN.fullmatch(normalized) or normalized in self.RESERVED:
+            raise InvalidUserNameError(self.MESSAGE)
 
-        self.value = self.value.strip()
-
-        if len(self.value) < self.MIN_LENGTH or len(self.value) > self.MAX_LENGTH:
-            raise InvalidUserNameError(
-                f"El nombre debe tener entre "
-                f"{self.MIN_LENGTH} y {self.MAX_LENGTH} caracteres"
-            )
+        object.__setattr__(self, "value", normalized)

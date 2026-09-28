@@ -5,8 +5,22 @@ export type FetchDataResponse<T = unknown> = {
     isError: boolean;
     message: string;
     status: number;
+    code?: string;
+    field?: string;
     requestId?: string;
 };
+
+const USERNAME_FIELD_CODES = new Set(["INVALID_USERNAME", "USERNAME_TAKEN"]);
+
+export function isUsernameFieldError(error: {
+    code?: string;
+    field?: string;
+}): boolean {
+    return (
+        error.field === "name" ||
+        (error.code !== undefined && USERNAME_FIELD_CODES.has(error.code))
+    );
+}
 
 export const emptyFetchResponse: FetchDataResponse = {
     data: null,
@@ -37,6 +51,19 @@ function messageFromBackend(data: unknown): string {
     }
 
     return "Request failed";
+}
+
+function errorMeta(data: unknown): { code?: string; field?: string } {
+    if (!data || typeof data !== "object") {
+        return {};
+    }
+
+    const record = data as { code?: unknown; field?: unknown };
+
+    return {
+        ...(typeof record.code === "string" ? { code: record.code } : {}),
+        ...(typeof record.field === "string" ? { field: record.field } : {}),
+    };
 }
 
 export type SessionResponse = {
@@ -212,6 +239,7 @@ export async function fetchData<T = unknown>(
                 message: messageFromBackend(data),
                 status: response.status,
                 requestId: echoedId,
+                ...errorMeta(data),
             };
         }
 

@@ -1,3 +1,5 @@
+import pytest
+from postgrest.exceptions import APIError
 from uuid6 import uuid7
 
 from db.db_client import DBClient
@@ -27,3 +29,27 @@ def test_inserts_and_deletes_user(users_table: DBClient) -> None:
         assert fetched.data == [{"id": user_id, "name": "pytest-user"}]
     finally:
         supabase.table("users").delete().eq("id", user_id).execute()
+
+
+def test_luna_and_Luna_cannot_coexist(users_table: DBClient) -> None:
+    first_id = str(uuid7())
+    second_id = str(uuid7())
+    supabase = users_table.get_db()
+
+    try:
+        supabase.table("users").insert({"id": first_id, "name": "luna"}).execute()
+
+        with pytest.raises(APIError):
+            supabase.table("users").insert(
+                {"id": second_id, "name": "Luna"}
+            ).execute()
+
+        stored = (
+            supabase.table("users")
+            .select("id,name")
+            .in_("id", [first_id, second_id])
+            .execute()
+        )
+        assert stored.data == [{"id": first_id, "name": "luna"}]
+    finally:
+        supabase.table("users").delete().in_("id", [first_id, second_id]).execute()

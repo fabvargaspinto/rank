@@ -21,7 +21,7 @@ def _mapper() -> UserMapper:
 def _full_user() -> User:
     return User(
         id=UserId(USER_ID),
-        name=UserName("Luna Reyes"),
+        name=UserName("lunareyes"),
         avatar=UserAvatar("https://example.com/avatar.jpg"),
         description=UserDescription("Cantautora"),
         links=[],
@@ -38,7 +38,7 @@ class TestUserMapper:
 
         assert row == {
             "id": USER_ID,
-            "name": "Luna Reyes",
+            "name": "lunareyes",
             "avatar_url": "https://example.com/avatar.jpg",
             "description": "Cantautora",
             "created_at": user.created_at.to_isoformat(),

@@ -10,12 +10,12 @@ export type NameAvailability = {
 export async function checkNameAvailability(
     name: string,
 ): Promise<NameAvailability> {
-    const username = name.trim().toLowerCase();
+    const username = name.trim();
 
     if (!username) {
         return {
             available: false,
-            message: "El nombre es obligatorio",
+            message: "El usuario es obligatorio",
         };
     }
 

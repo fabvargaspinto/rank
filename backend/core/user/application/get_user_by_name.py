@@ -1,5 +1,6 @@
 from core.user.application.application_error import UserNotFoundError
 from core.user.domain.user import User
+from core.user.domain.user_name import UserName
 from core.user.domain.user_repo import UserRepository
 
 
@@ -8,11 +9,8 @@ class GetUserByName:
         self.user_repo = user_repo
 
     def execute(self, name: str) -> User:
-        username = name.strip()
-        if not username:
-            raise UserNotFoundError("El usuario no existe")
-
-        user = self.user_repo.get_user_by_name(username)
+        username = UserName(name)
+        user = self.user_repo.get_user_by_name(username.value)
         if user is None:
             raise UserNotFoundError("El usuario no existe")
         return user

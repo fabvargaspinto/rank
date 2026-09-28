@@ -83,6 +83,11 @@
     border-color: transparent;
 }
 
+.hint {
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
+}
+
 .error {
     font-size: var(--font-size-sm);
     color: var(--accent-color);
