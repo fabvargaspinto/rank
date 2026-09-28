@@ -58,11 +58,24 @@
     padding: var(--scale-5);
 }
 
+.headerIdentity {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-1);
+}
+
 .headerTitle {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
+    line-height: 1.1;
     color: var(--accent-color);
     text-wrap: balance;
+}
+
+.headerHandle {
+    font-size: var(--font-size-sm);
+    line-height: 1.2;
+    color: var(--color-gray-light);
 }
 
 .headerDescription {

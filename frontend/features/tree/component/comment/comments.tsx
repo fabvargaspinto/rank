@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import Avatar from "@/components/ui/avatar/avatar";
+import Button from "@/components/ui/button/button";
 import styles from "./comments.module.css";
 
 export type Comment = {
@@ -19,6 +21,7 @@ type CommentsProps = {
     hasMore: boolean;
     loadingMore: boolean;
     onLoadMore: () => void;
+    onDelete?: (id: string) => Promise<{ isError: boolean; message: string }>;
 };
 
 function formatCommentDate(value: string): string {
@@ -51,6 +54,7 @@ export default function Comments({
     hasMore,
     loadingMore,
     onLoadMore,
+    onDelete,
 }: CommentsProps) {
     const sentinelRef = useRef<HTMLLIElement>(null);
 
@@ -90,7 +94,12 @@ export default function Comments({
         <ul className={styles.feed} aria-label="Comentarios">
             {comments.map((comment) => (
                 <li key={comment.id}>
-                    <CommentItem {...comment} />
+                    <CommentItem
+                        {...comment}
+                        onDelete={
+                            onDelete ? () => onDelete(comment.id) : undefined
+                        }
+                    />
                 </li>
             ))}
             {hasMore ? (
@@ -104,7 +113,71 @@ export default function Comments({
     );
 }
 
-function CommentItem({ avatar, user, date, text, link }: Omit<Comment, "id">) {
+function CommentItem({
+    avatar,
+    user,
+    date,
+    text,
+    link,
+    onDelete,
+}: Omit<Comment, "id"> & {
+    onDelete?: () => Promise<{ isError: boolean; message: string }>;
+}) {
+    const titleId = useId();
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const [open, setOpen] = useState(false);
+    const [pending, setPending] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+
+        if (!dialog) {
+            return;
+        }
+
+        if (open && !dialog.open) {
+            dialog.showModal();
+        }
+
+        if (!open && dialog.open) {
+            dialog.close();
+        }
+    }, [open]);
+
+    function close() {
+        if (pending) {
+            return;
+        }
+
+        setOpen(false);
+        setError("");
+    }
+
+    async function confirm() {
+        if (!onDelete) {
+            return;
+        }
+
+        setPending(true);
+        setError("");
+
+        try {
+            const result = await onDelete();
+
+            if (result.isError) {
+                setError(result.message || "No se pudo borrar el comentario");
+                return;
+            }
+
+            setOpen(false);
+        } catch {
+            setError("No se pudo borrar el comentario");
+        } finally {
+            setPending(false);
+        }
+    }
+
     return (
         <article className={styles.comment}>
             <Avatar src={avatar || null} name={user} size="sm" />
@@ -114,7 +187,71 @@ function CommentItem({ avatar, user, date, text, link }: Omit<Comment, "id">) {
                     <time className={styles.date} dateTime={date}>
                         {formatCommentDate(date)}
                     </time>
+                    {onDelete ? (
+                        <button
+                            type="button"
+                            className={styles.remove}
+                            aria-label="Borrar comentario"
+                            onClick={() => {
+                                setError("");
+                                setOpen(true);
+                            }}
+                        >
+                            ×
+                        </button>
+                    ) : null}
                 </div>
+                {open
+                    ? createPortal(
+                          <dialog
+                              ref={dialogRef}
+                              className={styles.dialog}
+                              aria-labelledby={titleId}
+                              onClose={close}
+                              onClick={(event) => {
+                                  if (event.target === event.currentTarget) {
+                                      close();
+                                  }
+                              }}
+                          >
+                              <div className={styles.dialogBody}>
+                                  <h2 id={titleId} className={styles.dialogTitle}>
+                                      Borrar comentario
+                                  </h2>
+                                  <p className={styles.dialogCopy}>
+                                      Se borra este comentario. Esta acción no se
+                                      puede deshacer.
+                                  </p>
+                                  {error ? (
+                                      <p className={styles.dialogError} role="alert">
+                                          {error}
+                                      </p>
+                                  ) : null}
+                                  <div className={styles.dialogActions}>
+                                      <Button
+                                          type="button"
+                                          variant="secondary"
+                                          onClick={close}
+                                          disabled={pending}
+                                      >
+                                          Cancelar
+                                      </Button>
+                                      <Button
+                                          type="button"
+                                          variant="danger"
+                                          onClick={() => {
+                                              void confirm();
+                                          }}
+                                          disabled={pending}
+                                      >
+                                          {pending ? "Borrando..." : "Borrar"}
+                                      </Button>
+                                  </div>
+                              </div>
+                          </dialog>,
+                          document.body,
+                      )
+                    : null}
                 <p className={styles.text}>{text}</p>
                 {link ? (
                     <a

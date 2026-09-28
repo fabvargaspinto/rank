@@ -13,10 +13,12 @@ from api.dependencies.auth import (
 from config.dependency_container import (
     get_comments_by_user_use_case,
     get_create_comment_use_case,
+    get_delete_comment_use_case,
 )
 from controller.comment_route import router
 from controller.error_handlers import register_error_handlers
 from core.comment.application.create_comment import CreateComment
+from core.comment.application.delete_comment import DeleteComment
 from core.comment.application.get_comments_by_user import GetCommentsByUser
 from core.comment.domain.comment import Comment
 from core.comment.domain.comment_created_at import CommentCreatedAt
@@ -65,6 +67,9 @@ def _client(
     )
     app.dependency_overrides[get_comments_by_user_use_case] = (
         lambda: GetCommentsByUser(fake_user_repo, fake_comment_repo)
+    )
+    app.dependency_overrides[get_delete_comment_use_case] = (
+        lambda: DeleteComment(fake_user_repo, fake_comment_repo)
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -201,3 +206,45 @@ class TestListCommentsByUser:
 
         assert response.status_code == 404
         assert response.json() == {"detail": "El usuario no existe"}
+
+
+class TestDeleteCommentRoute:
+    def test_deletes_own_comment(self):
+        user_repo = FakeUserRepo()
+        comment_repo = FakeCommentRepo()
+        user = User.create_empty()
+        user_repo.users_by_auth_id[AUTH_ID] = user
+        comment = _comment(user.id.value, "Un tema")
+        comment_repo.create_comment(comment)
+        app_client = _client(user_repo, comment_repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.delete(
+            f"/users/{AUTH_ID}/comments/{comment.id.value}"
+        )
+
+        assert response.status_code == 204
+        assert comment_repo.comments == []
+
+    def test_other_users_comment_returns_404(self):
+        user_repo = FakeUserRepo()
+        comment_repo = FakeCommentRepo()
+        user = User.create_empty()
+        user_repo.users_by_auth_id[AUTH_ID] = user
+        comment = _comment(USER_ID, "Ajeno")
+        comment_repo.create_comment(comment)
+        app_client = _client(user_repo, comment_repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.delete(
+            f"/users/{AUTH_ID}/comments/{comment.id.value}"
+        )
+
+        assert response.status_code == 404
+        assert comment_repo.comments == [comment]

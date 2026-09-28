@@ -15,6 +15,7 @@ class UserResponse(BaseModel):
 
     id: str = Field(description="Id del usuario de negocio (public.users).")
     name: str | None = None
+    display_name: str | None = None
     avatar: str | None = None
     description: str | None = None
     links: list[UserLinkResponse] = Field(default_factory=list)
@@ -30,6 +31,7 @@ class UpdateUserRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
+    display_name: str | None = None
     avatar: str | None = None
     description: str | None = None
     links: list[UpdateUserLinkRequest] | None = None

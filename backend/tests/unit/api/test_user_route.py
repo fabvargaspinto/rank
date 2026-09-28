@@ -23,9 +23,6 @@ from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
 from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import User
-from core.user.domain.user_avatar import UserAvatar
-from core.user.domain.user_description import UserDescription
-from core.user.domain.user_name import UserName
 from core.user.infrastructure.avatar_url import public_avatar_url
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
 from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
@@ -47,9 +44,10 @@ class _UnusedJwksClient:
 
 def _named_user() -> User:
     user = User.create_empty()
-    user.name = UserName("lunareyes")
-    user.avatar = UserAvatar(AVATAR_PATH)
-    user.description = UserDescription("Cantautora")
+    user.rename("lunareyes")
+    user.change_display_name("Luna Reyes")
+    user.change_avatar(AVATAR_PATH)
+    user.describe("Cantautora")
     return user
 
 
@@ -114,6 +112,7 @@ class TestGetUserByAuthId:
         assert response.json() == {
             "id": user.id.value,
             "name": "lunareyes",
+            "display_name": "Luna Reyes",
             "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
@@ -144,6 +143,7 @@ class TestGetUserByName:
         assert response.json() == {
             "id": user.id.value,
             "name": "lunareyes",
+            "display_name": "Luna Reyes",
             "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
@@ -204,6 +204,7 @@ class TestUpdateUser:
         assert response.json() == {
             "id": user.id.value,
             "name": "luna",
+            "display_name": None,
             "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],

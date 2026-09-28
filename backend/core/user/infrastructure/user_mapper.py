@@ -3,6 +3,7 @@ from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_created_at import UserCreatedAt
 from core.user.domain.user_description import UserDescription
+from core.user.domain.user_display_name import UserDisplayName
 from core.user.domain.user_link import UserLink
 from core.user.domain.user_link_id import UserLinkId
 from core.user.domain.user_link_sort_index import UserLinkSortIndex
@@ -18,6 +19,7 @@ class UserMapper:
         return User(
             id=UserId(row["id"]),
             name=self._optional_name(row.get("name")),
+            display_name=self._optional_display_name(row.get("display_name")),
             avatar=self._optional_avatar(row.get("avatar_url")),
             description=self._optional_description(row.get("description")),
             links=self._links_from_row(row.get("user_links")),
@@ -29,6 +31,7 @@ class UserMapper:
         return {
             "id": user.id.value,
             "name": user.name.value if user.name else None,
+            "display_name": user.display_name.value if user.display_name else None,
             "avatar_url": user.avatar.value if user.avatar else None,
             "description": user.description.value if user.description else None,
             "created_at": user.created_at.to_isoformat(),
@@ -67,6 +70,11 @@ class UserMapper:
             url=UserLinkUrl(str(row["url"])),
             sort_index=UserLinkSortIndex(int(row["sort_index"])),
         )
+
+    def _optional_display_name(self, value: object) -> UserDisplayName | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        return UserDisplayName(value)
 
     def _optional_name(self, value: object) -> UserName | None:
         if not isinstance(value, str) or not value.strip():

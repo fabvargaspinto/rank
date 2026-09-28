@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from core.auth.domain.auth_created_at import AuthCreatedAt
 from core.auth.domain.auth_email import AuthEmail
-from core.auth.domain.auth_error import InvalidEmailError
 from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_method import AuthMethod
 from core.auth.domain.auth_provider import AuthProvider
@@ -15,11 +14,7 @@ class Auth:
     user_id: UserId
     created_at: AuthCreatedAt
     provider_method: AuthMethod
-    email: AuthEmail | None = None
-
-    def __post_init__(self) -> None:
-        if self.email is None:
-            raise InvalidEmailError("El email es requerido")
+    email: AuthEmail
 
     @staticmethod
     def create_with_email(id: str, user_id: str, email: str) -> "Auth":

@@ -15,6 +15,7 @@ def _user_row(links: list[dict] | None = None) -> dict:
     return {
         "id": USER_ID,
         "name": "lunareyes",
+        "display_name": "Luna Reyes",
         "avatar_url": AVATAR_URL,
         "description": "Cantautora",
         "created_at": CREATED_AT,
@@ -180,11 +181,9 @@ class TestUserSupabaseRepoUpdate:
         repo = UserSupabaseRepo(client)
         user = repo.get_user(USER_ID)
         assert user is not None
-        user.update_profile(
-            name="luna",
-            avatar=AVATAR_PATH,
-            description="Cantautora",
-        )
+        user.rename("luna")
+        user.change_avatar(AVATAR_PATH)
+        user.describe("Cantautora")
 
         updated = repo.update_user(user)
 
@@ -204,7 +203,7 @@ class TestUserSupabaseRepoUpdate:
         repo = UserSupabaseRepo(client)
         user = repo.get_user(USER_ID)
         assert user is not None
-        user.update_profile(name="luna")
+        user.rename("luna")
         user.replace_links(["https://www.youtube.com/@luna"])
 
         updated = repo.update_user(user)

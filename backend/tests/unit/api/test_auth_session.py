@@ -13,6 +13,8 @@ from controller.auth_route import router
 from controller.error_handlers import register_error_handlers
 from core.auth.application.ensure_user_provisioned import EnsureUserProvisioned
 from core.auth.domain.auth import Auth
+from core.auth.domain.auth_email import AuthEmail
+from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_provider import AuthProvider
 from core.auth.domain.auth_repo import AuthIdentity
 from core.user.domain.user import User
@@ -66,10 +68,10 @@ class TestAuthSession:
     def test_valid_current_user_provisions_session(self):
         repo = FakeAuthRepo()
         repo.identity = AuthIdentity(
-            id=AUTH_ID,
+            id=AuthId(AUTH_ID),
             provider=AuthProvider.EMAIL,
             provider_id=None,
-            email=EMAIL,
+            email=AuthEmail(EMAIL),
         )
         app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
@@ -86,10 +88,10 @@ class TestAuthSession:
     def test_session_is_idempotent(self):
         repo = FakeAuthRepo()
         repo.identity = AuthIdentity(
-            id=AUTH_ID,
+            id=AuthId(AUTH_ID),
             provider=AuthProvider.EMAIL,
             provider_id=None,
-            email=EMAIL,
+            email=AuthEmail(EMAIL),
         )
         app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
@@ -115,10 +117,10 @@ class TestAuthSession:
         )
         repo.save(existing_user, existing)
         repo.identity = AuthIdentity(
-            id=AUTH_ID,
+            id=AuthId(AUTH_ID),
             provider=AuthProvider.EMAIL,
             provider_id=None,
-            email=EMAIL,
+            email=AuthEmail(EMAIL),
         )
         app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(

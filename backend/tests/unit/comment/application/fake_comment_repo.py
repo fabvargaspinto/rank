@@ -27,3 +27,14 @@ class FakeCommentRepo(CommentRepository):
         ]
         matching.sort(key=lambda comment: comment.created_at.value, reverse=True)
         return matching[start : start + limit]
+
+    def get_comment(self, comment_id: str) -> Comment | None:
+        for comment in self.comments:
+            if comment.id.value == comment_id:
+                return comment
+        return None
+
+    def delete_comment(self, comment_id: str) -> None:
+        self.comments = [
+            comment for comment in self.comments if comment.id.value != comment_id
+        ]

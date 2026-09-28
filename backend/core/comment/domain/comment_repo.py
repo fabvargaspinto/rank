@@ -14,3 +14,9 @@ class CommentRepository(Protocol):
         offset: int,
     ) -> list[Comment]:
         pass
+
+    def get_comment(self, comment_id: str) -> Comment | None:
+        pass
+
+    def delete_comment(self, comment_id: str) -> None:
+        pass

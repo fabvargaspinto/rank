@@ -7,3 +7,7 @@ class CommentLookupError(InfrastructureError):
 
 class CommentCreationError(InfrastructureError):
     pass
+
+
+class CommentDeletionError(InfrastructureError):
+    pass

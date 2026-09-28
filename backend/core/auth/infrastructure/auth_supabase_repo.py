@@ -2,7 +2,9 @@ from postgrest.exceptions import APIError
 
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
+from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_provider import AuthProvider
+from core.auth.domain.auth_provider_id import AuthProviderId
 from core.auth.domain.auth_repo import (
     AuthIdentity,
     AuthRepository,
@@ -121,18 +123,18 @@ class AuthSupabaseRepo(AuthRepository):
                 return None
 
             return AuthIdentity(
-                id=user.id,
+                id=AuthId(str(user.id)),
                 provider=AuthProvider.GOOGLE,
-                provider_id=str(provider_id),
-                email=user.email,
+                provider_id=AuthProviderId(str(provider_id)),
+                email=AuthEmail(user.email) if user.email else None,
             )
 
         if user.email:
             return AuthIdentity(
-                id=user.id,
+                id=AuthId(str(user.id)),
                 provider=AuthProvider.EMAIL,
                 provider_id=None,
-                email=user.email,
+                email=AuthEmail(user.email),
             )
 
         return None

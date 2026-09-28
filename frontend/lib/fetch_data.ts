@@ -80,6 +80,7 @@ export type UserLinkResponse = {
 export type UserResponse = {
     id: string;
     name: string | null;
+    display_name: string | null;
     avatar: string | null;
     description: string | null;
     links: UserLinkResponse[];
@@ -132,6 +133,7 @@ export async function updateUser(
     accessToken: string,
     profile: {
         name: string;
+        display_name?: string | null;
         avatar?: string | null;
         description?: string | null;
         links?: { url: string }[] | null;
@@ -196,6 +198,22 @@ export async function createComment(
                 Authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify(comment),
+        },
+    );
+}
+
+export async function deleteComment(
+    authId: string,
+    accessToken: string,
+    commentId: string,
+): Promise<FetchDataResponse<null>> {
+    return fetchData<null>(
+        `/users/${encodeURIComponent(authId)}/comments/${encodeURIComponent(commentId)}`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
         },
     );
 }

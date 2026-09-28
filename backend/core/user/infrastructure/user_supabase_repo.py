@@ -75,6 +75,7 @@ class UserSupabaseRepo(UserRepository):
         row = self.mapper.to_row(user)
         payload = {
             "name": row["name"],
+            "display_name": row["display_name"],
             "avatar_url": row["avatar_url"],
             "description": row["description"],
             "updated_at": row["updated_at"],

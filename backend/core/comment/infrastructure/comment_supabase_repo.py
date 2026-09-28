@@ -3,6 +3,7 @@ from core.comment.domain.comment_repo import CommentRepository
 from core.comment.infrastructure.comment_mapper import CommentMapper
 from core.comment.infrastructure.error_infrastructure import (
     CommentCreationError,
+    CommentDeletionError,
     CommentLookupError,
 )
 from db.db_client import DBClient
@@ -58,3 +59,29 @@ class CommentSupabaseRepo(CommentRepository):
                 raise CommentLookupError("Error al buscar los comentarios")
             comments.append(self.mapper.to_domain(row))
         return comments
+
+    def get_comment(self, comment_id: str) -> Comment | None:
+        try:
+            response = (
+                self._db.table("comments")
+                .select("*")
+                .eq("id", comment_id)
+                .limit(1)
+                .execute()
+            )
+        except Exception as exc:
+            raise CommentLookupError("Error al buscar el comentario") from exc
+
+        rows = response.data or []
+        if not rows:
+            return None
+        row = rows[0]
+        if not isinstance(row, dict):
+            raise CommentLookupError("Error al buscar el comentario")
+        return self.mapper.to_domain(row)
+
+    def delete_comment(self, comment_id: str) -> None:
+        try:
+            self._db.table("comments").delete().eq("id", comment_id).execute()
+        except Exception as exc:
+            raise CommentDeletionError("Error al borrar el comentario") from exc

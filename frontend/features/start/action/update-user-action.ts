@@ -15,6 +15,7 @@ export type UpdateUserLinkInput = {
 
 export type UpdateUserInput = {
     name: string;
+    displayName?: string | null;
     avatar?: string | null;
     description?: string | null;
     links?: UpdateUserLinkInput[];
@@ -69,6 +70,9 @@ export async function updateUserAction(
 
     return updateUser(session.authId, session.accessToken, {
         name,
+        ...(input.displayName !== undefined
+            ? { display_name: input.displayName?.trim() || null }
+            : {}),
         description: input.description?.trim() || null,
         ...(input.avatar !== undefined
             ? { avatar: httpsAvatar(input.avatar) }

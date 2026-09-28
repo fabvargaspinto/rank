@@ -62,6 +62,7 @@ class TestUserLinkType:
         assert UserLinkType.SPOTIFY.hosts() == (
             "spotify.com",
             "www.spotify.com",
+            "open.spotify.com",
         )
 
     def test_tiktok_should_have_tiktok_hosts(self):
@@ -86,12 +87,16 @@ class TestUserLinkType:
         assert UserLinkType.FACEBOOK.hosts() == (
             "facebook.com",
             "www.facebook.com",
+            "fb.com",
+            "www.fb.com",
         )
 
     def test_x_should_have_x_hosts(self):
         assert UserLinkType.X.hosts() == (
             "x.com",
             "www.x.com",
+            "twitter.com",
+            "www.twitter.com",
         )
 
     def test_default_should_have_no_hosts(self):
@@ -116,9 +121,47 @@ class TestUserLinkType:
         with pytest.raises(InvalidUserLinkTypeError):
             UserLinkType.from_string("linkedin")
 
-    def test_from_host_matches_known_network(self):
-        assert UserLinkType.from_host("www.youtube.com") == UserLinkType.YOUTUBE
-        assert UserLinkType.from_host("instagram.com") == UserLinkType.INSTAGRAM
-
     def test_from_host_falls_back_to_default(self):
         assert UserLinkType.from_host("example.com") == UserLinkType.DEFAULT
+
+    @pytest.mark.parametrize(
+        ("host", "expected"),
+        [
+            ("youtube.com", UserLinkType.YOUTUBE),
+            ("www.youtube.com", UserLinkType.YOUTUBE),
+            ("m.youtube.com", UserLinkType.YOUTUBE),
+            ("youtu.be", UserLinkType.YOUTUBE),
+            ("music.youtube.com", UserLinkType.YOUTUBE),
+            ("instagram.com", UserLinkType.INSTAGRAM),
+            ("www.instagram.com", UserLinkType.INSTAGRAM),
+            ("spotify.com", UserLinkType.SPOTIFY),
+            ("www.spotify.com", UserLinkType.SPOTIFY),
+            ("open.spotify.com", UserLinkType.SPOTIFY),
+            ("tiktok.com", UserLinkType.TIKTOK),
+            ("www.tiktok.com", UserLinkType.TIKTOK),
+            ("twitch.tv", UserLinkType.TWITCH),
+            ("www.twitch.tv", UserLinkType.TWITCH),
+            ("kick.com", UserLinkType.KICK),
+            ("www.kick.com", UserLinkType.KICK),
+            ("facebook.com", UserLinkType.FACEBOOK),
+            ("www.facebook.com", UserLinkType.FACEBOOK),
+            ("fb.com", UserLinkType.FACEBOOK),
+            ("www.fb.com", UserLinkType.FACEBOOK),
+            ("x.com", UserLinkType.X),
+            ("www.x.com", UserLinkType.X),
+            ("twitter.com", UserLinkType.X),
+            ("www.twitter.com", UserLinkType.X),
+            ("soundcloud.com", UserLinkType.SOUNDCLOUD),
+            ("www.soundcloud.com", UserLinkType.SOUNDCLOUD),
+            ("m.soundcloud.com", UserLinkType.SOUNDCLOUD),
+            ("on.soundcloud.com", UserLinkType.SOUNDCLOUD),
+            ("bandcamp.com", UserLinkType.BANDCAMP),
+            ("www.bandcamp.com", UserLinkType.BANDCAMP),
+            ("luna.bandcamp.com", UserLinkType.BANDCAMP),
+            ("music.apple.com", UserLinkType.APPLE_MUSIC),
+            ("www.music.apple.com", UserLinkType.APPLE_MUSIC),
+            ("example.com", UserLinkType.DEFAULT),
+        ],
+    )
+    def test_classifies_each_host(self, host: str, expected: UserLinkType):
+        assert UserLinkType.from_host(host) == expected

@@ -43,5 +43,5 @@ class EnsureUserProvisioned:
             auth_id,
             email,
             identity.provider,
-            identity.provider_id,
+            identity.provider_id.value if identity.provider_id else None,
         )

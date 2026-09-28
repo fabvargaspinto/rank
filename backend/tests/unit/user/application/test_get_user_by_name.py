@@ -4,7 +4,6 @@ from core.user.application.application_error import UserNotFoundError
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.domain.user import User
 from core.user.domain.user_error import InvalidUserNameError
-from core.user.domain.user_name import UserName
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 USERNAME = "luna"
@@ -12,7 +11,7 @@ USERNAME = "luna"
 
 def _named_user() -> User:
     user = User.create_empty()
-    user.name = UserName(USERNAME)
+    user.rename(USERNAME)
     return user
 
 

@@ -36,6 +36,72 @@
     color: var(--accent-color);
 }
 
+.remove {
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted-color);
+    font: inherit;
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    cursor: pointer;
+}
+
+.remove:hover {
+    color: #c4362c;
+}
+
+.remove:focus-visible {
+    outline: var(--scale-1) solid #c4362c;
+    outline-offset: var(--scale-2);
+}
+
+.dialog {
+    width: min(100% - 2rem, 24rem);
+    margin: auto;
+    padding: var(--drawer-padding);
+    border: none;
+    border-radius: var(--component-border-radius);
+    background-color: var(--drawer-background-color);
+    color: var(--drawer-color);
+}
+
+.dialog::backdrop {
+    background-color: var(--drawer-overlay-color);
+}
+
+.dialogBody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+}
+
+.dialogTitle {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--drawer-title-color);
+}
+
+.dialogCopy {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--muted-color);
+}
+
+.dialogError {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: #c4362c;
+}
+
+.dialogActions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-3);
+}
+
 .date {
     font-size: var(--font-size-xs);
     color: var(--muted-color);

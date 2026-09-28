@@ -2,8 +2,11 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from core.auth.domain.auth import Auth
+from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_error import IdentityAlreadyExistsError
+from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_provider import AuthProvider
+from core.auth.domain.auth_provider_id import AuthProviderId
 from core.user.domain.user import User
 
 __all__ = [
@@ -15,10 +18,10 @@ __all__ = [
 
 @dataclass(frozen=True)
 class AuthIdentity:
-    id: str
+    id: AuthId
     provider: AuthProvider
-    provider_id: str | None
-    email: str | None
+    provider_id: AuthProviderId | None
+    email: AuthEmail | None
 
 
 class AuthRepository(Protocol):

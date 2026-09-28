@@ -11,6 +11,7 @@ from core.auth.application.application_error import (
     UnsupportedAuthProviderError,
 )
 from core.auth.domain.auth_error import IdentityAlreadyExistsError
+from core.comment.application.application_error import CommentNotFoundError
 from core.shared.application.application_error import ApplicationError
 from core.shared.domain.domain_error import DomainError
 from core.shared.infrastructure.infrastructure_error import InfrastructureError
@@ -102,7 +103,7 @@ def _status_for(exc: ApplicationError) -> int:
         return 409
     if isinstance(exc, InvalidAuthCredentialsError):
         return 401
-    if isinstance(exc, UserNotFoundError):
+    if isinstance(exc, (UserNotFoundError, CommentNotFoundError)):
         return 404
     if isinstance(exc, UserNameAlreadyExistsError):
         return 409

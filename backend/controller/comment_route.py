@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.schemas.auth import ErrorResponse
@@ -12,8 +12,10 @@ from api.schemas.comment import (
 from config.dependency_container import (
     get_comments_by_user_use_case,
     get_create_comment_use_case,
+    get_delete_comment_use_case,
 )
 from core.comment.application.create_comment import CreateComment
+from core.comment.application.delete_comment import DeleteComment
 from core.comment.application.get_comments_by_user import (
     DEFAULT_LIMIT,
     MAX_LIMIT,
@@ -91,3 +93,30 @@ def create_comment(
             link=body.link,
         )
     )
+
+
+@router.delete(
+    "/users/{auth_id}/comments/{comment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {
+            "model": ErrorResponse,
+            "description": "Token ausente o inválido",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Publicación no encontrada",
+        },
+    },
+)
+def delete_comment(
+    auth_id: str,
+    comment_id: str,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    use_case: DeleteComment = Depends(get_delete_comment_use_case),
+) -> Response:
+    if auth_id != current_user.auth_id:
+        raise UserNotFoundError("El usuario no existe")
+
+    use_case.execute(auth_id, comment_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

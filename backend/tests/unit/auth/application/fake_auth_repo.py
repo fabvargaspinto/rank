@@ -50,7 +50,7 @@ class FakeAuthRepo(AuthRepository):
         return None
 
     def get_identity(self, auth_id: str) -> AuthIdentity | None:
-        if self.identity is not None and self.identity.id == auth_id:
+        if self.identity is not None and self.identity.id.value == auth_id:
             return self.identity
         return None
 

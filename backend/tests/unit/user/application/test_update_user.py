@@ -4,10 +4,9 @@ from core.user.application.application_error import (
     UserNameAlreadyExistsError,
     UserNotFoundError,
 )
-from core.user.application.update_user import UpdateUser
+from core.user.application.update_user import UpdateProfileCommand, UpdateUser
 from core.user.domain.user import User
 from core.user.domain.user_error import InvalidUserNameError
-from core.user.domain.user_name import UserName
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
@@ -26,13 +25,18 @@ class TestUpdateUser:
 
         result = self.use_case.execute(
             AUTH_ID,
-            name="luna",
-            avatar=AVATAR_PATH,
-            description="Cantautora",
+            UpdateProfileCommand(
+                name="luna",
+                display_name="Luna Reyes",
+                avatar=AVATAR_PATH,
+                description="Cantautora",
+            ),
         )
 
         assert result.name is not None
         assert result.name.value == "luna"
+        assert result.display_name is not None
+        assert result.display_name.value == "Luna Reyes"
         assert result.avatar is not None
         assert result.avatar.value == AVATAR_PATH
         assert result.description is not None
@@ -45,11 +49,13 @@ class TestUpdateUser:
 
         result = self.use_case.execute(
             AUTH_ID,
-            name="luna",
-            links=[
-                "https://www.youtube.com/@luna",
-                "https://example.com/luna",
-            ],
+            UpdateProfileCommand(
+                name="luna",
+                links=[
+                    "https://www.youtube.com/@luna",
+                    "https://example.com/luna",
+                ],
+            ),
         )
 
         assert len(result.links) == 2
@@ -59,17 +65,14 @@ class TestUpdateUser:
 
     def test_keeps_existing_avatar_when_omitted(self):
         user = User.create_empty()
-        user.update_profile(
-            name="luna",
-            avatar=AVATAR_PATH,
-        )
+        user.rename("luna")
+        user.change_avatar(AVATAR_PATH)
         self.repo.users_by_auth_id[AUTH_ID] = user
         self.repo.users_by_name["luna"] = user
 
         result = self.use_case.execute(
             AUTH_ID,
-            name="luna",
-            description="Cantautora",
+            UpdateProfileCommand(name="luna", description="Cantautora"),
         )
 
         assert result.avatar is not None
@@ -80,21 +83,23 @@ class TestUpdateUser:
         user.add_link(url="https://www.instagram.com/luna")
         self.repo.users_by_auth_id[AUTH_ID] = user
 
-        result = self.use_case.execute(AUTH_ID, name="luna", description="Cantautora")
+        result = self.use_case.execute(
+            AUTH_ID,
+            UpdateProfileCommand(name="luna", description="Cantautora"),
+        )
 
         assert len(result.links) == 1
         assert result.links[0].url.value == "https://www.instagram.com/luna"
 
     def test_keeps_name_when_updating_own_profile(self):
         user = User.create_empty()
-        user.name = UserName("luna")
+        user.rename("luna")
         self.repo.users_by_auth_id[AUTH_ID] = user
         self.repo.users_by_name["luna"] = user
 
         result = self.use_case.execute(
             AUTH_ID,
-            name="luna",
-            description="Cantautora",
+            UpdateProfileCommand(name="luna", description="Cantautora"),
         )
 
         assert result.name is not None
@@ -104,12 +109,12 @@ class TestUpdateUser:
 
     def test_raises_when_auth_id_is_unknown(self):
         with pytest.raises(UserNotFoundError, match="El usuario no existe"):
-            self.use_case.execute(AUTH_ID, name="luna")
+            self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="luna"))
 
     def test_raises_when_name_is_taken(self):
         user = User.create_empty()
         taken = User.create_empty()
-        taken.name = UserName("luna")
+        taken.rename("luna")
         self.repo.users_by_auth_id[AUTH_ID] = user
         self.repo.users_by_auth_id[OTHER_AUTH_ID] = taken
         self.repo.users_by_name["luna"] = taken
@@ -117,11 +122,11 @@ class TestUpdateUser:
         with pytest.raises(
             UserNameAlreadyExistsError, match="Ese nombre ya está en uso"
         ):
-            self.use_case.execute(AUTH_ID, name="Luna")
+            self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="Luna"))
 
     def test_raises_when_name_is_invalid(self):
         user = User.create_empty()
         self.repo.users_by_auth_id[AUTH_ID] = user
 
         with pytest.raises(InvalidUserNameError):
-            self.use_case.execute(AUTH_ID, name="   ")
+            self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="   "))

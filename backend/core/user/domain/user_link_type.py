@@ -12,6 +12,9 @@ class UserLinkType(StrEnum):
     KICK = "kick"
     FACEBOOK = "facebook"
     X = "x"
+    SOUNDCLOUD = "soundcloud"
+    BANDCAMP = "bandcamp"
+    APPLE_MUSIC = "apple_music"
     DEFAULT = "default"
 
     def hosts(self) -> tuple[str, ...]:
@@ -26,7 +29,7 @@ class UserLinkType(StrEnum):
         if self is UserLinkType.INSTAGRAM:
             return ("instagram.com", "www.instagram.com")
         if self is UserLinkType.SPOTIFY:
-            return ("spotify.com", "www.spotify.com")
+            return ("spotify.com", "www.spotify.com", "open.spotify.com")
         if self is UserLinkType.TIKTOK:
             return ("tiktok.com", "www.tiktok.com")
         if self is UserLinkType.TWITCH:
@@ -34,10 +37,26 @@ class UserLinkType(StrEnum):
         if self is UserLinkType.KICK:
             return ("kick.com", "www.kick.com")
         if self is UserLinkType.FACEBOOK:
-            return ("facebook.com", "www.facebook.com")
+            return ("facebook.com", "www.facebook.com", "fb.com", "www.fb.com")
         if self is UserLinkType.X:
-            return ("x.com", "www.x.com")
+            return ("x.com", "www.x.com", "twitter.com", "www.twitter.com")
+        if self is UserLinkType.SOUNDCLOUD:
+            return (
+                "soundcloud.com",
+                "www.soundcloud.com",
+                "m.soundcloud.com",
+                "on.soundcloud.com",
+            )
+        if self is UserLinkType.BANDCAMP:
+            return ("bandcamp.com", "www.bandcamp.com")
+        if self is UserLinkType.APPLE_MUSIC:
+            return ("music.apple.com", "www.music.apple.com")
         return ()
+
+    def matches(self, host: str) -> bool:
+        if host in self.hosts():
+            return True
+        return self is UserLinkType.BANDCAMP and host.endswith(".bandcamp.com")
 
     def is_default(self) -> bool:
         return self is UserLinkType.DEFAULT
@@ -48,7 +67,7 @@ class UserLinkType(StrEnum):
         for link_type in cls:
             if link_type.is_default():
                 continue
-            if normalized in link_type.hosts():
+            if link_type.matches(normalized):
                 return link_type
         return cls.DEFAULT
 

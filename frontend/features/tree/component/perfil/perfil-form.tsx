@@ -24,6 +24,7 @@ export type ProfileLink = {
 
 export type Profile = {
     name: string;
+    displayName: string;
     description: string;
     photo: string;
     links: ProfileLink[];
@@ -56,9 +57,11 @@ type PerfilFormProps = {
 
 export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     const nameId = useId();
+    const displayNameId = useId();
     const descriptionId = useId();
     const linksId = useId();
     const [name, setName] = useState(profile.name);
+    const [displayName, setDisplayName] = useState(profile.displayName);
     const [description, setDescription] = useState(profile.description);
     const [photo, setPhoto] = useState(profile.photo);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -66,6 +69,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [nameError, setNameError] = useState("");
+    const [displayNameError, setDisplayNameError] = useState("");
     const photoRef = useRef(photo);
     const savedPhotoRef = useRef(profile.photo);
 
@@ -175,6 +179,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
             const result = await updateUserAction({
                 name: nextName,
+                displayName,
                 description: description.trim(),
                 links: nextLinks.map((link) => ({ url: link.url })),
                 ...(avatar !== undefined ? { avatar } : {}),
@@ -183,6 +188,11 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             if (result.isError || !result.data) {
                 if (isUsernameFieldError(result)) {
                     setNameError(result.message || "Ese usuario no es válido");
+                    return;
+                }
+
+                if (result.field === "display_name") {
+                    setDisplayNameError(result.message || "Ese nombre no es válido");
                     return;
                 }
 
@@ -198,6 +208,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
             onSave({
                 name: result.data.name?.trim() || nextName,
+                displayName: result.data.display_name?.trim() || "",
                 description: result.data.description ?? "",
                 photo: result.data.avatar ?? "",
                 links: (result.data.links ?? []).map((link) => ({
@@ -289,6 +300,32 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         <p id={`${nameId}-error`} className={styles.error}>
                             {nameError}
                         </p>
+                    ) : null}
+                </div>
+                <div className={styles.field}>
+                    <label className={styles.fieldLabel} htmlFor={displayNameId}>
+                        Nombre
+                    </label>
+                    <Input
+                        id={displayNameId}
+                        name="displayName"
+                        value={displayName}
+                        autoComplete="name"
+                        placeholder="Luna Reyes"
+                        maxLength={50}
+                        aria-invalid={Boolean(displayNameError)}
+                        aria-describedby={`${displayNameId}-hint`}
+                        onChange={(event) => {
+                            setDisplayName(event.target.value);
+                            setDisplayNameError("");
+                        }}
+                    />
+                    <p id={`${displayNameId}-hint`} className={styles.hint}>
+                        Así aparece en tu perfil. Podés usar mayúsculas,
+                        espacios y emojis.
+                    </p>
+                    {displayNameError ? (
+                        <p className={styles.error}>{displayNameError}</p>
                     ) : null}
                 </div>
                 <div className={styles.field}>

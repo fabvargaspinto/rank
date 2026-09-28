@@ -1,15 +1,12 @@
 import pytest
 
 from core.user.domain.user import User
-from core.user.domain.user_avatar import UserAvatar
-from core.user.domain.user_description import UserDescription
 from core.user.domain.user_error import (
     InvalidUserLinksReorderError,
     TooManyUserLinksError,
     UserLinkNotFoundError,
 )
 from core.user.domain.user_link_type import UserLinkType
-from core.user.domain.user_name import UserName
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 AVATAR_PATH = f"{USER_ID}/avatar.jpg"
@@ -19,17 +16,12 @@ DEFAULT_URL = "https://example.com/luna"
 
 
 def create_user_with_values():
-    empty_user = User.create_empty()
-
-    return User(
-        id=empty_user.id,
-        name=UserName("johndoe"),
-        avatar=UserAvatar(AVATAR_PATH),
-        description=UserDescription("My description"),
-        links=[],
-        created_at=empty_user.created_at,
-        updated_at=empty_user.updated_at,
-    )
+    user = User.create_empty()
+    user.rename("johndoe")
+    user.change_display_name("John Doe")
+    user.change_avatar(AVATAR_PATH)
+    user.describe("My description")
+    return user
 
 
 class TestUser:
@@ -39,6 +31,7 @@ class TestUser:
 
         assert user.id is not None
         assert user.name is None
+        assert user.display_name is None
         assert user.avatar is None
         assert user.description is None
         assert user.links == []
@@ -49,6 +42,8 @@ class TestUser:
         user = create_user_with_values()
 
         assert user.name.value == "johndoe"
+        assert user.display_name is not None
+        assert user.display_name.value == "John Doe"
         assert user.avatar.value == AVATAR_PATH
         assert user.description.value == "My description"
         assert user.links == []
@@ -63,43 +58,42 @@ class TestUser:
 
         assert user.has_name() is True
 
-    def test_update_profile_sets_name_and_optional_fields(self):
+    def test_rename_sets_the_username(self):
         user = User.create_empty()
-        previous_updated_at = user.updated_at
 
-        user.update_profile(
-            name="luna",
-            avatar=AVATAR_PATH,
-            description="Cantautora",
-        )
+        user.rename("luna")
 
         assert user.name is not None
         assert user.name.value == "luna"
-        assert user.avatar is not None
-        assert user.avatar.value == AVATAR_PATH
-        assert user.description is not None
-        assert user.description.value == "Cantautora"
-        assert user.updated_at != previous_updated_at
 
-    def test_update_profile_keeps_avatar_when_omitted(self):
+    def test_change_display_name_keeps_accents_and_emoji(self):
+        user = User.create_empty()
+
+        user.change_display_name("  Luna Reyes 🎸 ")
+
+        assert user.display_name is not None
+        assert user.display_name.value == "Luna Reyes 🎸"
+
+    def test_clear_display_name_and_avatar(self):
         user = create_user_with_values()
 
-        user.update_profile(name="luna", description="Cantautora")
+        user.clear_display_name()
+        user.remove_avatar()
+        user.describe("   ")
 
-        assert user.avatar is not None
-        assert user.avatar.value == AVATAR_PATH
-        assert user.description is not None
-        assert user.description.value == "Cantautora"
-
-    def test_update_profile_clears_optional_fields(self):
-        user = create_user_with_values()
-
-        user.update_profile(name="luna", avatar="", description="   ")
-
-        assert user.name is not None
-        assert user.name.value == "luna"
+        assert user.display_name is None
         assert user.avatar is None
         assert user.description is None
+
+    def test_replace_links_keeps_the_id_of_an_unchanged_url(self):
+        user = User.create_empty()
+        first = user.add_link(url=YOUTUBE_URL)
+
+        user.replace_links([INSTAGRAM_URL, YOUTUBE_URL])
+
+        assert user.links[1].id == first.id
+        assert user.links[0].id != first.id
+        assert user.links[0].url.value == INSTAGRAM_URL
 
     def test_add_link_appends_with_sort_index(self):
         user = User.create_empty()

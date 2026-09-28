@@ -3,6 +3,7 @@
 import { useCallback, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { COMMENTS_PAGE_SIZE } from "@/features/tree/comment-constants";
+import { deleteCommentAction } from "@/features/tree/action/delete-comment-action";
 import { getCommentsAction } from "@/features/tree/action/get-comments-action";
 import type { CommentResponse, UserResponse } from "@/lib/fetch_data";
 import Comments, { type Comment } from "./comment/comments";
@@ -10,7 +11,6 @@ import DrawerComment from "./comment/drawer-comment";
 import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";
 import SocialLinkIcon, {
     socialLinkLabel,
-    socialLinkTypeFromUrl,
     socialLinkTypeFromValue,
 } from "./social-link-icon";
 import Socials from "./socials/socials";
@@ -26,6 +26,7 @@ const TABS: { id: TabId; label: string }[] = [
 function profileFromUser(user: UserResponse): Profile {
     return {
         name: user.name?.trim() || "Sin nombre",
+        displayName: user.display_name?.trim() || "",
         description: user.description ?? "",
         photo: user.avatar ?? "",
         links: (user.links ?? []).map((link) => ({
@@ -43,7 +44,7 @@ function commentFromResponse(
     return {
         id: created.id,
         avatar: profile.photo,
-        user: profile.name,
+        user: profile.displayName || profile.name,
         date: created.created_at,
         text: created.text,
         ...(created.link ? { link: created.link } : {}),
@@ -82,6 +83,18 @@ export default function Tree({
     );
     const [loadingMore, setLoadingMore] = useState(false);
 
+    async function removeComment(id: string) {
+        const result = await deleteCommentAction(id);
+
+        if (!result.isError) {
+            setFeed((current) =>
+                current.filter((comment) => comment.id !== id),
+            );
+        }
+
+        return result;
+    }
+
     function addComment(created: CommentResponse) {
         setFeed((current) => [commentFromResponse(created, profile), ...current]);
     }
@@ -91,7 +104,7 @@ export default function Tree({
         setFeed((current) =>
             current.map((comment) => ({
                 ...comment,
-                user: next.name,
+                user: next.displayName || next.name,
                 avatar: next.photo,
             })),
         );
@@ -174,6 +187,7 @@ export default function Tree({
                             onLoadMore={() => {
                                 void loadMore();
                             }}
+                            {...(editable ? { onDelete: removeComment } : {})}
                         />
                     ) : (
                         <Socials />
@@ -219,9 +233,7 @@ function TreeHeader({
         .filter((link) => link.url.trim().length > 0)
         .slice(0, 6)
         .map((link) => {
-            const type = link.type
-                ? socialLinkTypeFromValue(link.type)
-                : socialLinkTypeFromUrl(link.url);
+            const type = socialLinkTypeFromValue(link.type);
 
             return {
                 id: link.id,
@@ -300,7 +312,12 @@ function TreeHeader({
                         </div>
                     </div>
                 ) : null}
-                <h1 className={styles.headerTitle}>{profile.name}</h1>
+                <div className={styles.headerIdentity}>
+                    <h1 className={styles.headerTitle}>
+                        {profile.displayName || profile.name}
+                    </h1>
+                    <p className={styles.headerHandle}>@{profile.name}</p>
+                </div>
                 {profile.description ? (
                     <p className={styles.headerDescription}>{profile.description}</p>
                 ) : null}

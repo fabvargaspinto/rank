@@ -16,15 +16,16 @@ export async function generateMetadata({
     }
 
     const username = result.data.name.trim();
+    const visibleName = result.data.display_name?.trim() || username;
     const description =
-        result.data.description?.trim() || `Los links de ${username}`;
+        result.data.description?.trim() || `Los links de ${visibleName}`;
     const avatar = result.data.avatar?.trim();
 
     return {
-        title: username,
+        title: visibleName,
         description,
         openGraph: {
-            title: username,
+            title: visibleName,
             description,
             ...(avatar ? { images: [avatar] } : {}),
         },

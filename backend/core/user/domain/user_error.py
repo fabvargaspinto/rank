@@ -1,6 +1,11 @@
 from core.shared.domain.domain_error import DomainError
 
 
+class InvalidUserDisplayNameError(DomainError):
+    code = "INVALID_DISPLAY_NAME"
+    field = "display_name"
+
+
 class InvalidUserNameError(DomainError):
     code = "INVALID_USERNAME"
     field = "name"

@@ -111,6 +111,8 @@ ignore_imports = [
     "core.comment.application.create_comment -> core.user.domain.user_repo",
     "core.comment.application.get_comments_by_user -> core.user.application.application_error",
     "core.comment.application.get_comments_by_user -> core.user.domain.user_repo",
+    "core.comment.application.delete_comment -> core.user.application.application_error",
+    "core.comment.application.delete_comment -> core.user.domain.user_repo",
     # Borrar la cuenta también borra la identidad.
     "core.user.application.delete_account -> core.auth.domain.auth_repo",
 ]

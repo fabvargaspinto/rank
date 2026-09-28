@@ -3,7 +3,10 @@ import pytest
 from core.auth.application.application_error import InvalidAuthCredentialsError
 from core.auth.application.ensure_user_provisioned import EnsureUserProvisioned
 from core.auth.domain.auth import Auth
+from core.auth.domain.auth_email import AuthEmail
+from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_provider import AuthProvider
+from core.auth.domain.auth_provider_id import AuthProviderId
 from core.auth.domain.auth_repo import AuthIdentity
 from core.user.domain.user import User
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
@@ -48,10 +51,10 @@ class TestEnsureUserProvisioned:
 
     def test_provisions_email_identity(self):
         self.repo.identity = AuthIdentity(
-            id=AUTH_ID,
+            id=AuthId(AUTH_ID),
             provider=AuthProvider.EMAIL,
             provider_id=None,
-            email=EMAIL,
+            email=AuthEmail(EMAIL),
         )
 
         result = self.use_case.execute(AUTH_ID, "TEST@EXAMPLE.COM")
@@ -63,10 +66,10 @@ class TestEnsureUserProvisioned:
 
     def test_provisions_google_identity(self):
         self.repo.identity = AuthIdentity(
-            id=AUTH_ID,
+            id=AuthId(AUTH_ID),
             provider=AuthProvider.GOOGLE,
-            provider_id="google-123",
-            email=EMAIL,
+            provider_id=AuthProviderId("google-123"),
+            email=AuthEmail(EMAIL),
         )
 
         result = self.use_case.execute(AUTH_ID, EMAIL)

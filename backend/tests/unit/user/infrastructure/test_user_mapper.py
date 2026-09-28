@@ -5,6 +5,7 @@ from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_created_at import UserCreatedAt
 from core.user.domain.user_description import UserDescription
+from core.user.domain.user_display_name import UserDisplayName
 from core.user.domain.user_name import UserName
 from core.user.domain.user_updated_at import UserUpdatedAt
 from core.user.infrastructure.user_mapper import UserMapper
@@ -26,6 +27,7 @@ def _full_user() -> User:
     return User(
         id=UserId(USER_ID),
         name=UserName("lunareyes"),
+        display_name=UserDisplayName("Luna Reyes"),
         avatar=UserAvatar(AVATAR_PATH),
         description=UserDescription("Cantautora"),
         links=[],
@@ -43,6 +45,7 @@ class TestUserMapper:
         assert row == {
             "id": USER_ID,
             "name": "lunareyes",
+            "display_name": "Luna Reyes",
             "avatar_url": AVATAR_PATH,
             "description": "Cantautora",
             "created_at": user.created_at.to_isoformat(),
@@ -56,6 +59,7 @@ class TestUserMapper:
 
         assert row["id"] == user.id.value
         assert row["name"] is None
+        assert row["display_name"] is None
         assert row["avatar_url"] is None
         assert row["description"] is None
 
@@ -86,6 +90,7 @@ class TestUserMapper:
         row = {
             "id": user.id.value,
             "name": None,
+            "display_name": None,
             "avatar_url": None,
             "description": None,
             "created_at": user.created_at.to_isoformat(),

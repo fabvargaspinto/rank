@@ -17,9 +17,9 @@ from core.user.application.application_error import UserNotFoundError
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
-from core.user.application.update_user import UpdateUser
+from core.user.application.update_user import UNSET, UpdateProfileCommand, UpdateUser
 from core.user.application.upload_avatar import UploadAvatar
-from core.user.domain.user import UNSET, User
+from core.user.domain.user import User
 from core.user.infrastructure.avatar_url import object_path, public_avatar_url
 
 router = APIRouter()
@@ -44,6 +44,7 @@ def _to_response(user: User, supabase_url: str) -> UserResponse:
     return UserResponse(
         id=user.id.value,
         name=user.name.value if user.name else None,
+        display_name=user.display_name.value if user.display_name else None,
         avatar=avatar,
         description=user.description.value if user.description else None,
         links=[
@@ -136,16 +137,24 @@ def update_user(
         if "avatar" in body.model_fields_set
         else UNSET
     )
+    display_name = (
+        body.display_name
+        if "display_name" in body.model_fields_set
+        else UNSET
+    )
     return _to_response(
         use_case.execute(
             auth_id,
-            name=body.name,
-            avatar=_stored_avatar(avatar),
-            description=body.description,
-            links=(
-                [link.url for link in body.links]
-                if body.links is not None
-                else None
+            UpdateProfileCommand(
+                name=body.name,
+                display_name=display_name,
+                avatar=_stored_avatar(avatar),
+                description=body.description,
+                links=(
+                    [link.url for link in body.links]
+                    if body.links is not None
+                    else None
+                ),
             ),
         ),
         supabase_url,
