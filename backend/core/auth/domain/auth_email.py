@@ -1,19 +1,21 @@
 import re
 from dataclasses import dataclass
+from typing import NoReturn
 
 from core.auth.domain.auth_error import InvalidEmailError
 from core.shared.domain.string import String
 
+_EMAIL = re.compile(r"^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$")
 
-@dataclass
+
+@dataclass(frozen=True)
 class AuthEmail(String):
-    value: str
+    def _reject_type(self) -> NoReturn:
+        raise InvalidEmailError("Invalid email address")
 
-    def __post_init__(self) -> None:
-        self.validate()
+    def normalize(self, value: str) -> str:
+        return value.strip().lower()
 
-    def validate(self) -> None:
-        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", self.value):
+    def validate(self, value: str) -> None:
+        if _EMAIL.fullmatch(value) is None:
             raise InvalidEmailError("Invalid email address")
-        self.value = self.value.strip().lower()
-

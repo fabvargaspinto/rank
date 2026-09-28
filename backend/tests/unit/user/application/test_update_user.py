@@ -11,6 +11,7 @@ from core.user.domain.user_name import UserName
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
+AVATAR_PATH = f"{AUTH_ID}/avatar.jpg"
 OTHER_AUTH_ID = "770e8400-e29b-41d4-a716-446655440000"
 
 
@@ -26,14 +27,14 @@ class TestUpdateUser:
         result = self.use_case.execute(
             AUTH_ID,
             name="luna",
-            avatar="https://example.com/avatar.jpg",
+            avatar=AVATAR_PATH,
             description="Cantautora",
         )
 
         assert result.name is not None
         assert result.name.value == "luna"
         assert result.avatar is not None
-        assert result.avatar.value == "https://example.com/avatar.jpg"
+        assert result.avatar.value == AVATAR_PATH
         assert result.description is not None
         assert result.description.value == "Cantautora"
         assert self.repo.users_by_name["luna"] is result
@@ -60,7 +61,7 @@ class TestUpdateUser:
         user = User.create_empty()
         user.update_profile(
             name="luna",
-            avatar="https://example.com/avatar.jpg",
+            avatar=AVATAR_PATH,
         )
         self.repo.users_by_auth_id[AUTH_ID] = user
         self.repo.users_by_name["luna"] = user
@@ -72,7 +73,7 @@ class TestUpdateUser:
         )
 
         assert result.avatar is not None
-        assert result.avatar.value == "https://example.com/avatar.jpg"
+        assert result.avatar.value == AVATAR_PATH
 
     def test_keeps_existing_links_when_omitted(self):
         user = User.create_empty()

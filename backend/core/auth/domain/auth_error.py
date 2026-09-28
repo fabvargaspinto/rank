@@ -9,7 +9,7 @@ class InvalidAuthProviderError(DomainError):
     pass
 
 
-class InvalidAuthPasswordError(DomainError):
+class InvalidAuthProviderIdError(DomainError):
     pass
 
 

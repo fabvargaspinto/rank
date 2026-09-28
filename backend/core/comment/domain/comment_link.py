@@ -1,27 +1,17 @@
 from dataclasses import dataclass
 
 from core.comment.domain.comment_error import InvalidCommentLinkError
-from core.shared.domain.string import String
+from core.shared.domain.https_url import HttpsUrl, is_https_url
 
 
-@dataclass
-class CommentLink(String):
-    value: str
+@dataclass(frozen=True)
+class CommentLink(HttpsUrl):
     MAX_LENGTH = 2048
 
-    def __post_init__(self) -> None:
-        self.validate()
-
-    def validate(self) -> None:
-        self.value = self.value.strip()
-
-        if not self.value:
-            raise InvalidCommentLinkError("La URL debe ser una URL válida")
-
-        if len(self.value) > self.MAX_LENGTH:
+    def validate(self, value: str) -> None:
+        if len(value) > self.MAX_LENGTH:
             raise InvalidCommentLinkError(
                 f"La URL debe tener menos de {self.MAX_LENGTH} caracteres"
             )
-
-        if not self.value.startswith("https://"):
+        if not is_https_url(value):
             raise InvalidCommentLinkError("La URL debe ser una URL válida")

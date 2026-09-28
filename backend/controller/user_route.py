@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.schemas.auth import ErrorResponse
 from api.schemas.user import AvatarUploadResponse, UpdateUserRequest, UserResponse
+from config.db_settings import DBSettings
 from config.dependency_container import (
     get_delete_account_use_case,
     get_update_user_use_case,
@@ -19,15 +20,31 @@ from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
 from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import UNSET, User
+from core.user.infrastructure.avatar_url import object_path, public_avatar_url
 
 router = APIRouter()
 
 
-def _to_response(user: User) -> UserResponse:
+def get_supabase_url() -> str:
+    return DBSettings().supabase_url.rstrip("/")
+
+
+def _stored_avatar(avatar: str | None | object) -> str | None | object:
+    if avatar is UNSET or avatar is None:
+        return avatar
+    if not isinstance(avatar, str) or not avatar.strip():
+        return avatar
+    return object_path(avatar)
+
+
+def _to_response(user: User, supabase_url: str) -> UserResponse:
+    avatar = (
+        public_avatar_url(supabase_url, user.avatar.value) if user.avatar else None
+    )
     return UserResponse(
         id=user.id.value,
         name=user.name.value if user.name else None,
-        avatar=user.avatar.value if user.avatar else None,
+        avatar=avatar,
         description=user.description.value if user.description else None,
         links=[
             {
@@ -55,8 +72,9 @@ def _to_response(user: User) -> UserResponse:
 def read_user_by_name(
     username: str,
     use_case: GetUserByName = Depends(get_user_by_name_use_case),
+    supabase_url: str = Depends(get_supabase_url),
 ) -> UserResponse:
-    return _to_response(use_case.execute(username))
+    return _to_response(use_case.execute(username), supabase_url)
 
 
 @router.get(
@@ -78,10 +96,11 @@ def read_user_by_auth_id(
     auth_id: str,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     use_case: GetUser = Depends(get_user_use_case),
+    supabase_url: str = Depends(get_supabase_url),
 ) -> UserResponse:
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
-    return _to_response(use_case.execute(auth_id))
+    return _to_response(use_case.execute(auth_id), supabase_url)
 
 
 @router.patch(
@@ -108,25 +127,28 @@ def update_user(
     body: UpdateUserRequest,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     use_case: UpdateUser = Depends(get_update_user_use_case),
+    supabase_url: str = Depends(get_supabase_url),
 ) -> UserResponse:
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
+    avatar = (
+        body.avatar
+        if "avatar" in body.model_fields_set
+        else UNSET
+    )
     return _to_response(
         use_case.execute(
             auth_id,
             name=body.name,
-            avatar=(
-                body.avatar
-                if "avatar" in body.model_fields_set
-                else UNSET
-            ),
+            avatar=_stored_avatar(avatar),
             description=body.description,
             links=(
                 [link.url for link in body.links]
                 if body.links is not None
                 else None
             ),
-        )
+        ),
+        supabase_url,
     )
 
 

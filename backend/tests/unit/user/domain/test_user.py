@@ -12,6 +12,7 @@ from core.user.domain.user_link_type import UserLinkType
 from core.user.domain.user_name import UserName
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
+AVATAR_PATH = f"{USER_ID}/avatar.jpg"
 YOUTUBE_URL = "https://www.youtube.com/@luna"
 INSTAGRAM_URL = "https://www.instagram.com/luna"
 DEFAULT_URL = "https://example.com/luna"
@@ -23,7 +24,7 @@ def create_user_with_values():
     return User(
         id=empty_user.id,
         name=UserName("johndoe"),
-        avatar=UserAvatar("https://example.com/avatar.jpg"),
+        avatar=UserAvatar(AVATAR_PATH),
         description=UserDescription("My description"),
         links=[],
         created_at=empty_user.created_at,
@@ -48,7 +49,7 @@ class TestUser:
         user = create_user_with_values()
 
         assert user.name.value == "johndoe"
-        assert user.avatar.value == "https://example.com/avatar.jpg"
+        assert user.avatar.value == AVATAR_PATH
         assert user.description.value == "My description"
         assert user.links == []
 
@@ -68,14 +69,14 @@ class TestUser:
 
         user.update_profile(
             name="luna",
-            avatar="https://example.com/avatar.jpg",
+            avatar=AVATAR_PATH,
             description="Cantautora",
         )
 
         assert user.name is not None
         assert user.name.value == "luna"
         assert user.avatar is not None
-        assert user.avatar.value == "https://example.com/avatar.jpg"
+        assert user.avatar.value == AVATAR_PATH
         assert user.description is not None
         assert user.description.value == "Cantautora"
         assert user.updated_at != previous_updated_at
@@ -86,7 +87,7 @@ class TestUser:
         user.update_profile(name="luna", description="Cantautora")
 
         assert user.avatar is not None
-        assert user.avatar.value == "https://example.com/avatar.jpg"
+        assert user.avatar.value == AVATAR_PATH
         assert user.description is not None
         assert user.description.value == "Cantautora"
 

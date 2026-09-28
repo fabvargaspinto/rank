@@ -9,3 +9,7 @@ class InvalidDateError(DomainError):
 
 class InvalidStringError(DomainError):
     pass
+
+
+class InvalidHttpsUrlError(DomainError):
+    pass

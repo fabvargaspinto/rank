@@ -4,6 +4,10 @@ from core.user.domain.user import User
 from core.user.infrastructure.user_supabase_repo import UserSupabaseRepo
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
+AVATAR_PATH = f"{USER_ID}/avatar.jpg"
+AVATAR_URL = (
+    "https://example.supabase.co/storage/v1/object/public/avatars/" + AVATAR_PATH
+)
 CREATED_AT = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC).isoformat()
 
 
@@ -11,7 +15,7 @@ def _user_row(links: list[dict] | None = None) -> dict:
     return {
         "id": USER_ID,
         "name": "lunareyes",
-        "avatar_url": "https://example.com/avatar.jpg",
+        "avatar_url": AVATAR_URL,
         "description": "Cantautora",
         "created_at": CREATED_AT,
         "updated_at": CREATED_AT,
@@ -131,7 +135,7 @@ class TestUserSupabaseRepoJoin:
         assert user.name is not None
         assert user.name.value == "lunareyes"
         assert user.avatar is not None
-        assert user.avatar.value == "https://example.com/avatar.jpg"
+        assert user.avatar.value == AVATAR_PATH
         assert user.links == []
 
     def test_get_user_by_auth_id_reads_embedded_user_list(self):
@@ -178,7 +182,7 @@ class TestUserSupabaseRepoUpdate:
         assert user is not None
         user.update_profile(
             name="luna",
-            avatar="https://example.com/avatar.jpg",
+            avatar=AVATAR_PATH,
             description="Cantautora",
         )
 
@@ -190,7 +194,7 @@ class TestUserSupabaseRepoUpdate:
         assert client._client.updated["users"]["name"] == "luna"
         assert (
             client._client.updated["users"]["avatar_url"]
-            == "https://example.com/avatar.jpg"
+            == AVATAR_PATH
         )
         assert client._client.updated["users"]["description"] == "Cantautora"
         assert client._client.deleted.get("user_links") is True

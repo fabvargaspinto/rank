@@ -10,6 +10,10 @@ from core.user.domain.user_updated_at import UserUpdatedAt
 from core.user.infrastructure.user_mapper import UserMapper
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
+AVATAR_PATH = f"{USER_ID}/avatar.jpg"
+AVATAR_URL = (
+    "https://example.supabase.co/storage/v1/object/public/avatars/" + AVATAR_PATH
+)
 CREATED_AT = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
 UPDATED_AT = datetime(2026, 1, 3, 4, 5, 6, tzinfo=UTC)
 
@@ -22,7 +26,7 @@ def _full_user() -> User:
     return User(
         id=UserId(USER_ID),
         name=UserName("lunareyes"),
-        avatar=UserAvatar("https://example.com/avatar.jpg"),
+        avatar=UserAvatar(AVATAR_PATH),
         description=UserDescription("Cantautora"),
         links=[],
         created_at=UserCreatedAt(CREATED_AT),
@@ -39,7 +43,7 @@ class TestUserMapper:
         assert row == {
             "id": USER_ID,
             "name": "lunareyes",
-            "avatar_url": "https://example.com/avatar.jpg",
+            "avatar_url": AVATAR_PATH,
             "description": "Cantautora",
             "created_at": user.created_at.to_isoformat(),
             "updated_at": user.updated_at.to_isoformat(),
@@ -66,6 +70,16 @@ class TestUserMapper:
         assert restored.avatar == user.avatar
         assert restored.description == user.description
         assert restored.links == []
+
+    def test_to_domain_reads_a_legacy_public_url_as_path(self):
+        user = _full_user()
+        row = _mapper().to_row(user)
+        row["avatar_url"] = AVATAR_URL
+
+        restored = _mapper().to_domain(row)
+
+        assert restored.avatar is not None
+        assert restored.avatar.value == AVATAR_PATH
 
     def test_to_domain_accepts_empty_optional_fields(self):
         user = User.create_empty()

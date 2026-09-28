@@ -23,6 +23,10 @@ class TestCommentLink:
         with pytest.raises(InvalidCommentLinkError):
             CommentLink("")
 
+    def test_should_reject_link_without_host(self):
+        with pytest.raises(InvalidCommentLinkError):
+            CommentLink("https://")
+
     def test_should_reject_link_with_only_spaces(self):
         with pytest.raises(InvalidCommentLinkError):
             CommentLink("   ")

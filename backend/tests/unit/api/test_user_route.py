@@ -16,7 +16,7 @@ from config.dependency_container import (
     get_user_use_case,
 )
 from controller.error_handlers import register_error_handlers
-from controller.user_route import router
+from controller.user_route import get_supabase_url, router
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
@@ -26,12 +26,16 @@ from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_description import UserDescription
 from core.user.domain.user_name import UserName
+from core.user.infrastructure.avatar_url import public_avatar_url
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
 from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
 OTHER_AUTH_ID = "770e8400-e29b-41d4-a716-446655440000"
+SUPABASE_URL = "https://example.supabase.co"
+AVATAR_PATH = f"{AUTH_ID}/avatar.jpg"
+AVATAR_URL = public_avatar_url(SUPABASE_URL, AVATAR_PATH)
 ISSUER = "https://example.supabase.co/auth/v1"
 USERNAME = "luna"
 
@@ -44,7 +48,7 @@ class _UnusedJwksClient:
 def _named_user() -> User:
     user = User.create_empty()
     user.name = UserName("lunareyes")
-    user.avatar = UserAvatar("https://example.com/avatar.jpg")
+    user.avatar = UserAvatar(AVATAR_PATH)
     user.description = UserDescription("Cantautora")
     return user
 
@@ -71,6 +75,7 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
         issuer=ISSUER,
     )
     app.dependency_overrides[get_jwks_client] = lambda: _UnusedJwksClient()
+    app.dependency_overrides[get_supabase_url] = lambda: SUPABASE_URL
     return TestClient(app)
 
 
@@ -109,7 +114,7 @@ class TestGetUserByAuthId:
         assert response.json() == {
             "id": user.id.value,
             "name": "lunareyes",
-            "avatar": "https://example.com/avatar.jpg",
+            "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
         }
@@ -139,7 +144,7 @@ class TestGetUserByName:
         assert response.json() == {
             "id": user.id.value,
             "name": "lunareyes",
-            "avatar": "https://example.com/avatar.jpg",
+            "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
         }
@@ -190,7 +195,7 @@ class TestUpdateUser:
             f"/users/{AUTH_ID}",
             json={
                 "name": "luna",
-                "avatar": "https://example.com/avatar.jpg",
+                "avatar": AVATAR_URL,
                 "description": "Cantautora",
             },
         )
@@ -199,10 +204,29 @@ class TestUpdateUser:
         assert response.json() == {
             "id": user.id.value,
             "name": "luna",
-            "avatar": "https://example.com/avatar.jpg",
+            "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
         }
+
+    def test_rejects_avatar_from_another_domain(self):
+        repo = FakeUserRepo()
+        repo.users_by_auth_id[AUTH_ID] = User.create_empty()
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.patch(
+            f"/users/{AUTH_ID}",
+            json={
+                "name": "luna",
+                "avatar": "https://otro-dominio.example/pixel.gif",
+            },
+        )
+
+        assert response.status_code == 400
 
     def test_omitted_avatar_keeps_existing(self):
         repo = FakeUserRepo()
@@ -221,7 +245,7 @@ class TestUpdateUser:
         )
 
         assert response.status_code == 200
-        assert response.json()["avatar"] == "https://example.com/avatar.jpg"
+        assert response.json()["avatar"] == AVATAR_URL
         assert response.json()["name"] == "luna"
         assert response.json()["description"] == "Nueva bio"
 

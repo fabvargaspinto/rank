@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -9,7 +9,7 @@ from core.shared.domain.domain_error import InvalidDateError
 class TestCommentCreatedAt:
 
     def test_should_create_valid_date(self):
-        value = datetime(2026, 9, 22, 12, 0, 0)
+        value = datetime(2026, 9, 22, 12, 0, 0, tzinfo=UTC)
 
         created_at = CommentCreatedAt(value)
 
@@ -19,13 +19,17 @@ class TestCommentCreatedAt:
         with pytest.raises(InvalidDateError):
             CommentCreatedAt("not a date")
 
+    def test_should_reject_naive_date(self):
+        with pytest.raises(InvalidDateError):
+            CommentCreatedAt(datetime(2026, 9, 22, 12, 0, 0))
+
     def test_should_create_current_date(self):
         created_at = CommentCreatedAt.now()
 
-        assert created_at is not None
+        assert created_at.value.utcoffset() is not None
 
     def test_should_create_date_from_isoformat(self):
-        value = "2026-09-22T12:00:00"
+        value = "2026-09-22T12:00:00+00:00"
 
         created_at = CommentCreatedAt.from_isoformat(value)
 

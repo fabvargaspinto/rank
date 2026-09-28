@@ -116,19 +116,6 @@ class TestUserLinkType:
         with pytest.raises(InvalidUserLinkTypeError):
             UserLinkType.from_string("linkedin")
 
-    def test_should_get_all_types(self):
-        assert UserLinkType.get_all() == [
-            "youtube",
-            "instagram",
-            "spotify",
-            "tiktok",
-            "twitch",
-            "kick",
-            "facebook",
-            "x",
-            "default",
-        ]
-
     def test_from_host_matches_known_network(self):
         assert UserLinkType.from_host("www.youtube.com") == UserLinkType.YOUTUBE
         assert UserLinkType.from_host("instagram.com") == UserLinkType.INSTAGRAM

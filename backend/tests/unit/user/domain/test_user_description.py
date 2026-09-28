@@ -34,6 +34,11 @@ class TestUserDescription:
 
         assert description.value == "My description"
 
+    def test_should_measure_length_after_stripping(self):
+        description = UserDescription((" " * 10) + ("a" * 245))
+
+        assert description.value == "a" * 245
+
     def test_should_preserve_internal_spaces(self):
         description = UserDescription("My awesome description")
 

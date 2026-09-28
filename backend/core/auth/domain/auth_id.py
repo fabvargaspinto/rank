@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
+from core.shared.domain.uuid import UUID
+
 
 @dataclass(frozen=True)
-class AuthId:
-    value: str
-
+class AuthId(UUID):
+    pass

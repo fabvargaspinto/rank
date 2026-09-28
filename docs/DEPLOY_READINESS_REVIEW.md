@@ -387,7 +387,7 @@ Dos de estas diferencias ya producen defectos:
 
 **Recomendación:** un glosario corto en `docs/`, usado como criterio de nombres en ambos proyectos.
 
-### 5.3 Value Objects [verificado]
+###  ✅ 5.3 Value Objects [verificado]
 
 Resultado de construir cada VO con entradas límite:
 

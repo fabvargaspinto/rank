@@ -23,6 +23,14 @@ class TestUserLinkUrl:
         with pytest.raises(InvalidUserLinkUrlError):
             UserLinkUrl("")
 
+    def test_should_reject_url_without_host(self):
+        with pytest.raises(InvalidUserLinkUrlError):
+            UserLinkUrl("https://")
+
+    def test_should_reject_url_with_spaces(self):
+        with pytest.raises(InvalidUserLinkUrlError):
+            UserLinkUrl("https:// no es una url")
+
     def test_should_reject_url_with_only_spaces(self):
         with pytest.raises(InvalidUserLinkUrlError):
             UserLinkUrl("   ")

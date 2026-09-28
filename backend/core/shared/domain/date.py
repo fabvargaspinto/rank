@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Self
 
 from core.shared.domain.domain_error import InvalidDateError
@@ -17,11 +17,15 @@ class Date:
 
     @classmethod
     def now(cls) -> Self:
-        return cls(datetime.now())
+        return cls(datetime.now(UTC))
 
     @classmethod
     def validate(cls, value: datetime) -> bool:
-        return isinstance(value, datetime)
+        return (
+            isinstance(value, datetime)
+            and value.tzinfo is not None
+            and value.utcoffset() is not None
+        )
 
     def to_isoformat(self) -> str:
         return self.value.isoformat()

@@ -10,6 +10,7 @@ from core.user.domain.user_link_type import UserLinkType
 from core.user.domain.user_link_url import UserLinkUrl
 from core.user.domain.user_name import UserName
 from core.user.domain.user_updated_at import UserUpdatedAt
+from core.user.infrastructure.avatar_url import object_path
 
 
 class UserMapper:
@@ -75,7 +76,7 @@ class UserMapper:
     def _optional_avatar(self, value: object) -> UserAvatar | None:
         if not isinstance(value, str) or not value.strip():
             return None
-        return UserAvatar(value)
+        return UserAvatar(object_path(value))
 
     def _optional_description(self, value: object) -> UserDescription | None:
         if not isinstance(value, str):

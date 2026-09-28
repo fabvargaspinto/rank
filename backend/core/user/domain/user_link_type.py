@@ -62,7 +62,3 @@ class UserLinkType(StrEnum):
             raise InvalidUserLinkTypeError(
                 f"El tipo de link debe ser uno de los siguientes: {allowed}"
             ) from exc
-
-    @classmethod
-    def get_all(cls) -> list[str]:
-        return [link_type.value for link_type in cls]

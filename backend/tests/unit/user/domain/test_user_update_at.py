@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 
@@ -10,7 +10,7 @@ from core.user.domain.user_updated_at import UserUpdatedAt
 class TestUserUpdatedAt:
 
     def test_should_create_valid_date(self):
-        value = datetime(2026, 9, 12, 12, 0, 0)
+        value = datetime(2026, 9, 12, 12, 0, 0, tzinfo=UTC)
 
         updated_at = UserUpdatedAt(value)
 
@@ -20,13 +20,17 @@ class TestUserUpdatedAt:
         with pytest.raises(InvalidDateError):
             UserUpdatedAt("not a date")
 
+    def test_should_reject_naive_date(self):
+        with pytest.raises(InvalidDateError):
+            UserUpdatedAt(datetime(2026, 9, 12, 12, 0, 0))
+
     def test_should_create_current_date(self):
         updated_at = UserUpdatedAt.now()
 
-        assert updated_at is not None
+        assert updated_at.value.utcoffset() is not None
 
     def test_should_create_date_from_isoformat(self):
-        value = "2026-09-12T12:00:00"
+        value = "2026-09-12T12:00:00+00:00"
 
         updated_at = UserUpdatedAt.from_isoformat(value)
 
