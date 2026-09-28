@@ -258,7 +258,7 @@ Además, ni `finish()` (`start-form.tsx:170-208`) ni el submit de `perfil-form.t
 
 **Test que debe fallar antes del arreglo:** E2E con Playwright, "subir un JPEG de 1,5 MB en el onboarding termina en `/dashboard/tree` con la foto visible" (ejemplo en [8.5](#85-ejemplos)).
 
-### 4.5 Datos inventados en perfiles públicos
+### 4.5 Datos inventados en perfiles públicos (todavía en proceso )
 
 `frontend/features/tree/component/socials/socials.tsx:35-44` define una serie fija de "seguidores por semana", de 1.240 a 1.750 con "+140 esta semana", que se muestra **en todos los perfiles, incluidos los públicos**. `SocialOptions` (`:73-81`) dibuja tres elementos de lista vacíos.
 

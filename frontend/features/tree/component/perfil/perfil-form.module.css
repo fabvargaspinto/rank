@@ -168,6 +168,11 @@
     margin-top: var(--scale-2);
 }
 
+.deleteSection {
+    padding-top: var(--component-inner-gap);
+    border-top: 1px solid var(--color-black-4);
+}
+
 .hint {
     font-size: var(--font-size-xs);
     color: var(--muted-color);

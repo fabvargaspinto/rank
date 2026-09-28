@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { provisionSession, type FetchDataResponse } from "@/lib/fetch_data";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
+import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/lib/supabase/server";
 import { invalidFormResponse, registerSchema } from "@/lib/validation/auth";
 
@@ -25,9 +26,13 @@ export async function registerCredentialAction(
     }
 
     const supabase = await createClient();
+    const origin = await requestOrigin();
     const { data, error } = await supabase.auth.signUp({
         email: parsed.data.email,
         password: parsed.data.password,
+        options: {
+            emailRedirectTo: `${origin}/auth/confirm`,
+        },
     });
 
     if (error) {

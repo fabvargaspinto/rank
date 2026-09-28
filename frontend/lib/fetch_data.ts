@@ -115,6 +115,18 @@ export async function fetchUserByName(
     );
 }
 
+export async function deleteAccount(
+    authId: string,
+    accessToken: string,
+): Promise<FetchDataResponse<null>> {
+    return fetchData<null>(`/users/${encodeURIComponent(authId)}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+}
+
 export async function updateUser(
     authId: string,
     accessToken: string,

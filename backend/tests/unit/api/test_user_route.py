@@ -9,6 +9,7 @@ from api.dependencies.auth import (
     get_jwks_client,
 )
 from config.dependency_container import (
+    get_delete_account_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
     get_user_by_name_use_case,
@@ -16,6 +17,7 @@ from config.dependency_container import (
 )
 from controller.error_handlers import register_error_handlers
 from controller.user_route import router
+from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
@@ -24,6 +26,7 @@ from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_description import UserDescription
 from core.user.domain.user_name import UserName
+from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
 from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
@@ -59,6 +62,9 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
     app.dependency_overrides[get_update_user_use_case] = lambda: UpdateUser(fake_repo)
     app.dependency_overrides[get_upload_avatar_use_case] = lambda: UploadAvatar(
         fake_repo, FakeAvatarStorage()
+    )
+    app.dependency_overrides[get_delete_account_use_case] = lambda: DeleteAccount(
+        fake_repo, FakeAvatarStorage(), FakeAuthRepo()
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -370,3 +376,47 @@ class TestUploadAvatar:
 
         assert response.status_code == 400
         assert response.json() == {"detail": "La imagen debe ser JPEG, PNG o WebP"}
+
+
+class TestDeleteAccountRoute:
+    def test_missing_authorization_returns_401(self):
+        response = _client().delete(f"/users/{AUTH_ID}")
+
+        assert response.status_code == 401
+        assert response.json() == {"detail": "El token de autenticación no es válido"}
+
+    def test_other_auth_id_returns_404(self):
+        app_client = _client()
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+
+        response = app_client.delete(f"/users/{OTHER_AUTH_ID}")
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "El usuario no existe"}
+
+    def test_deletes_the_current_account(self):
+        repo = FakeUserRepo()
+        user = _named_user()
+        repo.users_by_id[user.id.value] = user
+        repo.users_by_auth_id[AUTH_ID] = user
+        auth = FakeAuthRepo()
+        avatars = FakeAvatarStorage()
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+        app_client.app.dependency_overrides[get_delete_account_use_case] = (
+            lambda: DeleteAccount(repo, avatars, auth)
+        )
+
+        response = app_client.delete(f"/users/{AUTH_ID}")
+
+        assert response.status_code == 204
+        assert response.content == b""
+        assert AUTH_ID not in repo.users_by_auth_id
+        assert auth.deleted_ids == [AUTH_ID]
+        assert avatars.deleted == [AUTH_ID]

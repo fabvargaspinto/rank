@@ -15,3 +15,6 @@ class UserRepository(Protocol):
 
     def update_user(self, user: User) -> User | None:
         pass
+
+    def delete_user(self, user_id: str) -> None:
+        pass

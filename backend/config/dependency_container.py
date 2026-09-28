@@ -10,6 +10,7 @@ from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.comment.application.create_comment import CreateComment
 from core.comment.application.get_comments_by_user import GetCommentsByUser
 from core.comment.infrastructure.comment_supabase_repo import CommentSupabaseRepo
+from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
@@ -57,6 +58,13 @@ class DependencyContainer:
     def get_comments_by_user(self) -> GetCommentsByUser:
         return GetCommentsByUser(self.user_repository, self.comment_repository)
 
+    def delete_account(self) -> DeleteAccount:
+        return DeleteAccount(
+            self.user_repository,
+            self.avatar_storage,
+            self.auth_repository,
+        )
+
 
 @lru_cache
 def get_dependency_container() -> DependencyContainer:
@@ -89,3 +97,7 @@ def get_create_comment_use_case() -> CreateComment:
 
 def get_comments_by_user_use_case() -> GetCommentsByUser:
     return get_dependency_container().get_comments_by_user()
+
+
+def get_delete_account_use_case() -> DeleteAccount:
+    return get_dependency_container().delete_account()

@@ -1,0 +1,29 @@
+.bar {
+    position: absolute;
+    top: max(var(--scale-5), env(safe-area-inset-top));
+    left: max(var(--scale-5), env(safe-area-inset-left));
+    z-index: var(--z-index-3);
+}
+
+.action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--scale-6) + var(--scale-3));
+    height: calc(var(--scale-6) + var(--scale-3));
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: color-mix(in srgb, var(--color-black-0) 56%, transparent);
+    color: var(--accent-color);
+    cursor: pointer;
+}
+
+.action:hover {
+    background-color: color-mix(in srgb, var(--color-black-0) 72%, transparent);
+}
+
+.action:focus-visible {
+    outline: var(--scale-1) solid var(--color-gray-light);
+    outline-offset: var(--scale-2);
+}

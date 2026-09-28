@@ -1,17 +1,19 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.schemas.auth import ErrorResponse
 from api.schemas.user import AvatarUploadResponse, UpdateUserRequest, UserResponse
 from config.dependency_container import (
+    get_delete_account_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
     get_user_by_name_use_case,
     get_user_use_case,
 )
 from core.user.application.application_error import UserNotFoundError
+from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
@@ -163,5 +165,30 @@ def upload_avatar(
         content_type=file.content_type or "",
     )
     return AvatarUploadResponse(url=url)
+
+
+@router.delete(
+    "/users/{auth_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {
+            "model": ErrorResponse,
+            "description": "Token ausente o inválido",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Usuario no encontrado",
+        },
+    },
+)
+def delete_account(
+    auth_id: str,
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    use_case: DeleteAccount = Depends(get_delete_account_use_case),
+) -> Response:
+    if auth_id != current_user.auth_id:
+        raise UserNotFoundError("El usuario no existe")
+    use_case.execute(auth_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

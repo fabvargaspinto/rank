@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import FormHero from "@/components/ui/form-hero/form-hero";
 import Input from "@/components/ui/input/input";
 import { emptyFetchResponse } from "@/lib/fetch_data";
 import { loginCredentialAction } from "../action/login-credential-action";
 import { loginGoogleAction } from "../action/login-google-action";
+import styles from "./login-form.module.css";
 
 type LoginFormProps = {
     initialError?: string;
@@ -32,6 +34,9 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
         >
             <Input type="email" name="email" placeholder="Email" autoComplete="email" />
             <Input type="password" name="password" placeholder="Password" autoComplete="current-password" />
+            <p className={styles.forgot}>
+                <Link href="/forgot-password">Olvidé mi contraseña</Link>
+            </p>
         </FormHero>
     );
 }

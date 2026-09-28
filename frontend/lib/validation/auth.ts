@@ -12,38 +12,53 @@ export const loginSchema = z.object({
     password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
+export const passwordSchema = z
+    .string()
+    .min(1, "La contraseña es obligatoria")
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(64, "La contraseña debe tener menos de 64 caracteres")
+    .refine((value) => !/\s/.test(value), {
+        message: "La contraseña no debe tener espacios",
+    })
+    .refine((value) => /\p{L}/u.test(value), {
+        message: "La contraseña debe incluir al menos una letra",
+    })
+    .refine((value) => /\d/.test(value), {
+        message: "La contraseña debe incluir al menos un número",
+    })
+    .refine((value) => /[A-Z]/.test(value), {
+        message: "La contraseña debe incluir al menos una letra mayúscula",
+    })
+    .refine((value) => /[a-z]/.test(value), {
+        message: "La contraseña debe incluir al menos una letra minúscula",
+    });
+
+const passwordConfirmationSchema = z
+    .string()
+    .min(1, "Confirmá la contraseña");
+
 export const registerSchema = z
     .object({
         email: emailSchema,
-        password: z
-            .string()
-            .min(1, "La contraseña es obligatoria")
-            .min(8, "La contraseña debe tener al menos 8 caracteres")
-            .max(64, "La contraseña debe tener menos de 64 caracteres")
-            .refine((value) => !/\s/.test(value), {
-                message: "La contraseña no debe tener espacios",
-            })
-            .refine((value) => /\p{L}/u.test(value), {
-                message: "La contraseña debe incluir al menos una letra",
-            })
-            .refine((value) => /\d/.test(value), {
-                message: "La contraseña debe incluir al menos un número",
-            })
-            .refine((value) => /[A-Z]/.test(value), {
-                message: "La contraseña debe incluir al menos una letra mayúscula",
-            })
-            .refine((value) => /[a-z]/.test(value), {
-                message: "La contraseña debe incluir al menos una letra minúscula",
-            }),
-        
-        passwordConfirmation: z
-            .string()
-            .min(1, "Confirmá la contraseña"),
+        password: passwordSchema,
+        passwordConfirmation: passwordConfirmationSchema,
     })
     .refine((data) => data.password === data.passwordConfirmation, {
         message: "Las contraseñas no coinciden",
         path: ["passwordConfirmation"],
     });
+
+export const resetPasswordSchema = z
+    .object({
+        password: passwordSchema,
+        passwordConfirmation: passwordConfirmationSchema,
+    })
+    .refine((data) => data.password === data.passwordConfirmation, {
+        message: "Las contraseñas no coinciden",
+        path: ["passwordConfirmation"],
+    });
+
+export { emailSchema };
 
 export function invalidFormResponse(
     error: z.ZodError,

@@ -37,3 +37,16 @@ class AvatarSupabaseStorage:
 
         url = self._db.storage.from_(BUCKET).get_public_url(path)
         return url.split("?")[0]
+
+    def delete(self, auth_id: str) -> None:
+        try:
+            listed = self._db.storage.from_(BUCKET).list(auth_id) or []
+            paths = [
+                f"{auth_id}/{item['name']}"
+                for item in listed
+                if isinstance(item, dict) and item.get("name")
+            ]
+            if paths:
+                self._db.storage.from_(BUCKET).remove(paths)
+        except Exception:
+            return

@@ -43,3 +43,6 @@ class AuthRepository(Protocol):
 
     def get_identity(self, auth_id: str) -> AuthIdentity | None:
         pass
+
+    def delete_identity(self, auth_id: str) -> None:
+        pass

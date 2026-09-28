@@ -1,0 +1,45 @@
+.dialog {
+    width: min(100% - 2rem, 24rem);
+    margin: auto;
+    padding: var(--drawer-padding);
+    border: none;
+    border-radius: var(--component-border-radius);
+    background-color: var(--drawer-background-color);
+    color: var(--drawer-color);
+}
+
+.dialog::backdrop {
+    background-color: var(--drawer-overlay-color);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-inner-gap);
+}
+
+.title {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--drawer-title-color);
+}
+
+.copy,
+.label {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--muted-color);
+}
+
+.error {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: #c4362c;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-3);
+}

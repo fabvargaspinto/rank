@@ -10,11 +10,14 @@ from core.auth.domain.auth_repo import (
 )
 from core.auth.infrastructure.auth_mapper import AuthMapper
 from core.auth.infrastructure.email_crypto import EmailCrypto
-from core.auth.infrastructure.error_infrastructure import AuthCreationError
+from core.auth.infrastructure.error_infrastructure import (
+    AuthCreationError,
+    AuthDeletionError,
+)
 from core.auth.infrastructure.postgres_error import is_unique_violation
 from core.user.domain.user import User
-from db.db_client import DBClient
 from core.user.infrastructure.user_mapper import UserMapper
+from db.db_client import DBClient
 
 
 class AuthSupabaseRepo(AuthRepository):
@@ -154,3 +157,12 @@ class AuthSupabaseRepo(AuthRepository):
         if not isinstance(row, dict):
             raise AuthCreationError("Error al buscar el usuario")
         return self._mapper.to_domain(row)
+
+    def delete_identity(self, auth_id: str) -> None:
+        try:
+            self._db.auth.admin.delete_user(auth_id)
+        except Exception as exc:
+            message = str(exc).lower()
+            if "not found" in message:
+                return
+            raise AuthDeletionError("Error al borrar la cuenta") from exc

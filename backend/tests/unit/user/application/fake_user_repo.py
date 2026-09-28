@@ -43,3 +43,16 @@ class FakeUserRepo(UserRepository):
         if user.name is not None:
             self.users_by_name[user.name.value] = user
         return user
+
+    def delete_user(self, user_id: str) -> None:
+        user = self.users_by_id.pop(user_id, None)
+        if user is None:
+            return
+
+        for auth_id, stored in list(self.users_by_auth_id.items()):
+            if stored.id == user.id:
+                del self.users_by_auth_id[auth_id]
+
+        for name, stored in list(self.users_by_name.items()):
+            if stored.id == user.id:
+                del self.users_by_name[name]

@@ -23,6 +23,7 @@ type FormHeroProps = {
     pending?: boolean;
     isError?: boolean;
     message?: string;
+    showGoogle?: boolean;
 };
 
 export default function FormHero({
@@ -37,6 +38,7 @@ export default function FormHero({
     pending = false,
     isError = false,
     message = "",
+    showGoogle = true,
 }: FormHeroProps) {
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         const submitter = (event.nativeEvent as SubmitEvent).submitter;
@@ -72,13 +74,17 @@ export default function FormHero({
                 <Button type="submit" disabled={pending}>
                     {pending ? "Cargando..." : submitLabel}
                 </Button>
-                <div className={styles.separator} />
-                <GoogleButton
-                    type={googleAction ? "submit" : "button"}
-                    data-provider="google"
-                    formAction={googleAction}
-                    disabled={pending}
-                />
+                {showGoogle ? (
+                    <>
+                        <div className={styles.separator} />
+                        <GoogleButton
+                            type={googleAction ? "submit" : "button"}
+                            data-provider="google"
+                            formAction={googleAction}
+                            disabled={pending}
+                        />
+                    </>
+                ) : null}
                 <p className={styles.footerLink}>
                     {footerPrompt}{" "}
                     <Link href={footerHref}>{footerLabel}</Link>

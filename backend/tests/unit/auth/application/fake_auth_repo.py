@@ -14,6 +14,7 @@ class FakeAuthRepo(AuthRepository):
         self.users: list[User] = []
         self.identity: AuthIdentity | None = None
         self.fail_on_save = False
+        self.deleted_ids: list[str] = []
 
     def save(self, user: User, auth: Auth) -> Auth:
         if self.fail_on_save or self._conflicts(auth):
@@ -52,6 +53,10 @@ class FakeAuthRepo(AuthRepository):
         if self.identity is not None and self.identity.id == auth_id:
             return self.identity
         return None
+
+    def delete_identity(self, auth_id: str) -> None:
+        self.deleted_ids.append(auth_id)
+        self.auths = [auth for auth in self.auths if auth.id.value != auth_id]
 
     def _conflicts(self, auth: Auth) -> bool:
         for existing in self.auths:

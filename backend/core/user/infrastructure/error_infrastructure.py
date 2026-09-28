@@ -9,5 +9,9 @@ class UserUpdateError(InfrastructureError):
     pass
 
 
+class UserDeletionError(InfrastructureError):
+    pass
+
+
 class AvatarUploadError(InfrastructureError):
     pass

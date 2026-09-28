@@ -5,6 +5,7 @@ from core.user.application.application_error import UserNameAlreadyExistsError
 from core.user.domain.user import User
 from core.user.domain.user_repo import UserRepository
 from core.user.infrastructure.error_infrastructure import (
+    UserDeletionError,
     UserLookupError,
     UserUpdateError,
 )
@@ -113,6 +114,12 @@ class UserSupabaseRepo(UserRepository):
             raise UserUpdateError("Error al actualizar los links") from exc
 
         return self.get_user(user.id.value)
+
+    def delete_user(self, user_id: str) -> None:
+        try:
+            self._db.table("users").delete().eq("id", user_id).execute()
+        except Exception as exc:
+            raise UserDeletionError("Error al borrar la cuenta") from exc
 
     def _find_user(self, filters: dict) -> User | None:
         query = self._db.table("users").select(USER_WITH_LINKS_SELECT)

@@ -9,3 +9,6 @@ class AvatarStorage(Protocol):
         content_type: str,
     ) -> str:
         pass
+
+    def delete(self, auth_id: str) -> None:
+        pass

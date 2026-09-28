@@ -1,0 +1,15 @@
+.forgot {
+    width: 100%;
+    margin: 0;
+    text-align: right;
+    font-size: var(--font-size-xs);
+}
+
+.forgot a {
+    color: var(--muted-color);
+    text-decoration: none;
+}
+
+.forgot a:hover {
+    color: var(--accent-color);
+}

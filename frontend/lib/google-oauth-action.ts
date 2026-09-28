@@ -1,24 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/lib/supabase/server";
-
-async function originFromHeaders() {
-    const headerStore = await headers();
-    const origin = headerStore.get("origin");
-    if (origin) {
-        return origin;
-    }
-
-    const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-    const proto = headerStore.get("x-forwarded-proto") ?? "http";
-    if (host) {
-        return `${proto}://${host}`;
-    }
-
-    return "http://localhost:3000";
-}
 
 function fromQuery(from: string) {
     return from === "/register" ? "register" : "login";
@@ -29,7 +13,7 @@ function fromPath(from: string) {
 }
 
 export async function startGoogleOAuthAction(from: string) {
-    const origin = await originFromHeaders();
+    const origin = await requestOrigin();
     const path = fromPath(from);
     const supabase = await createClient();
 

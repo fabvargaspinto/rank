@@ -31,6 +31,16 @@
     background-color: var(--button-secondary-background-color-hover);
 }
 
+.danger {
+    color: #fff;
+    background-color: #c4362c;
+    border-color: #c4362c;
+}
+
+.danger:hover {
+    background-color: #a82d25;
+}
+
 .button:focus-visible {
     border-color: var(--color-gray-light);
 }

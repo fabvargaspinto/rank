@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import PageWrapper from "@/components/ui/page-wrapper/page-wrapper";
+import AccountMenu from "@/features/account/component/account-menu";
 import { COMMENTS_PAGE_SIZE } from "./comment-constants";
 import { getCommentsAction } from "./action/get-comments-action";
 import getUserFromJwt from "./action/get-user-from-jwt";
@@ -15,6 +16,7 @@ export default async function TreePage() {
     if (result.isError || !result.data) {
         return (
             <PageWrapper>
+                <AccountMenu />
                 <p>{result.message || "No se pudo cargar tu perfil"}</p>
             </PageWrapper>
         );
@@ -27,6 +29,7 @@ export default async function TreePage() {
 
     return (
         <PageWrapper>
+            <AccountMenu />
             <Tree
                 user={result.data}
                 initialComments={comments.data?.items ?? []}

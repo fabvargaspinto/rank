@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
+import DeleteAccountButton from "@/features/account/component/delete-account-button";
 import { updateUserAction } from "@/features/start/action/update-user-action";
 import { uploadAvatarAction } from "@/features/start/action/upload-avatar-action";
 import { isUsernameFieldError } from "@/lib/fetch_data";
@@ -357,6 +358,9 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                             Añadir link
                         </Button>
                     ) : null}
+                </div>
+                <div className={styles.deleteSection}>
+                    <DeleteAccountButton username={profile.name} />
                 </div>
             </div>
             <div className={styles.footer}>
