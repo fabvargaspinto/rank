@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
+from core.shared.domain.user_id import UserId
 from core.user.domain.user_error import InvalidUserLinkUrlError
-from core.user.domain.user_id import UserId
 from core.user.domain.user_link_id import UserLinkId
 from core.user.domain.user_link_sort_index import UserLinkSortIndex
 from core.user.domain.user_link_type import UserLinkType

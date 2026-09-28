@@ -8,7 +8,7 @@ from core.auth.domain.auth_error import InvalidEmailError
 from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_method import AuthMethod
 from core.auth.domain.auth_provider import AuthProvider
-from core.user.domain.user_id import UserId
+from core.shared.domain.user_id import UserId
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"

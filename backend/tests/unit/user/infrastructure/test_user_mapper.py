@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 
+from core.shared.domain.user_id import UserId
 from core.user.domain.user import User
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_created_at import UserCreatedAt
 from core.user.domain.user_description import UserDescription
-from core.user.domain.user_id import UserId
 from core.user.domain.user_name import UserName
 from core.user.domain.user_updated_at import UserUpdatedAt
 from core.user.infrastructure.user_mapper import UserMapper

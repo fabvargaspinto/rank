@@ -4,7 +4,7 @@ from core.comment.domain.comment_created_at import CommentCreatedAt
 from core.comment.domain.comment_id import CommentId
 from core.comment.domain.comment_link import CommentLink
 from core.comment.domain.comment_text import CommentText
-from core.user.domain.user_id import UserId
+from core.shared.domain.user_id import UserId
 
 
 @dataclass(frozen=True)

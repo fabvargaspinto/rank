@@ -14,7 +14,7 @@ from core.auth.infrastructure.error_infrastructure import (
     AuthCreationError,
     AuthDeletionError,
 )
-from core.auth.infrastructure.postgres_error import is_unique_violation
+from core.shared.infrastructure.postgres_error import is_unique_violation
 from core.user.domain.user import User
 from core.user.infrastructure.user_mapper import UserMapper
 from db.db_client import DBClient

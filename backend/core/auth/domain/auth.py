@@ -6,7 +6,7 @@ from core.auth.domain.auth_error import InvalidEmailError
 from core.auth.domain.auth_id import AuthId
 from core.auth.domain.auth_method import AuthMethod
 from core.auth.domain.auth_provider import AuthProvider
-from core.user.domain.user_id import UserId
+from core.shared.domain.user_id import UserId
 
 
 @dataclass(frozen=True)

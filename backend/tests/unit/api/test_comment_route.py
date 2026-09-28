@@ -22,8 +22,8 @@ from core.comment.domain.comment import Comment
 from core.comment.domain.comment_created_at import CommentCreatedAt
 from core.comment.domain.comment_id import CommentId
 from core.comment.domain.comment_text import CommentText
+from core.shared.domain.user_id import UserId
 from core.user.domain.user import User
-from core.user.domain.user_id import UserId
 from tests.unit.comment.application.fake_comment_repo import FakeCommentRepo
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 

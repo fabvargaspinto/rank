@@ -16,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "import-linter>=2.5",
     "mypy>=2.3.1",
     "pytest>=8.4.2",
     "ruff>=0.16.7",
@@ -63,6 +64,56 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["api", "config", "controller", "core", "db", "tests"]
+
+[tool.importlinter]
+root_packages = ["core"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Capas dentro de cada contexto"
+type = "layers"
+containers = ["core.auth", "core.user", "core.comment"]
+layers = ["infrastructure", "application", "domain"]
+
+[[tool.importlinter.contracts]]
+name = "Domain y Application no dependen de frameworks"
+type = "forbidden"
+source_modules = [
+    "core.auth.domain",
+    "core.auth.application",
+    "core.user.domain",
+    "core.user.application",
+    "core.comment.domain",
+    "core.comment.application",
+    "core.shared.domain",
+]
+forbidden_modules = [
+    "fastapi",
+    "starlette",
+    "pydantic_settings",
+    "supabase",
+    "postgrest",
+]
+
+[[tool.importlinter.contracts]]
+name = "Contextos independientes: solo comparten core.shared"
+type = "independence"
+modules = ["core.auth", "core.user", "core.comment"]
+ignore_imports = [
+    # El aprovisionamiento crea Auth y User en la misma transacción.
+    "core.auth.domain.auth_repo -> core.user.domain.user",
+    "core.auth.application.register_with_email -> core.user.domain.user",
+    "core.auth.application.provision_oauth_user -> core.user.domain.user",
+    "core.auth.infrastructure.auth_supabase_repo -> core.user.domain.user",
+    "core.auth.infrastructure.auth_supabase_repo -> core.user.infrastructure.user_mapper",
+    # Comment resuelve el autor con el repositorio de user.
+    "core.comment.application.create_comment -> core.user.application.application_error",
+    "core.comment.application.create_comment -> core.user.domain.user_repo",
+    "core.comment.application.get_comments_by_user -> core.user.application.application_error",
+    "core.comment.application.get_comments_by_user -> core.user.domain.user_repo",
+    # Borrar la cuenta también borra la identidad.
+    "core.user.application.delete_account -> core.auth.domain.auth_repo",
+]
 
 [tool.mypy]
 python_version = "3.13"

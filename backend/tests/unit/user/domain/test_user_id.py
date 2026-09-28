@@ -1,7 +1,7 @@
 import pytest
 
 from core.shared.domain.domain_error import InvalidUUIDError
-from core.user.domain.user_id import UserId
+from core.shared.domain.user_id import UserId
 
 
 class TestUserId:

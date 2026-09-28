@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from core.shared.domain.user_id import UserId
 from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_created_at import UserCreatedAt
 from core.user.domain.user_description import UserDescription
@@ -9,7 +10,6 @@ from core.user.domain.user_error import (
     TooManyUserLinksError,
     UserLinkNotFoundError,
 )
-from core.user.domain.user_id import UserId
 from core.user.domain.user_link import UserLink
 from core.user.domain.user_link_id import UserLinkId
 from core.user.domain.user_link_sort_index import UserLinkSortIndex

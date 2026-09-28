@@ -6,7 +6,7 @@ from core.comment.domain.comment_id import CommentId
 from core.comment.domain.comment_link import CommentLink
 from core.comment.domain.comment_text import CommentText
 from core.comment.infrastructure.comment_mapper import CommentMapper
-from core.user.domain.user_id import UserId
+from core.shared.domain.user_id import UserId
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 COMMENT_ID = "660e8400-e29b-41d4-a716-446655440000"

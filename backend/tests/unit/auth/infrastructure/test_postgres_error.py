@@ -1,6 +1,6 @@
 from postgrest.exceptions import APIError
 
-from core.auth.infrastructure.postgres_error import is_unique_violation
+from core.shared.infrastructure.postgres_error import is_unique_violation
 
 
 def test_postgres_unique_violation_is_duplicate():

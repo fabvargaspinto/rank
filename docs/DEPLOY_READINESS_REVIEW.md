@@ -318,7 +318,7 @@ export async function generateMetadata({ params }: PageProps<"/[name]">): Promis
 }
 ```
 
-### 4.8 Sin CI, y `main` ya tiene errores
+### 4.8 Sin CI, y `main` ya tiene errores (más adelante cuando lleguemos al 10.4)
 
 | Herramienta | Resultado en `main` |
 |---|---|
@@ -334,7 +334,7 @@ El pipeline mínimo propuesto está en [10.4](#104-cicd).
 
 ## 5. DDD en el backend
 
-### 5.1 Mapa de contextos
+### ✅ 5.1 Mapa de contextos
 
 Los tres contextos dependen de `shared` (no se dibuja). Las flechas muestran las dependencias entre contextos que existen hoy:
 
@@ -366,7 +366,7 @@ Observaciones:
 
 **Recomendación:** mover `UserId` e `is_unique_violation` a `shared`, y agregar contratos de `import-linter` ([5.9](#59-estructura-objetivo-y-guardas-de-arquitectura)) para que las dependencias entre contextos no crezcan sin que nadie lo decida.
 
-### 5.2 Lenguaje ubicuo
+### 5.2 Lenguaje ubicuo (hacerlo alfinal)
 
 El código, la interfaz y el producto usan palabras distintas para las mismas cosas, y a veces la misma palabra para cosas distintas:
 

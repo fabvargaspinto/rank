@@ -1,6 +1,6 @@
 from postgrest.exceptions import APIError
 
-from core.auth.infrastructure.postgres_error import is_unique_violation
+from core.shared.infrastructure.postgres_error import is_unique_violation
 from core.user.application.application_error import UserNameAlreadyExistsError
 from core.user.domain.user import User
 from core.user.domain.user_repo import UserRepository
