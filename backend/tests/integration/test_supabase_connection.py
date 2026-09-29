@@ -1,4 +1,4 @@
-from db.db_client import DBClient
+from core.shared.infrastructure.supabase_client import DBClient
 
 
 def test_service_role_can_call_auth_admin(db_client: DBClient) -> None:

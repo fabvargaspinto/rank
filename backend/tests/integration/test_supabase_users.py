@@ -2,7 +2,7 @@ import pytest
 from postgrest.exceptions import APIError
 from uuid6 import uuid7
 
-from db.db_client import DBClient
+from core.shared.infrastructure.supabase_client import DBClient
 
 
 def test_can_query_users_table(users_table: DBClient) -> None:
@@ -40,9 +40,7 @@ def test_luna_and_Luna_cannot_coexist(users_table: DBClient) -> None:
         supabase.table("users").insert({"id": first_id, "name": "luna"}).execute()
 
         with pytest.raises(APIError):
-            supabase.table("users").insert(
-                {"id": second_id, "name": "Luna"}
-            ).execute()
+            supabase.table("users").insert({"id": second_id, "name": "Luna"}).execute()
 
         stored = (
             supabase.table("users")

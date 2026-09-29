@@ -1,7 +1,7 @@
 from storage3.exceptions import StorageApiError
 
+from core.shared.infrastructure.supabase_client import DBClient
 from core.user.infrastructure.error_infrastructure import AvatarUploadError
-from db.db_client import DBClient
 
 BUCKET = "avatars"
 

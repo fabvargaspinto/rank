@@ -8,9 +8,9 @@ from api.dependencies.auth import (
     get_current_user,
     get_jwks_client,
 )
-from config.dependency_container import get_ensure_user_provisioned
-from controller.auth_route import router
-from controller.error_handlers import register_error_handlers
+from api.dependencies.container import get_ensure_user_provisioned
+from api.errors import register_error_handlers
+from api.routers.session import router
 from core.auth.application.provision_identity import ProvisionIdentity
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
@@ -37,8 +37,8 @@ def _client(repo: FakeAuthRepo | None = None) -> TestClient:
     app.include_router(router)
 
     fake_repo = repo or FakeAuthRepo()
-    app.dependency_overrides[get_ensure_user_provisioned] = (
-        lambda: ProvisionIdentity(fake_repo)
+    app.dependency_overrides[get_ensure_user_provisioned] = lambda: ProvisionIdentity(
+        fake_repo
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -153,9 +153,9 @@ def _session_openapi_schema():
     app = FastAPI()
     app.include_router(router)
     spec = app.openapi()
-    ref = spec["paths"]["/auth/session"]["post"]["responses"]["200"][
-        "content"
-    ]["application/json"]["schema"]["$ref"]
+    ref = spec["paths"]["/auth/session"]["post"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]["$ref"]
     name = ref.rsplit("/", 1)[-1]
     return spec, spec["components"]["schemas"][name]
 

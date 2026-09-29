@@ -3,8 +3,8 @@ import logging
 
 from fastapi.testclient import TestClient
 
-from controller.body_limit import MAX_REQUEST_BYTES
-from controller.logging_config import HealthAccessFilter, JsonFormatter
+from api.body_limit import MAX_REQUEST_BYTES
+from api.logging import HealthAccessFilter, JsonFormatter
 from main import create_app
 
 

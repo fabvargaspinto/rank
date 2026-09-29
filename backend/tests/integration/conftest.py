@@ -8,7 +8,7 @@ from config.crypto_setings import CryptoSettings
 from config.db_settings import DBSettings
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
-from db.db_client import DBClient
+from core.shared.infrastructure.supabase_client import DBClient
 from tests.integration.local_supabase import (
     configure_local_supabase_env,
     ensure_local_supabase_running,

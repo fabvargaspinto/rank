@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from api.dependencies.auth import CurrentUser, get_current_user
-from config.dependency_container import get_user_use_case
+from api.dependencies.container import get_user_use_case
 from core.user.application.get_user import GetUser
 from core.user.domain.user import User
 

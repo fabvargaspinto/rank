@@ -25,9 +25,8 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         request: Request,
         call_next: RequestResponseEndpoint,
     ) -> Response:
-        request_id = (
-            _parse_request_id(request.headers.get(REQUEST_ID_HEADER))
-            or str(uuid4())
+        request_id = _parse_request_id(request.headers.get(REQUEST_ID_HEADER)) or str(
+            uuid4()
         )
         request.state.request_id = request_id
         response = await call_next(request)

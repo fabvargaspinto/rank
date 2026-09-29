@@ -1,6 +1,7 @@
 from postgrest.exceptions import APIError
 
 from core.shared.infrastructure.postgres_error import is_unique_violation
+from core.shared.infrastructure.supabase_client import DBClient
 from core.user.domain.user import User
 from core.user.domain.user_error import (
     UsernameAlreadyTakenError,
@@ -13,7 +14,6 @@ from core.user.infrastructure.error_infrastructure import (
     UserUpdateError,
 )
 from core.user.infrastructure.user_mapper import UserMapper
-from db.db_client import DBClient
 
 USER_WITH_LINKS_SELECT = "*, user_links(*)"
 AUTH_USER_WITH_LINKS_SELECT = "users(*, user_links(*))"
@@ -50,9 +50,7 @@ class UserSupabaseRepo(UserRepository):
 
     def get_user_by_name(self, name: str) -> User | None:
         folded = name.strip().lower()
-        pattern = (
-            folded.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        )
+        pattern = folded.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         query = (
             self._db.table("users")
             .select(USER_WITH_LINKS_SELECT)
@@ -92,9 +90,7 @@ class UserSupabaseRepo(UserRepository):
             ).execute()
         except APIError as exc:
             if is_unique_violation(exc):
-                raise UsernameAlreadyTakenError(
-                    "Ese nombre ya está en uso"
-                ) from exc
+                raise UsernameAlreadyTakenError("Ese nombre ya está en uso") from exc
             if str(exc.code) == "P0002":
                 raise UserProfileNotFoundError("El usuario no existe") from exc
             raise UserUpdateError("Error al actualizar el usuario") from exc

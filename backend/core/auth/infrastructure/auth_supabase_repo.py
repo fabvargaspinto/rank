@@ -18,13 +18,12 @@ from core.auth.infrastructure.error_infrastructure import (
     AuthLookupError,
 )
 from core.shared.infrastructure.postgres_error import is_unique_violation
+from core.shared.infrastructure.supabase_client import DBClient
 from core.user.domain.user import User
 from core.user.infrastructure.user_mapper import UserMapper
-from db.db_client import DBClient
 
 
 class AuthSupabaseRepo(AuthRepository):
-
     def __init__(
         self,
         db_client: DBClient,
@@ -43,7 +42,6 @@ class AuthSupabaseRepo(AuthRepository):
         row = self._mapper.to_row(auth)
         user_row = self._user_mapper.to_row(user)
 
-
         try:
             self._db.rpc(
                 "create_user_and_auth",
@@ -58,22 +56,14 @@ class AuthSupabaseRepo(AuthRepository):
             ).execute()
         except APIError as exc:
             if is_unique_violation(exc):
-                raise IdentityAlreadyExistsError(
-                    "La identidad ya existe"
-                ) from exc
-            raise AuthCreationError(
-                "Error al guardar el usuario"
-            ) from exc
+                raise IdentityAlreadyExistsError("La identidad ya existe") from exc
+            raise AuthCreationError("Error al guardar el usuario") from exc
         except Exception as exc:
-            raise AuthCreationError(
-                "Error al guardar el usuario"
-            ) from exc
+            raise AuthCreationError("Error al guardar el usuario") from exc
 
         persisted = self.find_by_id(auth.id.value)
         if persisted is None:
-            raise AuthCreationError(
-                "Error al guardar el usuario"
-            )
+            raise AuthCreationError("Error al guardar el usuario")
 
         return persisted
 
@@ -89,10 +79,12 @@ class AuthSupabaseRepo(AuthRepository):
         provider: AuthProvider,
         provider_id: str,
     ) -> Auth | None:
-        return self._find_auth({
-            "provider": provider.value,
-            "provider_id": provider_id,
-        })
+        return self._find_auth(
+            {
+                "provider": provider.value,
+                "provider_id": provider_id,
+            }
+        )
 
     def get_identity(self, auth_id: str) -> AuthIdentity | None:
         try:
@@ -106,11 +98,7 @@ class AuthSupabaseRepo(AuthRepository):
 
         identities = user.identities or []
         google = next(
-            (
-                identity
-                for identity in identities
-                if identity.provider == "google"
-            ),
+            (identity for identity in identities if identity.provider == "google"),
             None,
         )
         if google is not None:

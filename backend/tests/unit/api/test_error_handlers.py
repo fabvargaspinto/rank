@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from controller.error_handlers import register_error_handlers
-from controller.request_id import REQUEST_ID_HEADER, register_request_id
+from api.errors import register_error_handlers
+from api.request_id import REQUEST_ID_HEADER, register_request_id
 from core.auth.application.application_error import (
     AuthAlreadyExistsError,
     EmailAlreadyExistsError,

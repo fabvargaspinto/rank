@@ -7,7 +7,7 @@ from core.comment.infrastructure.error_infrastructure import (
     CommentDeletionError,
     CommentLookupError,
 )
-from db.db_client import DBClient
+from core.shared.infrastructure.supabase_client import DBClient
 
 
 class CommentSupabaseRepo(CommentRepository):

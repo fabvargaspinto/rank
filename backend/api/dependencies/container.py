@@ -9,6 +9,7 @@ from core.comment.application.create_comment import CreateComment
 from core.comment.application.delete_comment import DeleteComment
 from core.comment.application.get_comments_by_user import GetCommentsByUser
 from core.comment.infrastructure.comment_supabase_repo import CommentSupabaseRepo
+from core.shared.infrastructure.supabase_client import DBClient
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user import GetUser
@@ -17,7 +18,6 @@ from core.user.application.update_user import UpdateUser
 from core.user.application.upload_avatar import UploadAvatar
 from core.user.infrastructure.avatar_supabase_storage import AvatarSupabaseStorage
 from core.user.infrastructure.user_supabase_repo import UserSupabaseRepo
-from db.db_client import DBClient
 
 
 class DependencyContainer:

@@ -9,8 +9,8 @@ from core.auth.domain.auth_error import IdentityAlreadyExistsError
 from core.auth.domain.auth_provider import AuthProvider
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
+from core.shared.infrastructure.supabase_client import DBClient
 from core.user.domain.user import User
-from db.db_client import DBClient
 
 _PASSWORD = "Password123"
 
@@ -52,11 +52,13 @@ def _unique_email(prefix: str) -> str:
 
 
 def _create_idp_user(db_client: DBClient, email: str) -> str:
-    created = db_client.get_db().auth.admin.create_user({
-        "email": email,
-        "password": _PASSWORD,
-        "email_confirm": True,
-    })
+    created = db_client.get_db().auth.admin.create_user(
+        {
+            "email": email,
+            "password": _PASSWORD,
+            "email_confirm": True,
+        }
+    )
     assert created.user is not None
     return created.user.id
 
@@ -85,26 +87,20 @@ def test_save_creates_user_and_auth_via_rpc(
 
     supabase = db_client.get_db()
     auth_row = (
-        supabase.table("auth")
-        .select("id,user_id,provider")
-        .eq("id", auth_id)
-        .execute()
+        supabase.table("auth").select("id,user_id,provider").eq("id", auth_id).execute()
     )
-    user_row = (
-        supabase.table("users")
-        .select("id")
-        .eq("id", user.id.value)
-        .execute()
-    )
+    user_row = supabase.table("users").select("id").eq("id", user.id.value).execute()
 
     assert saved.id.value == auth_id
     assert saved.user_id.value == user.id.value
     assert saved.provider_method.provider is AuthProvider.EMAIL
-    assert auth_row.data == [{
-        "id": auth_id,
-        "user_id": user.id.value,
-        "provider": "EMAIL",
-    }]
+    assert auth_row.data == [
+        {
+            "id": auth_id,
+            "user_id": user.id.value,
+            "provider": "EMAIL",
+        }
+    ]
     assert user_row.data == [{"id": user.id.value}]
 
 

@@ -61,11 +61,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "api/**" = ["B008"]
-"controller/**" = ["B008"]
 "tests/**" = ["B008"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["api", "config", "controller", "core", "db", "tests"]
+known-first-party = ["api", "config", "core", "tests"]
 
 [tool.importlinter]
 root_packages = ["core"]
@@ -120,7 +119,7 @@ ignore_imports = [
 
 [tool.mypy]
 python_version = "3.13"
-files = ["api", "config", "controller", "core", "db", "main.py"]
+files = ["api", "config", "core", "main.py"]
 mypy_path = "."
 explicit_package_bases = true
 pretty = true

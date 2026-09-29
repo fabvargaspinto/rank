@@ -11,15 +11,17 @@ from api.dependencies.auth import (
     get_current_user,
     get_jwks_client,
 )
-from config.dependency_container import (
+from api.dependencies.container import (
     get_delete_account_use_case,
     get_public_profile_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
     get_user_use_case,
 )
-from controller.error_handlers import register_error_handlers
-from controller.user_route import get_supabase_url, router
+from api.dependencies.supabase import get_supabase_url
+from api.errors import register_error_handlers
+from api.routers.me import router as me_router
+from api.routers.profiles import router as profiles_router
 from core.comment.application.get_comments_by_user import GetCommentsByUser
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_public_profile import GetPublicProfile
@@ -59,7 +61,8 @@ def _named_user() -> User:
 def _client(repo: FakeUserRepo | None = None) -> TestClient:
     app = FastAPI()
     register_error_handlers(app)
-    app.include_router(router)
+    app.include_router(me_router)
+    app.include_router(profiles_router)
 
     fake_repo = repo or FakeUserRepo()
     app.dependency_overrides[get_user_use_case] = lambda: GetUser(fake_repo)
@@ -428,8 +431,8 @@ class TestDeleteAccountRoute:
             auth_id=AUTH_ID,
             email="user@example.com",
         )
-        app_client.app.dependency_overrides[get_delete_account_use_case] = (
-            lambda: DeleteAccount(repo, avatars, auth)
+        app_client.app.dependency_overrides[get_delete_account_use_case] = lambda: (
+            DeleteAccount(repo, avatars, auth)
         )
 
         response = app_client.delete("/me")

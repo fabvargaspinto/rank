@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from controller.request_id import REQUEST_ID_HEADER
+from api.request_id import REQUEST_ID_HEADER
 from main import app
 
 

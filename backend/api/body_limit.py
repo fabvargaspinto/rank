@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from controller.request_id import REQUEST_ID_HEADER, get_request_id
+from api.request_id import REQUEST_ID_HEADER, get_request_id
 
 MAX_REQUEST_BYTES = 3 * 1024 * 1024
 

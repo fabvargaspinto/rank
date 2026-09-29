@@ -2,16 +2,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from api.body_limit import register_body_limit
+from api.errors import register_error_handlers
+from api.logging import configure_logging
+from api.rate_limit import register_rate_limit
+from api.request_id import register_request_id
+from api.routers.health import router as health_router
+from api.routers.me import router as me_router
+from api.routers.profiles import router as profiles_router
+from api.routers.session import router as session_router
 from config.app_settings import AppSettings
-from controller.auth_route import router as auth_router
-from controller.body_limit import register_body_limit
-from controller.comment_route import router as comment_router
-from controller.error_handlers import register_error_handlers
-from controller.health_route import router as health_router
-from controller.logging_config import configure_logging
-from controller.rate_limit import register_rate_limit
-from controller.request_id import register_request_id
-from controller.user_route import router as user_router
 
 
 @asynccontextmanager
@@ -36,9 +36,9 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     register_rate_limit(app)
     app.include_router(health_router)
-    app.include_router(auth_router)
-    app.include_router(user_router)
-    app.include_router(comment_router)
+    app.include_router(session_router)
+    app.include_router(me_router)
+    app.include_router(profiles_router)
     return app
 
 

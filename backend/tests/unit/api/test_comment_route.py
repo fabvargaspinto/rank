@@ -10,15 +10,16 @@ from api.dependencies.auth import (
     get_current_user,
     get_jwks_client,
 )
-from config.dependency_container import (
+from api.dependencies.container import (
     get_comments_by_user_use_case,
     get_create_comment_use_case,
     get_delete_comment_use_case,
     get_user_by_name_use_case,
     get_user_use_case,
 )
-from controller.comment_route import router
-from controller.error_handlers import register_error_handlers
+from api.errors import register_error_handlers
+from api.routers.me import router as me_router
+from api.routers.profiles import router as profiles_router
 from core.comment.application.create_comment import CreateComment
 from core.comment.application.delete_comment import DeleteComment
 from core.comment.application.get_comments_by_user import GetCommentsByUser
@@ -61,7 +62,8 @@ def _client(
 ) -> TestClient:
     app = FastAPI()
     register_error_handlers(app)
-    app.include_router(router)
+    app.include_router(me_router)
+    app.include_router(profiles_router)
 
     fake_user_repo = user_repo or FakeUserRepo()
     fake_comment_repo = comment_repo or FakeCommentRepo()
@@ -72,11 +74,11 @@ def _client(
     app.dependency_overrides[get_create_comment_use_case] = lambda: CreateComment(
         fake_comment_repo,
     )
-    app.dependency_overrides[get_comments_by_user_use_case] = (
-        lambda: GetCommentsByUser(fake_user_repo, fake_comment_repo)
+    app.dependency_overrides[get_comments_by_user_use_case] = lambda: GetCommentsByUser(
+        fake_user_repo, fake_comment_repo
     )
-    app.dependency_overrides[get_delete_comment_use_case] = (
-        lambda: DeleteComment(fake_comment_repo)
+    app.dependency_overrides[get_delete_comment_use_case] = lambda: DeleteComment(
+        fake_comment_repo
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -245,9 +247,7 @@ class TestDeleteCommentRoute:
             email="user@example.com",
         )
 
-        response = app_client.delete(
-            f"/me/posts/{comment.id.value}"
-        )
+        response = app_client.delete(f"/me/posts/{comment.id.value}")
 
         assert response.status_code == 204
         assert comment_repo.comments == []
@@ -265,9 +265,7 @@ class TestDeleteCommentRoute:
             email="user@example.com",
         )
 
-        response = app_client.delete(
-            f"/me/posts/{comment.id.value}"
-        )
+        response = app_client.delete(f"/me/posts/{comment.id.value}")
 
         assert response.status_code == 404
         assert comment_repo.comments == [comment]

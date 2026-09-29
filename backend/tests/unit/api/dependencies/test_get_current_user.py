@@ -14,7 +14,7 @@ from api.dependencies.auth import (
     get_current_user,
     get_jwks_client,
 )
-from controller.error_handlers import register_error_handlers
+from api.errors import register_error_handlers
 
 ISSUER = "https://example.supabase.co/auth/v1"
 AUDIENCE = "authenticated"

@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
-from controller.request_id import REQUEST_ID_HEADER, get_request_id
+from api.request_id import REQUEST_ID_HEADER, get_request_id
 from core.shared.application.application_error import ApplicationError
 from core.shared.domain.domain_error import DomainError
 from core.shared.infrastructure.infrastructure_error import InfrastructureError
