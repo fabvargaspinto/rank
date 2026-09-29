@@ -1,3 +1,4 @@
+import re
 from datetime import UTC, datetime
 
 from core.comment.domain.comment import Comment
@@ -36,8 +37,9 @@ class _Query:
         self._table = table
         self._name = name
         self._filters: dict = {}
-        self._order_desc = False
-        self._range: tuple[int, int] | None = None
+        self._orders: list[tuple[str, bool]] = []
+        self._limit: int | None = None
+        self._or = ""
         self._inserted = None
 
     def select(self, *_args, **_kwargs):
@@ -48,11 +50,15 @@ class _Query:
         return self
 
     def order(self, column, desc=False):
-        self._order_desc = desc and column == "created_at"
+        self._orders.append((column, desc))
         return self
 
-    def range(self, start, end):
-        self._range = (start, end)
+    def limit(self, count):
+        self._limit = count
+        return self
+
+    def or_(self, filters):
+        self._or = filters
         return self
 
     def insert(self, row):
@@ -70,11 +76,26 @@ class _Query:
             for row in self._table.data_for(self._name)
             if all(row.get(column) == value for column, value in self._filters.items())
         ]
-        if self._order_desc:
-            data = sorted(data, key=lambda row: row["created_at"], reverse=True)
-        if self._range is not None:
-            start, end = self._range
-            data = data[start : end + 1]
+        if self._orders:
+            data = sorted(
+                data,
+                key=lambda row: tuple(row[column] for column, _desc in self._orders),
+                reverse=all(desc for _column, desc in self._orders),
+            )
+        if self._or:
+            match = re.search(
+                r'created_at\.lt\."([^"]+)".*id\.lt\.([0-9a-fA-F-]+)',
+                self._or,
+            )
+            if match:
+                position = (match.group(1), match.group(2))
+                data = [
+                    row
+                    for row in data
+                    if (row["created_at"], row["id"]) < position
+                ]
+        if self._limit is not None:
+            data = data[: self._limit]
         return _Result(data)
 
 
@@ -140,7 +161,7 @@ class TestCommentSupabaseRepoGetByUser:
             )
         )
 
-        comments = repo.get_comments_by_user_id(USER_ID, limit=10, offset=0)
+        comments = repo.get_comments_by_user_id(USER_ID, limit=10)
 
         assert [comment.text.value for comment in comments] == ["Nuevo", "Viejo"]
 
@@ -162,7 +183,12 @@ class TestCommentSupabaseRepoGetByUser:
             )
         )
 
-        page = repo.get_comments_by_user_id(USER_ID, limit=1, offset=1)
+        first = repo.get_comments_by_user_id(USER_ID, limit=1)
+        cursor = type("Cursor", (), {
+            "created_at": first[0].created_at.to_isoformat(),
+            "id": first[0].id.value,
+        })()
+        page = repo.get_comments_by_user_id(USER_ID, limit=1, cursor=cursor)
 
         assert len(page) == 1
         assert page[0].text.value == "Segundo"
@@ -181,7 +207,7 @@ class TestCommentSupabaseRepoGetByUser:
             )
         )
 
-        comments = repo.get_comments_by_user_id(USER_ID, limit=10, offset=0)
+        comments = repo.get_comments_by_user_id(USER_ID, limit=10)
 
         assert len(comments) == 1
         assert comments[0].text.value == "Mio"
@@ -189,4 +215,4 @@ class TestCommentSupabaseRepoGetByUser:
     def test_get_comments_by_user_id_returns_empty_when_limit_is_zero(self):
         repo = CommentSupabaseRepo(_FakeDBClient([_comment_row()]))
 
-        assert repo.get_comments_by_user_id(USER_ID, limit=0, offset=0) == []
+        assert repo.get_comments_by_user_id(USER_ID, limit=0) == []

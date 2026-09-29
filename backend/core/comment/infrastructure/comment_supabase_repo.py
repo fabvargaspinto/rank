@@ -1,4 +1,5 @@
 from core.comment.domain.comment import Comment
+from core.comment.domain.comment_page import CommentCursor
 from core.comment.domain.comment_repo import CommentRepository
 from core.comment.infrastructure.comment_mapper import CommentMapper
 from core.comment.infrastructure.error_infrastructure import (
@@ -32,23 +33,23 @@ class CommentSupabaseRepo(CommentRepository):
         self,
         user_id: str,
         limit: int,
-        offset: int,
+        cursor: CommentCursor | None = None,
     ) -> list[Comment]:
         if limit <= 0:
             return []
 
-        start = max(offset, 0)
-        end = start + limit - 1
-
         try:
-            response = (
+            query = (
                 self._db.table("comments")
                 .select("*")
                 .eq("user_id", user_id)
                 .order("created_at", desc=True)
-                .range(start, end)
-                .execute()
+                .order("id", desc=True)
+                .limit(limit)
             )
+            if cursor is not None:
+                query = query.or_(_cursor_filter(cursor))
+            response = query.execute()
         except Exception as exc:
             raise CommentLookupError("Error al buscar los comentarios") from exc
 
@@ -85,3 +86,11 @@ class CommentSupabaseRepo(CommentRepository):
             self._db.table("comments").delete().eq("id", comment_id).execute()
         except Exception as exc:
             raise CommentDeletionError("Error al borrar el comentario") from exc
+
+
+def _cursor_filter(cursor: CommentCursor) -> str:
+    created_at = cursor.created_at.replace('"', "")
+    return (
+        f'created_at.lt."{created_at}",'
+        f'and(created_at.eq."{created_at}",id.lt.{cursor.id})'
+    )

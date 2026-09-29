@@ -40,8 +40,7 @@ class UserLinkType(StrEnum):
         return ()
 
     def matches(self, host: str) -> bool:
-        if host in self.hosts():
-            return True
+        return host in self.hosts()
 
     def is_default(self) -> bool:
         return self is UserLinkType.DEFAULT

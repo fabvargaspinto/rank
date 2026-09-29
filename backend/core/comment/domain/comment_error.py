@@ -7,3 +7,7 @@ class InvalidCommentTextError(DomainError):
 
 class InvalidCommentLinkError(DomainError):
     pass
+
+
+class InvalidCommentCursorError(DomainError):
+    pass

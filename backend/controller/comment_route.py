@@ -1,8 +1,10 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
+from api.dependencies.current_profile import get_current_profile
 from api.schemas.auth import ErrorResponse
 from api.schemas.comment import (
     CommentListResponse,
@@ -22,7 +24,9 @@ from core.comment.application.get_comments_by_user import (
     GetCommentsByUser,
 )
 from core.comment.domain.comment import Comment
+from core.comment.domain.comment_page import CommentPage
 from core.user.application.application_error import UserNotFoundError
+from core.user.domain.user import User
 
 router = APIRouter()
 
@@ -49,13 +53,13 @@ def _to_response(comment: Comment) -> CommentResponse:
     },
 )
 def list_comments_by_user(
-    user_id: str,
+    user_id: UUID,
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    cursor: Annotated[str | None, Query()] = None,
     use_case: GetCommentsByUser = Depends(get_comments_by_user_use_case),
 ) -> CommentListResponse:
-    comments = use_case.execute(user_id, limit=limit, offset=offset)
-    return CommentListResponse(items=[_to_response(comment) for comment in comments])
+    page = use_case.execute(str(user_id), limit=limit, cursor=cursor)
+    return _page_response(page)
 
 
 @router.post(
@@ -81,6 +85,7 @@ def create_comment(
     auth_id: str,
     body: CreateCommentRequest,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    profile: Annotated[User, Depends(get_current_profile)],
     use_case: CreateComment = Depends(get_create_comment_use_case),
 ) -> CommentResponse:
     if auth_id != current_user.auth_id:
@@ -88,7 +93,7 @@ def create_comment(
 
     return _to_response(
         use_case.execute(
-            auth_id,
+            profile,
             text=body.text,
             link=body.link,
         )
@@ -111,12 +116,20 @@ def create_comment(
 )
 def delete_comment(
     auth_id: str,
-    comment_id: str,
+    comment_id: UUID,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    profile: Annotated[User, Depends(get_current_profile)],
     use_case: DeleteComment = Depends(get_delete_comment_use_case),
 ) -> Response:
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
 
-    use_case.execute(auth_id, comment_id)
+    use_case.execute(profile, str(comment_id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _page_response(page: CommentPage) -> CommentListResponse:
+    return CommentListResponse(
+        items=[_to_response(comment) for comment in page.items],
+        next_cursor=page.next_cursor,
+    )

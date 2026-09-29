@@ -441,7 +441,7 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
 
 ### ✅ 5.4.2 Hacer el start para name user y display name
 
-### 5.5 Repositorios y puertos
+### ✅ 5.5 Repositorios y puertos
 
 1. **La actualización del perfil no es atómica.** `UserSupabaseRepo.update_user` (`user_supabase_repo.py:50-92`) hace cuatro llamadas HTTP separadas: `UPDATE users`, `DELETE user_links`, `INSERT user_links` y un `SELECT` final. Si el `INSERT` falla después del `DELETE`, **el usuario pierde todos sus links**. Sumando las dos lecturas del caso de uso, un PATCH de perfil hace seis viajes a Supabase. Arreglo: una función Postgres `update_profile(p_user_id, p_name, ..., p_links jsonb)` llamada por RPC, igual que se hizo con `create_user_and_auth`.
 2. **Los errores del contrato del puerto viven en Application.** `UserSupabaseRepo` lanza `UserNameAlreadyExistsError` importándolo de Application (`user_supabase_repo.py:4`), y `AvatarSupabaseStorage` importa `ALLOWED_AVATAR_TYPES` de Application (`avatar_supabase_storage.py:3`). En Auth ya se resolvió bien: `IdentityAlreadyExistsError` es parte del puerto y vive en Domain. Aplicar lo mismo: `UsernameAlreadyTakenError` en `core/user/domain/`.
@@ -450,7 +450,7 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
 5. **Mensajes de error engañosos.** `_find_auth` lanza `AuthCreationError("Error al buscar el usuario")` en una búsqueda (`auth_supabase_repo.py:145-147` y `:155`). Separar un `AuthLookupError`.
 6. **Fallos de descifrado sin traducir.** Si `EmailCrypto.decrypt` falla (clave rotada o dato corrupto), `cryptography` lanza `InvalidTag`, que no es `InfrastructureError` y termina en un 500 sin formato JSON ni log propio.
 
-### 5.6 Casos de uso
+### ✅ 5.6 Casos de uso
 
 1. **Todos resuelven `auth_id` a `User` por su cuenta.** `GetUser`, `UpdateUser`, `UploadAvatar` y `CreateComment` empiezan igual: `get_user_by_auth_id` y, si no existe, `UserNotFoundError`. Opciones, de menor a mayor esfuerzo:
    - Una dependencia de FastAPI `get_current_profile` que resuelve el `User` una sola vez y lo pasa al caso de uso.

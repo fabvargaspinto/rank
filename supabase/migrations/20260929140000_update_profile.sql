@@ -16,6 +16,7 @@ ALTER TABLE public.user_links
             'kick',
             'facebook',
             'x',
+            'default'
         )
     );
 

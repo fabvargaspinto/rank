@@ -24,7 +24,6 @@ export default async function TreePage() {
 
     const comments = await getCommentsAction(result.data.id, {
         limit: COMMENTS_PAGE_SIZE,
-        offset: 0,
     });
 
     return (
@@ -33,6 +32,7 @@ export default async function TreePage() {
             <Tree
                 user={result.data}
                 initialComments={comments.data?.items ?? []}
+                initialNextCursor={comments.data?.next_cursor ?? null}
                 editable
             />
         </PageWrapper>

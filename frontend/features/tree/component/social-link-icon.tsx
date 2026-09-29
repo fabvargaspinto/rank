@@ -7,9 +7,6 @@ export type SocialLinkType =
     | "kick"
     | "facebook"
     | "x"
-    | "soundcloud"
-    | "bandcamp"
-    | "apple_music"
     | "default";
 
 const LABELS: Record<SocialLinkType, string> = {
@@ -21,9 +18,6 @@ const LABELS: Record<SocialLinkType, string> = {
     kick: "Kick",
     facebook: "Facebook",
     x: "X",
-    soundcloud: "SoundCloud",
-    bandcamp: "Bandcamp",
-    apple_music: "Apple Music",
     default: "Link",
 };
 
@@ -112,21 +106,6 @@ function iconPath(type: SocialLinkType) {
                     fillRule="evenodd"
                     d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"
                 />
-            );
-        case "soundcloud":
-            return (
-                <path d="M8.2 15.2V9.4h1.3v5.8H8.2Zm2.1.6V7.6h1.3v8.2h-1.3Zm2.1.7V6.2h1.3v10.3h-1.3Zm2.1.6V5h1.3v11.5h-1.3Zm2.2.4c.2-1.6 1.5-2.8 3.1-2.8 1.7 0 3.1 1.4 3.1 3.1s-1.4 3.1-3.1 3.1H7.4v-1.6h9.2c.8 0 1.5-.7 1.5-1.5s-.7-1.5-1.5-1.5c-.7 0-1.3.5-1.5 1.2h-1.3Z" />
-            );
-        case "bandcamp":
-            return (
-                <path
-                    fillRule="evenodd"
-                    d="M12 2.2a9.8 9.8 0 1 0 0 19.6 9.8 9.8 0 0 0 0-19.6Zm0 3.2a6.6 6.6 0 1 1 0 13.2 6.6 6.6 0 0 1 0-13.2Z"
-                />
-            );
-        case "apple_music":
-            return (
-                <path d="M9 18.2a2.6 2.6 0 1 1-1.7-2.45V6.2l10-2v9.55a2.6 2.6 0 1 1-1.3 2.25V6.7l-7 1.4v7.35c.45.42.73.99.73 1.75Z" />
             );
         default:
             return (

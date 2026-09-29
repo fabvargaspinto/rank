@@ -2,9 +2,7 @@ from functools import lru_cache
 
 from config.crypto_setings import CryptoSettings
 from config.db_settings import DBSettings
-from core.auth.application.ensure_user_provisioned import EnsureUserProvisioned
-from core.auth.application.provision_oauth_user import ProvisionOAuthUser
-from core.auth.application.register_with_email import RegisterWithEmail
+from core.auth.application.provision_identity import ProvisionIdentity
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.comment.application.create_comment import CreateComment
@@ -12,6 +10,7 @@ from core.comment.application.delete_comment import DeleteComment
 from core.comment.application.get_comments_by_user import GetCommentsByUser
 from core.comment.infrastructure.comment_supabase_repo import CommentSupabaseRepo
 from core.user.application.delete_account import DeleteAccount
+from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
@@ -31,21 +30,21 @@ class DependencyContainer:
         self.user_repository = UserSupabaseRepo(self.db_client)
         self.comment_repository = CommentSupabaseRepo(self.db_client)
         self.avatar_storage = AvatarSupabaseStorage(self.db_client)
-        self.register_with_email = RegisterWithEmail(self.auth_repository)
-        self.provision_oauth_user = ProvisionOAuthUser(self.auth_repository)
 
-    def ensure_user_provisioned(self) -> EnsureUserProvisioned:
-        return EnsureUserProvisioned(
-            self.auth_repository,
-            self.register_with_email,
-            self.provision_oauth_user,
-        )
+    def provision_identity(self) -> ProvisionIdentity:
+        return ProvisionIdentity(self.auth_repository)
 
     def get_user(self) -> GetUser:
         return GetUser(self.user_repository)
 
     def get_user_by_name(self) -> GetUserByName:
         return GetUserByName(self.user_repository)
+
+    def get_public_profile(self) -> GetPublicProfile:
+        return GetPublicProfile(
+            self.get_user_by_name(),
+            self.get_comments_by_user(),
+        )
 
     def update_user(self) -> UpdateUser:
         return UpdateUser(self.user_repository)
@@ -54,13 +53,13 @@ class DependencyContainer:
         return UploadAvatar(self.user_repository, self.avatar_storage)
 
     def create_comment(self) -> CreateComment:
-        return CreateComment(self.user_repository, self.comment_repository)
+        return CreateComment(self.comment_repository)
 
     def get_comments_by_user(self) -> GetCommentsByUser:
         return GetCommentsByUser(self.user_repository, self.comment_repository)
 
     def delete_comment(self) -> DeleteComment:
-        return DeleteComment(self.user_repository, self.comment_repository)
+        return DeleteComment(self.comment_repository)
 
     def delete_account(self) -> DeleteAccount:
         return DeleteAccount(
@@ -75,8 +74,8 @@ def get_dependency_container() -> DependencyContainer:
     return DependencyContainer()
 
 
-def get_ensure_user_provisioned() -> EnsureUserProvisioned:
-    return get_dependency_container().ensure_user_provisioned()
+def get_ensure_user_provisioned() -> ProvisionIdentity:
+    return get_dependency_container().provision_identity()
 
 
 def get_user_use_case() -> GetUser:
@@ -85,6 +84,10 @@ def get_user_use_case() -> GetUser:
 
 def get_user_by_name_use_case() -> GetUserByName:
     return get_dependency_container().get_user_by_name()
+
+
+def get_public_profile_use_case() -> GetPublicProfile:
+    return get_dependency_container().get_public_profile()
 
 
 def get_update_user_use_case() -> UpdateUser:

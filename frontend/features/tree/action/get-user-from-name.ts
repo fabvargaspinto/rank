@@ -2,13 +2,14 @@ import { cache } from "react";
 import {
     fetchUserByName,
     type FetchDataResponse,
-    type UserResponse,
+    type PublicProfileResponse,
 } from "@/lib/fetch_data";
+import { COMMENTS_PAGE_SIZE } from "../comment-constants";
 
 const getUserFromName = cache(
     async function getUserFromName(
         name: string,
-    ): Promise<FetchDataResponse<UserResponse>> {
+    ): Promise<FetchDataResponse<PublicProfileResponse>> {
         const username = name?.trim() ?? "";
 
         if (!username) {
@@ -20,7 +21,7 @@ const getUserFromName = cache(
             };
         }
 
-        return fetchUserByName(username);
+        return fetchUserByName(username, { limit: COMMENTS_PAGE_SIZE });
     },
 );
 

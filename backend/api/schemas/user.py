@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.schemas.comment import CommentResponse
+
 
 class UserLinkResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -19,6 +21,11 @@ class UserResponse(BaseModel):
     avatar: str | None = None
     description: str | None = None
     links: list[UserLinkResponse] = Field(default_factory=list)
+
+
+class PublicProfileResponse(UserResponse):
+    comments: list[CommentResponse] = Field(default_factory=list)
+    next_cursor: str | None = None
 
 
 class UpdateUserLinkRequest(BaseModel):

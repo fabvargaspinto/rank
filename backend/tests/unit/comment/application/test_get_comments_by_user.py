@@ -11,6 +11,7 @@ from core.comment.domain.comment import Comment
 from core.comment.domain.comment_created_at import CommentCreatedAt
 from core.comment.domain.comment_id import CommentId
 from core.comment.domain.comment_text import CommentText
+from core.shared.domain.domain_error import InvalidUUIDError
 from core.shared.domain.user_id import UserId
 from core.user.application.application_error import UserNotFoundError
 from core.user.domain.user import User
@@ -51,9 +52,9 @@ class TestGetCommentsByUser:
         self.comment_repo.create_comment(older)
         self.comment_repo.create_comment(newer)
 
-        comments = self.use_case.execute(self.user.id.value)
+        page = self.use_case.execute(self.user.id.value)
 
-        assert [comment.text.value for comment in comments] == ["Nuevo", "Viejo"]
+        assert [comment.text.value for comment in page.items] == ["Nuevo", "Viejo"]
 
     def test_does_not_return_other_users_comments(self):
         own = _comment(self.user.id.value, "Mio")
@@ -61,10 +62,10 @@ class TestGetCommentsByUser:
         self.comment_repo.create_comment(own)
         self.comment_repo.create_comment(other)
 
-        comments = self.use_case.execute(self.user.id.value)
+        page = self.use_case.execute(self.user.id.value)
 
-        assert len(comments) == 1
-        assert comments[0].text.value == "Mio"
+        assert len(page.items) == 1
+        assert page.items[0].text.value == "Mio"
 
     def test_paginates_comments(self):
         first = _comment(self.user.id.value, "Primero", minutes_ago=0)
@@ -72,10 +73,18 @@ class TestGetCommentsByUser:
         self.comment_repo.create_comment(first)
         self.comment_repo.create_comment(second)
 
-        page = self.use_case.execute(self.user.id.value, limit=1, offset=1)
+        page = self.use_case.execute(self.user.id.value, limit=1)
+        assert page.next_cursor is not None
 
-        assert len(page) == 1
-        assert page[0].text.value == "Segundo"
+        next_page = self.use_case.execute(
+            self.user.id.value,
+            limit=1,
+            cursor=page.next_cursor,
+        )
+
+        assert len(next_page.items) == 1
+        assert next_page.items[0].text.value == "Segundo"
+        assert next_page.next_cursor is None
 
     def test_uses_default_limit(self):
         for index in range(DEFAULT_LIMIT + 5):
@@ -87,9 +96,10 @@ class TestGetCommentsByUser:
                 )
             )
 
-        comments = self.use_case.execute(self.user.id.value)
+        page = self.use_case.execute(self.user.id.value)
 
-        assert len(comments) == DEFAULT_LIMIT
+        assert len(page.items) == DEFAULT_LIMIT
+        assert page.next_cursor is not None
 
     def test_caps_limit_at_max(self):
         for index in range(MAX_LIMIT + 5):
@@ -101,13 +111,17 @@ class TestGetCommentsByUser:
                 )
             )
 
-        comments = self.use_case.execute(
+        page = self.use_case.execute(
             self.user.id.value,
             limit=MAX_LIMIT + 100,
         )
 
-        assert len(comments) == MAX_LIMIT
+        assert len(page.items) == MAX_LIMIT
 
     def test_raises_when_user_is_missing(self):
         with pytest.raises(UserNotFoundError, match="El usuario no existe"):
             self.use_case.execute(USER_ID)
+
+    def test_rejects_an_id_that_is_not_a_uuid(self):
+        with pytest.raises(InvalidUUIDError):
+            self.use_case.execute("not-a-uuid")

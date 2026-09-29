@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "cryptography>=50.0.1",
     "fastapi[standard]>=0.141.1",
+    "pillow>=12.3.0",
     "pydantic-settings>=2.15.0",
     "pyjwt[crypto]>=2.13.0",
     "python-dotenv>=1.2.3",
@@ -102,17 +103,16 @@ modules = ["core.auth", "core.user", "core.comment"]
 ignore_imports = [
     # El aprovisionamiento crea Auth y User en la misma transacción.
     "core.auth.domain.auth_repo -> core.user.domain.user",
-    "core.auth.application.register_with_email -> core.user.domain.user",
-    "core.auth.application.provision_oauth_user -> core.user.domain.user",
+    "core.auth.application.provision_identity -> core.user.domain.user",
     "core.auth.infrastructure.auth_supabase_repo -> core.user.domain.user",
     "core.auth.infrastructure.auth_supabase_repo -> core.user.infrastructure.user_mapper",
     # Comment resuelve el autor con el repositorio de user.
-    "core.comment.application.create_comment -> core.user.application.application_error",
-    "core.comment.application.create_comment -> core.user.domain.user_repo",
+    "core.comment.application.create_comment -> core.user.domain.user",
     "core.comment.application.get_comments_by_user -> core.user.application.application_error",
     "core.comment.application.get_comments_by_user -> core.user.domain.user_repo",
-    "core.comment.application.delete_comment -> core.user.application.application_error",
-    "core.comment.application.delete_comment -> core.user.domain.user_repo",
+    "core.comment.application.delete_comment -> core.user.domain.user",
+    "core.user.application.get_public_profile -> core.comment.application.get_comments_by_user",
+    "core.user.application.get_public_profile -> core.comment.domain.comment",
     # Borrar la cuenta también borra la identidad.
     "core.user.application.delete_account -> core.auth.domain.auth_repo",
 ]

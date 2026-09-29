@@ -22,3 +22,4 @@ class CommentListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[CommentResponse] = Field(default_factory=list)
+    next_cursor: str | None = None

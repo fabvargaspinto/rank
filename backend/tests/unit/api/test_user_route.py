@@ -1,5 +1,8 @@
+from io import BytesIO
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from api.dependencies.auth import (
     AuthJwtSettings,
@@ -10,14 +13,16 @@ from api.dependencies.auth import (
 )
 from config.dependency_container import (
     get_delete_account_use_case,
+    get_public_profile_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
-    get_user_by_name_use_case,
     get_user_use_case,
 )
 from controller.error_handlers import register_error_handlers
 from controller.user_route import get_supabase_url, router
+from core.comment.application.get_comments_by_user import GetCommentsByUser
 from core.user.application.delete_account import DeleteAccount
+from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user import GetUser
 from core.user.application.get_user_by_name import GetUserByName
 from core.user.application.update_user import UpdateUser
@@ -25,6 +30,7 @@ from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import User
 from core.user.infrastructure.avatar_url import public_avatar_url
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
+from tests.unit.comment.application.fake_comment_repo import FakeCommentRepo
 from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
@@ -58,8 +64,9 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
 
     fake_repo = repo or FakeUserRepo()
     app.dependency_overrides[get_user_use_case] = lambda: GetUser(fake_repo)
-    app.dependency_overrides[get_user_by_name_use_case] = lambda: GetUserByName(
-        fake_repo
+    app.dependency_overrides[get_public_profile_use_case] = lambda: GetPublicProfile(
+        GetUserByName(fake_repo),
+        GetCommentsByUser(fake_repo, FakeCommentRepo()),
     )
     app.dependency_overrides[get_update_user_use_case] = lambda: UpdateUser(fake_repo)
     app.dependency_overrides[get_upload_avatar_use_case] = lambda: UploadAvatar(
@@ -136,6 +143,7 @@ class TestGetUserByName:
         repo = FakeUserRepo()
         user = _named_user()
         repo.users_by_name[USERNAME] = user
+        repo.users_by_id[user.id.value] = user
 
         response = _client(repo).get(f"/users/name/{USERNAME}")
 
@@ -147,6 +155,8 @@ class TestGetUserByName:
             "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
+            "comments": [],
+            "next_cursor": None,
         }
 
     def test_unknown_name_returns_404(self):
@@ -372,13 +382,18 @@ class TestUploadAvatar:
             email="user@example.com",
         )
 
+        image = BytesIO()
+        Image.new("RGB", (8, 8), "red").save(image, format="PNG")
+
         response = app_client.post(
             f"/users/{AUTH_ID}/avatar",
-            files={"file": ("avatar.jpg", b"jpeg-bytes", "image/jpeg")},
+            files={"file": ("avatar.png", image.getvalue(), "image/png")},
         )
 
         assert response.status_code == 200
-        assert response.json() == {"url": AVATAR_URL}
+        assert response.json() == {
+            "url": public_avatar_url(SUPABASE_URL, f"{AUTH_ID}/avatar.webp")
+        }
 
     def test_rejects_unsupported_type(self):
         repo = FakeUserRepo()
@@ -389,9 +404,12 @@ class TestUploadAvatar:
             email="user@example.com",
         )
 
+        gif = BytesIO()
+        Image.new("RGB", (8, 8), "blue").save(gif, format="GIF")
+
         response = app_client.post(
             f"/users/{AUTH_ID}/avatar",
-            files={"file": ("avatar.gif", b"gif-bytes", "image/gif")},
+            files={"file": ("avatar.gif", gif.getvalue(), "image/gif")},
         )
 
         assert response.status_code == 400

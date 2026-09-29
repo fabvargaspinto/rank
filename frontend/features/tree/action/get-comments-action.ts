@@ -9,7 +9,7 @@ import { COMMENTS_PAGE_SIZE } from "../comment-constants";
 
 export async function getCommentsAction(
     userId: string,
-    options: { limit?: number; offset?: number } = {},
+    options: { limit?: number; cursor?: string | null } = {},
 ): Promise<FetchDataResponse<CommentListResponse>> {
     const id = userId.trim();
 
@@ -24,6 +24,6 @@ export async function getCommentsAction(
 
     return fetchCommentsByUserId(id, {
         limit: options.limit ?? COMMENTS_PAGE_SIZE,
-        offset: options.offset ?? 0,
+        cursor: options.cursor,
     });
 }

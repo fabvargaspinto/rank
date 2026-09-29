@@ -2,11 +2,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from core.user.application.application_error import UserNotFoundError
+from core.user.application.change_username import ChangeUsername
 from core.user.domain.user import User
-from core.user.domain.user_error import (
-    UsernameAlreadyTakenError,
-    UserProfileNotFoundError,
-)
+from core.user.domain.user_error import UserProfileNotFoundError
 from core.user.domain.user_repo import UserRepository
 
 UNSET: Any = object()
@@ -24,26 +22,16 @@ class UpdateProfileCommand:
 class UpdateUser:
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
+        self.change_username = ChangeUsername(user_repo)
 
-    def execute(self, auth_id: str, command: UpdateProfileCommand) -> User:
-        user = self.user_repo.get_user_by_auth_id(auth_id)
-        if user is None:
-            raise UserNotFoundError("El usuario no existe")
-
-        user.rename(command.name)
+    def execute(self, user: User, command: UpdateProfileCommand) -> User:
+        self.change_username.execute(user, command.name)
         self._apply_display_name(user, command.display_name)
         self._apply_avatar(user, command.avatar)
         user.describe(command.description)
 
-        if user.name is None:
-            raise UserNotFoundError("El usuario no existe")
-
         if command.links is not None:
             user.replace_links(command.links)
-
-        taken = self.user_repo.get_user_by_name(user.name.value)
-        if taken is not None and taken.id != user.id:
-            raise UsernameAlreadyTakenError("Ese nombre ya está en uso")
 
         self._save(user)
         return user

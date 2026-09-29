@@ -14,6 +14,7 @@ from config.dependency_container import (
     get_comments_by_user_use_case,
     get_create_comment_use_case,
     get_delete_comment_use_case,
+    get_user_use_case,
 )
 from controller.comment_route import router
 from controller.error_handlers import register_error_handlers
@@ -25,6 +26,7 @@ from core.comment.domain.comment_created_at import CommentCreatedAt
 from core.comment.domain.comment_id import CommentId
 from core.comment.domain.comment_text import CommentText
 from core.shared.domain.user_id import UserId
+from core.user.application.get_user import GetUser
 from core.user.domain.user import User
 from tests.unit.comment.application.fake_comment_repo import FakeCommentRepo
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
@@ -61,15 +63,15 @@ def _client(
 
     fake_user_repo = user_repo or FakeUserRepo()
     fake_comment_repo = comment_repo or FakeCommentRepo()
+    app.dependency_overrides[get_user_use_case] = lambda: GetUser(fake_user_repo)
     app.dependency_overrides[get_create_comment_use_case] = lambda: CreateComment(
-        fake_user_repo,
         fake_comment_repo,
     )
     app.dependency_overrides[get_comments_by_user_use_case] = (
         lambda: GetCommentsByUser(fake_user_repo, fake_comment_repo)
     )
     app.dependency_overrides[get_delete_comment_use_case] = (
-        lambda: DeleteComment(fake_user_repo, fake_comment_repo)
+        lambda: DeleteComment(fake_comment_repo)
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -191,15 +193,26 @@ class TestListCommentsByUser:
         comment_repo.create_comment(_comment(user.id.value, "Viejo", minutes_ago=5))
         app_client = _client(user_repo, comment_repo)
 
+        first = app_client.get(
+            f"/users/id/{user.id.value}/comments",
+            params={"limit": 1},
+        )
+        cursor = first.json()["next_cursor"]
+
         response = app_client.get(
             f"/users/id/{user.id.value}/comments",
-            params={"limit": 1, "offset": 1},
+            params={"limit": 1, "cursor": cursor},
         )
 
         assert response.status_code == 200
         items = response.json()["items"]
         assert len(items) == 1
         assert items[0]["text"] == "Viejo"
+
+    def test_invalid_user_id_returns_422(self):
+        response = _client().get("/users/id/not-a-uuid/comments")
+
+        assert response.status_code == 422
 
     def test_unknown_user_returns_404(self):
         response = _client().get(f"/users/id/{USER_ID}/comments")

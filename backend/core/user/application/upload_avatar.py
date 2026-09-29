@@ -1,16 +1,10 @@
-from core.user.application.application_error import (
-    InvalidAvatarFileError,
-    UserNotFoundError,
-)
+from core.user.application.application_error import UserNotFoundError
+from core.user.application.avatar_image import recode_avatar
 from core.user.domain.avatar_storage import AvatarStorage
+from core.user.domain.user import User
 from core.user.domain.user_error import UserProfileNotFoundError
 from core.user.domain.user_repo import UserRepository
 
-ALLOWED_AVATAR_TYPES = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-}
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
 
 
@@ -23,29 +17,10 @@ class UploadAvatar:
         self.user_repo = user_repo
         self.avatar_storage = avatar_storage
 
-    def execute(
-        self,
-        auth_id: str,
-        content: bytes,
-        content_type: str,
-    ) -> str:
-        user = self.user_repo.get_user_by_auth_id(auth_id)
-        if user is None:
-            raise UserNotFoundError("El usuario no existe")
-
-        normalized_type = (content_type or "").split(";")[0].strip().lower()
-        if normalized_type not in ALLOWED_AVATAR_TYPES:
-            raise InvalidAvatarFileError("La imagen debe ser JPEG, PNG o WebP")
-
-        if not content:
-            raise InvalidAvatarFileError("La imagen es inválida")
-
-        if len(content) > MAX_AVATAR_BYTES:
-            raise InvalidAvatarFileError("La imagen no puede superar 2 MB")
-
-        extension = ALLOWED_AVATAR_TYPES[normalized_type]
-        path = f"{auth_id}/avatar.{extension}"
-        self.avatar_storage.upload(path, content, normalized_type)
+    def execute(self, user: User, auth_id: str, content: bytes) -> str:
+        encoded = recode_avatar(content, MAX_AVATAR_BYTES)
+        path = f"{auth_id}/avatar.webp"
+        self.avatar_storage.upload(path, encoded, "image/webp")
         user.change_avatar(path)
         try:
             self.user_repo.save(user)

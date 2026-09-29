@@ -1,6 +1,7 @@
 from typing import Protocol
 
 from core.comment.domain.comment import Comment
+from core.comment.domain.comment_page import CommentCursor
 
 
 class CommentRepository(Protocol):
@@ -11,7 +12,7 @@ class CommentRepository(Protocol):
         self,
         user_id: str,
         limit: int,
-        offset: int,
+        cursor: CommentCursor | None = None,
     ) -> list[Comment]:
         pass
 

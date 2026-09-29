@@ -1,6 +1,5 @@
 import pytest
 
-from core.user.application.application_error import UserNotFoundError
 from core.user.application.update_user import UpdateProfileCommand, UpdateUser
 from core.user.domain.user import User
 from core.user.domain.user_error import InvalidUserNameError, UsernameAlreadyTakenError
@@ -21,7 +20,7 @@ class TestUpdateUser:
         self.repo.users_by_auth_id[AUTH_ID] = user
 
         result = self.use_case.execute(
-            AUTH_ID,
+            user,
             UpdateProfileCommand(
                 name="luna",
                 display_name="Luna Reyes",
@@ -45,7 +44,7 @@ class TestUpdateUser:
         self.repo.users_by_auth_id[AUTH_ID] = user
 
         result = self.use_case.execute(
-            AUTH_ID,
+            user,
             UpdateProfileCommand(
                 name="luna",
                 links=[
@@ -68,7 +67,7 @@ class TestUpdateUser:
         self.repo.users_by_name["luna"] = user
 
         result = self.use_case.execute(
-            AUTH_ID,
+            user,
             UpdateProfileCommand(name="luna", description="Cantautora"),
         )
 
@@ -81,7 +80,7 @@ class TestUpdateUser:
         self.repo.users_by_auth_id[AUTH_ID] = user
 
         result = self.use_case.execute(
-            AUTH_ID,
+            user,
             UpdateProfileCommand(name="luna", description="Cantautora"),
         )
 
@@ -95,7 +94,7 @@ class TestUpdateUser:
         self.repo.users_by_name["luna"] = user
 
         result = self.use_case.execute(
-            AUTH_ID,
+            user,
             UpdateProfileCommand(name="luna", description="Cantautora"),
         )
 
@@ -103,10 +102,6 @@ class TestUpdateUser:
         assert result.name.value == "luna"
         assert result.description is not None
         assert result.description.value == "Cantautora"
-
-    def test_raises_when_auth_id_is_unknown(self):
-        with pytest.raises(UserNotFoundError, match="El usuario no existe"):
-            self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="luna"))
 
     def test_raises_when_name_is_taken(self):
         user = User.create_empty()
@@ -119,11 +114,11 @@ class TestUpdateUser:
         with pytest.raises(
             UsernameAlreadyTakenError, match="Ese nombre ya está en uso"
         ):
-            self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="Luna"))
+            self.use_case.execute(user, UpdateProfileCommand(name="Luna"))
 
     def test_raises_when_name_is_invalid(self):
         user = User.create_empty()
         self.repo.users_by_auth_id[AUTH_ID] = user
 
         with pytest.raises(InvalidUserNameError):
-            self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="   "))
+            self.use_case.execute(user, UpdateProfileCommand(name="   "))

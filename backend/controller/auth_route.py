@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.schemas.auth import ErrorResponse, SessionResponse
 from config.dependency_container import get_ensure_user_provisioned
-from core.auth.application.ensure_user_provisioned import EnsureUserProvisioned
+from core.auth.application.provision_identity import ProvisionIdentity
 
 router = APIRouter()
 
@@ -27,11 +27,11 @@ router = APIRouter()
 )
 def provision_session(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    ensure_user_provisioned: EnsureUserProvisioned = Depends(
+    provision_identity: ProvisionIdentity = Depends(
         get_ensure_user_provisioned
     ),
 ) -> SessionResponse:
-    ensure_user_provisioned.execute(
+    provision_identity.execute(
         auth_id=current_user.auth_id,
         email=current_user.email,
     )

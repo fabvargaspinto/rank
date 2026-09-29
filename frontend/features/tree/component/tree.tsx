@@ -62,10 +62,12 @@ function isExternalPhoto(photo: string): boolean {
 export default function Tree({
     user,
     initialComments,
+    initialNextCursor = null,
     editable = false,
 }: {
     user: UserResponse;
     initialComments: CommentResponse[];
+    initialNextCursor?: string | null;
     editable?: boolean;
 }) {
     const tabsId = useId();
@@ -78,9 +80,10 @@ export default function Tree({
             commentFromResponse(comment, profileFromUser(user)),
         ),
     );
-    const [hasMore, setHasMore] = useState(
-        () => initialComments.length >= COMMENTS_PAGE_SIZE,
+    const [nextCursor, setNextCursor] = useState<string | null>(
+        initialNextCursor,
     );
+    const [hasMore, setHasMore] = useState(() => initialNextCursor !== null);
     const [loadingMore, setLoadingMore] = useState(false);
 
     async function removeComment(id: string) {
@@ -120,7 +123,7 @@ export default function Tree({
 
         const result = await getCommentsAction(user.id, {
             limit: COMMENTS_PAGE_SIZE,
-            offset: feed.length,
+            cursor: nextCursor,
         });
 
         if (!result.isError && result.data) {
@@ -128,14 +131,15 @@ export default function Tree({
                 commentFromResponse(comment, profile),
             );
             setFeed((current) => [...current, ...next]);
-            setHasMore(result.data.items.length >= COMMENTS_PAGE_SIZE);
+            setNextCursor(result.data.next_cursor);
+            setHasMore(result.data.next_cursor !== null);
         } else {
             setHasMore(false);
         }
 
         setLoadingMore(false);
         loadingMoreRef.current = false;
-    }, [feed.length, hasMore, profile, user.id]);
+    }, [hasMore, nextCursor, profile, user.id]);
 
     return (
         <article className={styles.container}>

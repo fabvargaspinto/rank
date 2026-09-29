@@ -1,7 +1,7 @@
+import pytest
+
 from core.comment.domain.comment_id import CommentId
 from core.shared.domain.domain_error import InvalidUUIDError
-
-import pytest
 
 
 class TestCommentId:

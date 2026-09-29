@@ -110,9 +110,16 @@ export async function fetchUserByAuthId(
 
 export async function fetchUserByName(
     name: string,
-): Promise<FetchDataResponse<UserResponse>> {
-    return fetchData<UserResponse>(
-        `/users/name/${encodeURIComponent(name)}`,
+    options: { limit?: number } = {},
+): Promise<FetchDataResponse<PublicProfileResponse>> {
+    const params = new URLSearchParams();
+    if (options.limit !== undefined) {
+        params.set("limit", String(options.limit));
+    }
+    const query = params.toString();
+
+    return fetchData<PublicProfileResponse>(
+        `/users/name/${encodeURIComponent(name)}${query ? `?${query}` : ""}`,
     );
 }
 
@@ -162,18 +169,24 @@ export type CommentResponse = {
 
 export type CommentListResponse = {
     items: CommentResponse[];
+    next_cursor: string | null;
+};
+
+export type PublicProfileResponse = UserResponse & {
+    comments: CommentResponse[];
+    next_cursor: string | null;
 };
 
 export async function fetchCommentsByUserId(
     userId: string,
-    options: { limit?: number; offset?: number } = {},
+    options: { limit?: number; cursor?: string | null } = {},
 ): Promise<FetchDataResponse<CommentListResponse>> {
     const params = new URLSearchParams();
     if (options.limit !== undefined) {
         params.set("limit", String(options.limit));
     }
-    if (options.offset !== undefined) {
-        params.set("offset", String(options.offset));
+    if (options.cursor) {
+        params.set("cursor", options.cursor);
     }
     const query = params.toString();
 

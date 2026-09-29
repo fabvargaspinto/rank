@@ -1,22 +1,31 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
+from api.dependencies.current_profile import get_current_profile
 from api.schemas.auth import ErrorResponse
-from api.schemas.user import AvatarUploadResponse, UpdateUserRequest, UserResponse
+from api.schemas.comment import CommentResponse
+from api.schemas.user import (
+    AvatarUploadResponse,
+    PublicProfileResponse,
+    UpdateUserRequest,
+    UserResponse,
+)
 from config.db_settings import DBSettings
 from config.dependency_container import (
     get_delete_account_use_case,
+    get_public_profile_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
-    get_user_by_name_use_case,
-    get_user_use_case,
+)
+from core.comment.application.get_comments_by_user import (
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
 )
 from core.user.application.application_error import UserNotFoundError
 from core.user.application.delete_account import DeleteAccount
-from core.user.application.get_user import GetUser
-from core.user.application.get_user_by_name import GetUserByName
+from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.update_user import UNSET, UpdateProfileCommand, UpdateUser
 from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import User
@@ -61,7 +70,7 @@ def _to_response(user: User, supabase_url: str) -> UserResponse:
 
 @router.get(
     "/users/name/{username}",
-    response_model=UserResponse,
+    response_model=PublicProfileResponse,
     status_code=status.HTTP_200_OK,
     responses={
         404: {
@@ -72,10 +81,26 @@ def _to_response(user: User, supabase_url: str) -> UserResponse:
 )
 def read_user_by_name(
     username: str,
-    use_case: GetUserByName = Depends(get_user_by_name_use_case),
+    limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
+    use_case: GetPublicProfile = Depends(get_public_profile_use_case),
     supabase_url: str = Depends(get_supabase_url),
-) -> UserResponse:
-    return _to_response(use_case.execute(username), supabase_url)
+) -> PublicProfileResponse:
+    profile = use_case.execute(username, limit=limit)
+    user = _to_response(profile.user, supabase_url)
+    return PublicProfileResponse(
+        **user.model_dump(),
+        comments=[
+            CommentResponse(
+                id=comment.id.value,
+                user_id=comment.user_id.value,
+                text=comment.text.value,
+                link=comment.link.value if comment.link else None,
+                created_at=comment.created_at.to_isoformat(),
+            )
+            for comment in profile.comments
+        ],
+        next_cursor=profile.next_cursor,
+    )
 
 
 @router.get(
@@ -96,12 +121,12 @@ def read_user_by_name(
 def read_user_by_auth_id(
     auth_id: str,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
-    use_case: GetUser = Depends(get_user_use_case),
+    profile: Annotated[User, Depends(get_current_profile)],
     supabase_url: str = Depends(get_supabase_url),
 ) -> UserResponse:
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
-    return _to_response(use_case.execute(auth_id), supabase_url)
+    return _to_response(profile, supabase_url)
 
 
 @router.patch(
@@ -127,6 +152,7 @@ def update_user(
     auth_id: str,
     body: UpdateUserRequest,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    profile: Annotated[User, Depends(get_current_profile)],
     use_case: UpdateUser = Depends(get_update_user_use_case),
     supabase_url: str = Depends(get_supabase_url),
 ) -> UserResponse:
@@ -144,7 +170,7 @@ def update_user(
     )
     return _to_response(
         use_case.execute(
-            auth_id,
+            profile,
             UpdateProfileCommand(
                 name=body.name,
                 display_name=display_name,
@@ -183,6 +209,7 @@ def update_user(
 def upload_avatar(
     auth_id: str,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    profile: Annotated[User, Depends(get_current_profile)],
     use_case: UploadAvatar = Depends(get_upload_avatar_use_case),
     supabase_url: str = Depends(get_supabase_url),
     file: UploadFile = File(...),
@@ -191,11 +218,7 @@ def upload_avatar(
         raise UserNotFoundError("El usuario no existe")
 
     content = file.file.read()
-    path = use_case.execute(
-        auth_id,
-        content=content,
-        content_type=file.content_type or "",
-    )
+    path = use_case.execute(profile, current_user.auth_id, content)
     return AvatarUploadResponse(url=public_avatar_url(supabase_url, path))
 
 

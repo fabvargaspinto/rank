@@ -1,5 +1,6 @@
-from core.comment.domain.comment import Comment
+from core.comment.domain.comment_page import CommentCursor, CommentPage
 from core.comment.domain.comment_repo import CommentRepository
+from core.shared.domain.user_id import UserId
 from core.user.application.application_error import UserNotFoundError
 from core.user.domain.user_repo import UserRepository
 
@@ -20,17 +21,25 @@ class GetCommentsByUser:
         self,
         user_id: str,
         limit: int = DEFAULT_LIMIT,
-        offset: int = 0,
-    ) -> list[Comment]:
+        cursor: str | None = None,
+    ) -> CommentPage:
+        UserId(user_id)
         user = self.user_repo.get_user(user_id)
         if user is None:
             raise UserNotFoundError("El usuario no existe")
 
-        safe_limit = min(max(limit, 0), MAX_LIMIT)
-        safe_offset = max(offset, 0)
-
-        return self.comment_repo.get_comments_by_user_id(
+        safe_limit = min(max(limit, 1), MAX_LIMIT)
+        position = CommentCursor.decode(cursor) if cursor else None
+        rows = self.comment_repo.get_comments_by_user_id(
             user.id.value,
-            limit=safe_limit,
-            offset=safe_offset,
+            limit=safe_limit + 1,
+            cursor=position,
         )
+        has_more = len(rows) > safe_limit
+        items = rows[:safe_limit]
+        next_cursor = (
+            CommentCursor.from_comment(items[-1]).encode()
+            if has_more and items
+            else None
+        )
+        return CommentPage(items=items, next_cursor=next_cursor)
