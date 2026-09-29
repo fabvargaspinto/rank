@@ -22,7 +22,7 @@ from api.dependencies.supabase import get_supabase_url
 from api.errors import register_error_handlers
 from api.routers.me import router as me_router
 from api.routers.profiles import router as profiles_router
-from core.comment.application.get_comments_by_user import GetCommentsByUser
+from core.post.application.get_posts_by_user import GetPostsByUser
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user import GetUser
@@ -32,7 +32,7 @@ from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import User
 from core.user.infrastructure.avatar_url import public_avatar_url
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
-from tests.unit.comment.application.fake_comment_repo import FakeCommentRepo
+from tests.unit.post.application.fake_post_repo import FakePostRepo
 from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
@@ -68,7 +68,7 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
     app.dependency_overrides[get_user_use_case] = lambda: GetUser(fake_repo)
     app.dependency_overrides[get_public_profile_use_case] = lambda: GetPublicProfile(
         GetUserByName(fake_repo),
-        GetCommentsByUser(fake_repo, FakeCommentRepo()),
+        GetPostsByUser(fake_repo, FakePostRepo()),
     )
     app.dependency_overrides[get_update_user_use_case] = lambda: UpdateUser(fake_repo)
     app.dependency_overrides[get_upload_avatar_use_case] = lambda: UploadAvatar(
@@ -147,7 +147,7 @@ class TestGetUserByName:
             "avatar": AVATAR_URL,
             "description": "Cantautora",
             "links": [],
-            "comments": [],
+            "posts": [],
             "next_cursor": None,
         }
 

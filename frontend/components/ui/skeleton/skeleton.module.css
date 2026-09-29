@@ -50,19 +50,19 @@
     border-radius: var(--scale-2);
 }
 
-.comments {
+.posts {
     display: flex;
     flex-direction: column;
     gap: var(--scale-5);
 }
 
-.comment {
+.post {
     composes: block;
     width: 100%;
     height: calc(var(--scale-6) + var(--scale-4));
 }
 
-.commentShort {
+.postShort {
     composes: block;
     width: 64%;
     height: calc(var(--scale-6) + var(--scale-4));

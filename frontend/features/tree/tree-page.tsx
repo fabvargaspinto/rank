@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import PageWrapper from "@/components/ui/page-wrapper/page-wrapper";
 import AccountMenu from "@/features/account/component/account-menu";
-import { COMMENTS_PAGE_SIZE } from "./comment-constants";
-import { getCommentsAction } from "./action/get-comments-action";
+import { POSTS_PAGE_SIZE } from "./post-constants";
+import { getPostsAction } from "./action/get-posts-action";
 import getUserFromJwt from "./action/get-user-from-jwt";
 import Tree from "./component/tree";
 
@@ -22,9 +22,9 @@ export default async function TreePage() {
         );
     }
 
-    const comments = result.data.name
-        ? await getCommentsAction(result.data.name, {
-              limit: COMMENTS_PAGE_SIZE,
+    const posts = result.data.name
+        ? await getPostsAction(result.data.name, {
+              limit: POSTS_PAGE_SIZE,
           })
         : null;
 
@@ -33,8 +33,8 @@ export default async function TreePage() {
             <AccountMenu />
             <Tree
                 user={result.data}
-                initialComments={comments?.data?.items ?? []}
-                initialNextCursor={comments?.data?.next_cursor ?? null}
+                initialPosts={posts?.data?.items ?? []}
+                initialNextCursor={posts?.data?.next_cursor ?? null}
                 editable
             />
         </PageWrapper>

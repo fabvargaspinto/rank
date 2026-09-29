@@ -4,7 +4,7 @@ import {
     type FetchDataResponse,
     type PublicProfileResponse,
 } from "@/lib/fetch_data";
-import { COMMENTS_PAGE_SIZE } from "../comment-constants";
+import { POSTS_PAGE_SIZE } from "../post-constants";
 
 const getUserFromName = cache(
     async function getUserFromName(
@@ -21,7 +21,7 @@ const getUserFromName = cache(
             };
         }
 
-        return fetchUserByName(username, { limit: COMMENTS_PAGE_SIZE });
+        return fetchUserByName(username, { limit: POSTS_PAGE_SIZE });
     },
 );
 

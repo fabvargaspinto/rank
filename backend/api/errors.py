@@ -18,7 +18,7 @@ _APPLICATION_STATUS = {
     "AuthAlreadyExistsError": 409,
     "InvalidAuthCredentialsError": 401,
     "UserNotFoundError": 404,
-    "CommentNotFoundError": 404,
+    "PostNotFoundError": 404,
     "InvalidAvatarFileError": 400,
     "UnsupportedAuthProviderError": 400,
 }

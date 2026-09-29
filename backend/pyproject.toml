@@ -73,7 +73,7 @@ include_external_packages = true
 [[tool.importlinter.contracts]]
 name = "Capas dentro de cada contexto"
 type = "layers"
-containers = ["core.auth", "core.user", "core.comment"]
+containers = ["core.auth", "core.user", "core.post"]
 layers = ["infrastructure", "application", "domain"]
 
 [[tool.importlinter.contracts]]
@@ -84,8 +84,8 @@ source_modules = [
     "core.auth.application",
     "core.user.domain",
     "core.user.application",
-    "core.comment.domain",
-    "core.comment.application",
+    "core.post.domain",
+    "core.post.application",
     "core.shared.domain",
 ]
 forbidden_modules = [
@@ -99,20 +99,20 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "Contextos independientes: solo comparten core.shared"
 type = "independence"
-modules = ["core.auth", "core.user", "core.comment"]
+modules = ["core.auth", "core.user", "core.post"]
 ignore_imports = [
     # El aprovisionamiento crea Auth y User en la misma transacción.
     "core.auth.domain.auth_repo -> core.user.domain.user",
     "core.auth.application.provision_identity -> core.user.domain.user",
     "core.auth.infrastructure.auth_supabase_repo -> core.user.domain.user",
     "core.auth.infrastructure.auth_supabase_repo -> core.user.infrastructure.user_mapper",
-    # Comment resuelve el autor con el repositorio de user.
-    "core.comment.application.create_comment -> core.user.domain.user",
-    "core.comment.application.get_comments_by_user -> core.user.application.application_error",
-    "core.comment.application.get_comments_by_user -> core.user.domain.user_repo",
-    "core.comment.application.delete_comment -> core.user.domain.user",
-    "core.user.application.get_public_profile -> core.comment.application.get_comments_by_user",
-    "core.user.application.get_public_profile -> core.comment.domain.comment",
+    # Post resuelve el autor con el repositorio de user.
+    "core.post.application.create_post -> core.user.domain.user",
+    "core.post.application.get_posts_by_user -> core.user.application.application_error",
+    "core.post.application.get_posts_by_user -> core.user.domain.user_repo",
+    "core.post.application.delete_post -> core.user.domain.user",
+    "core.user.application.get_public_profile -> core.post.application.get_posts_by_user",
+    "core.user.application.get_public_profile -> core.post.domain.post",
     # Borrar la cuenta también borra la identidad.
     "core.user.application.delete_account -> core.auth.domain.auth_repo",
 ]

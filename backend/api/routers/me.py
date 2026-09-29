@@ -5,21 +5,21 @@ from fastapi import APIRouter, Depends, File, Request, Response, UploadFile, sta
 
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.dependencies.container import (
-    get_create_comment_use_case,
+    get_create_post_use_case,
     get_delete_account_use_case,
-    get_delete_comment_use_case,
+    get_delete_post_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
 )
 from api.dependencies.current_profile import get_current_profile
 from api.dependencies.supabase import get_supabase_url
-from api.mapping import stored_avatar, to_comment_response, to_user_response
+from api.mapping import stored_avatar, to_post_response, to_user_response
 from api.rate_limit import limiter
 from api.schemas.auth import ErrorResponse
-from api.schemas.comment import CommentResponse, CreateCommentRequest
+from api.schemas.post import CreatePostRequest, PostResponse
 from api.schemas.user import AvatarUploadResponse, UpdateUserRequest, UserResponse
-from core.comment.application.create_comment import CreateComment
-from core.comment.application.delete_comment import DeleteComment
+from core.post.application.create_post import CreatePost
+from core.post.application.delete_post import DeletePost
 from core.user.application.application_error import InvalidAvatarFileError
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.update_user import UNSET, UpdateProfileCommand, UpdateUser
@@ -172,7 +172,7 @@ def delete_account(
 
 @router.post(
     "/me/posts",
-    response_model=CommentResponse,
+    response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
     responses={
         401: {
@@ -181,7 +181,7 @@ def delete_account(
         },
         400: {
             "model": ErrorResponse,
-            "description": "Comentario inválido",
+            "description": "Publicación inválida",
         },
         404: {
             "model": ErrorResponse,
@@ -196,11 +196,11 @@ def delete_account(
 @limiter.limit("20/minute")
 def create_post(
     request: Request,
-    body: CreateCommentRequest,
+    body: CreatePostRequest,
     profile: Annotated[User, Depends(get_current_profile)],
-    use_case: CreateComment = Depends(get_create_comment_use_case),
-) -> CommentResponse:
-    return to_comment_response(
+    use_case: CreatePost = Depends(get_create_post_use_case),
+) -> PostResponse:
+    return to_post_response(
         use_case.execute(
             profile,
             text=body.text,
@@ -226,7 +226,7 @@ def create_post(
 def delete_post(
     post_id: UUID,
     profile: Annotated[User, Depends(get_current_profile)],
-    use_case: DeleteComment = Depends(get_delete_comment_use_case),
+    use_case: DeletePost = Depends(get_delete_post_use_case),
 ) -> Response:
     use_case.execute(profile, str(post_id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)

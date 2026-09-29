@@ -103,7 +103,7 @@ CREATE INDEX user_links_user_id_idx
 CREATE INDEX user_links_user_id_sort_idx
     ON public.user_links (user_id, sort_index);
 
-CREATE TABLE public.comments (
+CREATE TABLE public.posts (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL
         REFERENCES public.users (id)
@@ -112,13 +112,13 @@ CREATE TABLE public.comments (
         CHECK (char_length(text) >= 1 AND char_length(text) <= 280),
     link VARCHAR(2048),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT comments_link_https CHECK (
+    CONSTRAINT posts_link_https CHECK (
         link IS NULL OR link ~ '^https://'
     )
 );
 
-CREATE INDEX comments_user_created_at_id_idx
-    ON public.comments (user_id, created_at DESC, id DESC);
+CREATE INDEX posts_user_created_at_id_idx
+    ON public.posts (user_id, created_at DESC, id DESC);
 
 CREATE OR REPLACE FUNCTION public.create_user_and_auth(
     p_user_id uuid,
@@ -238,22 +238,22 @@ GRANT EXECUTE ON FUNCTION public.update_profile(
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.auth ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_links ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON TABLE public.users FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.auth FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON TABLE public.user_links FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON TABLE public.comments FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.posts FROM PUBLIC, anon, authenticated;
 
 GRANT ALL ON TABLE public.users TO service_role;
 GRANT ALL ON TABLE public.auth TO service_role;
 GRANT ALL ON TABLE public.user_links TO service_role;
-GRANT ALL ON TABLE public.comments TO service_role;
+GRANT ALL ON TABLE public.posts TO service_role;
 
 GRANT SELECT ON TABLE public.users TO authenticated;
 GRANT SELECT ON TABLE public.auth TO authenticated;
 GRANT SELECT ON TABLE public.user_links TO authenticated;
-GRANT SELECT ON TABLE public.comments TO authenticated;
+GRANT SELECT ON TABLE public.posts TO authenticated;
 
 CREATE POLICY users_select_own
 ON public.users
@@ -285,8 +285,8 @@ USING (
     )
 );
 
-CREATE POLICY comments_select_own
-ON public.comments
+CREATE POLICY posts_select_own
+ON public.posts
 FOR SELECT
 TO authenticated
 USING (

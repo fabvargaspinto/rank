@@ -366,7 +366,7 @@ Observaciones:
 
 **Recomendación:** mover `UserId` e `is_unique_violation` a `shared`, y agregar contratos de `import-linter` ([5.9](#59-estructura-objetivo-y-guardas-de-arquitectura)) para que las dependencias entre contextos no crezcan sin que nadie lo decida.
 
-### 5.2 Lenguaje ubicuo (hacerlo alfinal)
+###  ✅ 5.2 Lenguaje ubicuo (hacerlo alfinal)
 
 El código, la interfaz y el producto usan palabras distintas para las mismas cosas, y a veces la misma palabra para cosas distintas:
 
@@ -498,7 +498,7 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
   - La ruta es fija por usuario (`{auth_id}/avatar.{ext}`) y se sirve con `cache-control: 3600` (`avatar_supabase_storage.py:21` y `:30`). Después de cambiar la foto, navegadores y CDN pueden seguir mostrando la anterior hasta una hora; y si cambia la extensión, el archivo viejo queda huérfano. Usar un nombre nuevo en cada subida (`{user_id}/{uuid}.webp`) y borrar el anterior en el mismo caso de uso.
 - **Dos definiciones del bucket:** `config.toml:119-122` y la migración. Dejar solo la migración.
 
-### 5.9 Estructura objetivo y guardas de arquitectura
+### ✅ 5.9 Estructura objetivo y guardas de arquitectura
 
 Cambios mínimos sobre lo que ya existe:
 

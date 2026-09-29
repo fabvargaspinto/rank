@@ -5,10 +5,10 @@ from config.db_settings import DBSettings
 from core.auth.application.provision_identity import ProvisionIdentity
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
-from core.comment.application.create_comment import CreateComment
-from core.comment.application.delete_comment import DeleteComment
-from core.comment.application.get_comments_by_user import GetCommentsByUser
-from core.comment.infrastructure.comment_supabase_repo import CommentSupabaseRepo
+from core.post.application.create_post import CreatePost
+from core.post.application.delete_post import DeletePost
+from core.post.application.get_posts_by_user import GetPostsByUser
+from core.post.infrastructure.post_supabase_repo import PostSupabaseRepo
 from core.shared.infrastructure.supabase_client import DBClient
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_public_profile import GetPublicProfile
@@ -28,7 +28,7 @@ class DependencyContainer:
         self.email_crypto = EmailCrypto(self.crypto_settings)
         self.auth_repository = AuthSupabaseRepo(self.db_client, self.email_crypto)
         self.user_repository = UserSupabaseRepo(self.db_client)
-        self.comment_repository = CommentSupabaseRepo(self.db_client)
+        self.post_repository = PostSupabaseRepo(self.db_client)
         self.avatar_storage = AvatarSupabaseStorage(self.db_client)
 
     def provision_identity(self) -> ProvisionIdentity:
@@ -43,7 +43,7 @@ class DependencyContainer:
     def get_public_profile(self) -> GetPublicProfile:
         return GetPublicProfile(
             self.get_user_by_name(),
-            self.get_comments_by_user(),
+            self.get_posts_by_user(),
         )
 
     def update_user(self) -> UpdateUser:
@@ -52,14 +52,14 @@ class DependencyContainer:
     def upload_avatar(self) -> UploadAvatar:
         return UploadAvatar(self.user_repository, self.avatar_storage)
 
-    def create_comment(self) -> CreateComment:
-        return CreateComment(self.comment_repository)
+    def create_post(self) -> CreatePost:
+        return CreatePost(self.post_repository)
 
-    def get_comments_by_user(self) -> GetCommentsByUser:
-        return GetCommentsByUser(self.user_repository, self.comment_repository)
+    def get_posts_by_user(self) -> GetPostsByUser:
+        return GetPostsByUser(self.user_repository, self.post_repository)
 
-    def delete_comment(self) -> DeleteComment:
-        return DeleteComment(self.comment_repository)
+    def delete_post(self) -> DeletePost:
+        return DeletePost(self.post_repository)
 
     def delete_account(self) -> DeleteAccount:
         return DeleteAccount(
@@ -98,16 +98,16 @@ def get_upload_avatar_use_case() -> UploadAvatar:
     return get_dependency_container().upload_avatar()
 
 
-def get_create_comment_use_case() -> CreateComment:
-    return get_dependency_container().create_comment()
+def get_create_post_use_case() -> CreatePost:
+    return get_dependency_container().create_post()
 
 
-def get_comments_by_user_use_case() -> GetCommentsByUser:
-    return get_dependency_container().get_comments_by_user()
+def get_posts_by_user_use_case() -> GetPostsByUser:
+    return get_dependency_container().get_posts_by_user()
 
 
-def get_delete_comment_use_case() -> DeleteComment:
-    return get_dependency_container().delete_comment()
+def get_delete_post_use_case() -> DeletePost:
+    return get_dependency_container().delete_post()
 
 
 def get_delete_account_use_case() -> DeleteAccount:

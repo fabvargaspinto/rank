@@ -156,7 +156,7 @@ export type AvatarUploadResponse = {
     url: string;
 };
 
-export type CommentResponse = {
+export type PostResponse = {
     id: string;
     user_id: string;
     text: string;
@@ -164,20 +164,20 @@ export type CommentResponse = {
     created_at: string;
 };
 
-export type CommentListResponse = {
-    items: CommentResponse[];
+export type PostListResponse = {
+    items: PostResponse[];
     next_cursor: string | null;
 };
 
 export type PublicProfileResponse = UserResponse & {
-    comments: CommentResponse[];
+    posts: PostResponse[];
     next_cursor: string | null;
 };
 
 export async function fetchPostsByUsername(
     username: string,
     options: { limit?: number; cursor?: string | null } = {},
-): Promise<FetchDataResponse<CommentListResponse>> {
+): Promise<FetchDataResponse<PostListResponse>> {
     const params = new URLSearchParams();
     if (options.limit !== undefined) {
         params.set("limit", String(options.limit));
@@ -187,36 +187,36 @@ export async function fetchPostsByUsername(
     }
     const query = params.toString();
 
-    return fetchData<CommentListResponse>(
+    return fetchData<PostListResponse>(
         `/profiles/${encodeURIComponent(username)}/posts${query ? `?${query}` : ""}`,
     );
 }
 
-export async function createComment(
+export async function createPost(
     accessToken: string,
-    comment: {
+    post: {
         text: string;
         link?: string | null;
     },
-): Promise<FetchDataResponse<CommentResponse>> {
-    return fetchData<CommentResponse>(
+): Promise<FetchDataResponse<PostResponse>> {
+    return fetchData<PostResponse>(
         "/me/posts",
         {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
-            body: JSON.stringify(comment),
+            body: JSON.stringify(post),
         },
     );
 }
 
-export async function deleteComment(
+export async function deletePost(
     accessToken: string,
-    commentId: string,
+    postId: string,
 ): Promise<FetchDataResponse<null>> {
     return fetchData<null>(
-        `/me/posts/${encodeURIComponent(commentId)}`,
+        `/me/posts/${encodeURIComponent(postId)}`,
         {
             method: "DELETE",
             headers: {

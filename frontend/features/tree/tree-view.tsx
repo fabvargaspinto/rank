@@ -18,7 +18,7 @@ export default async function TreeViewPage({ username }: { username: string }) {
         <PageWrapper>
             <Tree
                 user={result.data}
-                initialComments={result.data.comments ?? []}
+                initialPosts={result.data.posts ?? []}
                 initialNextCursor={result.data.next_cursor}
             />
         </PageWrapper>

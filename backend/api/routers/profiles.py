@@ -3,19 +3,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from api.dependencies.container import (
-    get_comments_by_user_use_case,
+    get_posts_by_user_use_case,
     get_public_profile_use_case,
     get_user_by_name_use_case,
 )
 from api.dependencies.supabase import get_supabase_url
-from api.mapping import to_comment_page, to_comment_response, to_user_response
+from api.mapping import to_post_page, to_post_response, to_user_response
 from api.schemas.auth import ErrorResponse
-from api.schemas.comment import CommentListResponse
+from api.schemas.post import PostListResponse
 from api.schemas.user import PublicProfileResponse
-from core.comment.application.get_comments_by_user import (
+from core.post.application.get_posts_by_user import (
     DEFAULT_LIMIT,
     MAX_LIMIT,
-    GetCommentsByUser,
+    GetPostsByUser,
 )
 from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user_by_name import GetUserByName
@@ -44,14 +44,14 @@ def read_profile(
     user = to_user_response(profile.user, supabase_url)
     return PublicProfileResponse(
         **user.model_dump(),
-        comments=[to_comment_response(comment) for comment in profile.comments],
+        posts=[to_post_response(post) for post in profile.posts],
         next_cursor=profile.next_cursor,
     )
 
 
 @router.get(
     "/profiles/{username}/posts",
-    response_model=CommentListResponse,
+    response_model=PostListResponse,
     status_code=status.HTTP_200_OK,
     responses={
         404: {
@@ -65,8 +65,8 @@ def list_posts(
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
     cursor: Annotated[str | None, Query()] = None,
     users: GetUserByName = Depends(get_user_by_name_use_case),
-    use_case: GetCommentsByUser = Depends(get_comments_by_user_use_case),
-) -> CommentListResponse:
+    use_case: GetPostsByUser = Depends(get_posts_by_user_use_case),
+) -> PostListResponse:
     user = users.execute(username)
     page = use_case.execute(user.id.value, limit=limit, cursor=cursor)
-    return to_comment_page(page)
+    return to_post_page(page)

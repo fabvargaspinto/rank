@@ -15,10 +15,10 @@ export default function TreeSkeleton() {
                     <div className={styles.tab} />
                     <div className={styles.tab} />
                 </div>
-                <div className={`${treeStyles.panel} ${styles.comments}`}>
-                    <div className={styles.comment} />
-                    <div className={styles.commentShort} />
-                    <div className={styles.comment} />
+                <div className={`${treeStyles.panel} ${styles.posts}`}>
+                    <div className={styles.post} />
+                    <div className={styles.postShort} />
+                    <div className={styles.post} />
                 </div>
             </article>
         </PageWrapper>

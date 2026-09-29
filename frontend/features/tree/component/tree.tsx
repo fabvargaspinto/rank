@@ -2,12 +2,12 @@
 
 import { useCallback, useId, useRef, useState } from "react";
 import Image from "next/image";
-import { COMMENTS_PAGE_SIZE } from "@/features/tree/comment-constants";
-import { deleteCommentAction } from "@/features/tree/action/delete-comment-action";
-import { getCommentsAction } from "@/features/tree/action/get-comments-action";
-import type { CommentResponse, UserResponse } from "@/lib/fetch_data";
-import Comments, { type Comment } from "./comment/comments";
-import DrawerComment from "./comment/drawer-comment";
+import { POSTS_PAGE_SIZE } from "@/features/tree/post-constants";
+import { deletePostAction } from "@/features/tree/action/delete-post-action";
+import { getPostsAction } from "@/features/tree/action/get-posts-action";
+import type { PostResponse, UserResponse } from "@/lib/fetch_data";
+import Posts, { type Post } from "./post/posts";
+import DrawerPost from "./post/drawer-post";
 import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";
 import SocialLinkIcon, {
     socialLinkLabel,
@@ -16,10 +16,10 @@ import SocialLinkIcon, {
 import Socials from "./socials/socials";
 import styles from "./tree.module.css";
 
-type TabId = "comments" | "socials";
+type TabId = "posts" | "socials";
 
 const TABS: { id: TabId; label: string }[] = [
-    { id: "comments", label: "Comentarios" },
+    { id: "posts", label: "Publicaciones" },
     { id: "socials", label: "Redes" },
 ];
 
@@ -37,10 +37,10 @@ function profileFromUser(user: UserResponse): Profile {
     };
 }
 
-function commentFromResponse(
-    created: CommentResponse,
+function postFromResponse(
+    created: PostResponse,
     profile: Profile,
-): Comment {
+): Post {
     return {
         id: created.id,
         avatar: profile.photo,
@@ -61,23 +61,23 @@ function isExternalPhoto(photo: string): boolean {
 
 export default function Tree({
     user,
-    initialComments,
+    initialPosts,
     initialNextCursor = null,
     editable = false,
 }: {
     user: UserResponse;
-    initialComments: CommentResponse[];
+    initialPosts: PostResponse[];
     initialNextCursor?: string | null;
     editable?: boolean;
 }) {
     const tabsId = useId();
     const panelRef = useRef<HTMLDivElement>(null);
     const loadingMoreRef = useRef(false);
-    const [tab, setTab] = useState<TabId>("comments");
+    const [tab, setTab] = useState<TabId>("posts");
     const [profile, setProfile] = useState<Profile>(() => profileFromUser(user));
-    const [feed, setFeed] = useState<Comment[]>(() =>
-        initialComments.map((comment) =>
-            commentFromResponse(comment, profileFromUser(user)),
+    const [feed, setFeed] = useState<Post[]>(() =>
+        initialPosts.map((post) =>
+            postFromResponse(post, profileFromUser(user)),
         ),
     );
     const [nextCursor, setNextCursor] = useState<string | null>(
@@ -86,27 +86,27 @@ export default function Tree({
     const [hasMore, setHasMore] = useState(() => initialNextCursor !== null);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    async function removeComment(id: string) {
-        const result = await deleteCommentAction(id);
+    async function removePost(id: string) {
+        const result = await deletePostAction(id);
 
         if (!result.isError) {
             setFeed((current) =>
-                current.filter((comment) => comment.id !== id),
+                current.filter((post) => post.id !== id),
             );
         }
 
         return result;
     }
 
-    function addComment(created: CommentResponse) {
-        setFeed((current) => [commentFromResponse(created, profile), ...current]);
+    function addPost(created: PostResponse) {
+        setFeed((current) => [postFromResponse(created, profile), ...current]);
     }
 
     function onSaveProfile(next: Profile) {
         setProfile(next);
         setFeed((current) =>
-            current.map((comment) => ({
-                ...comment,
+            current.map((post) => ({
+                ...post,
                 user: next.displayName || next.name,
                 avatar: next.photo,
             })),
@@ -121,14 +121,14 @@ export default function Tree({
         loadingMoreRef.current = true;
         setLoadingMore(true);
 
-        const result = await getCommentsAction(user.name ?? "", {
-            limit: COMMENTS_PAGE_SIZE,
+        const result = await getPostsAction(user.name ?? "", {
+            limit: POSTS_PAGE_SIZE,
             cursor: nextCursor,
         });
 
         if (!result.isError && result.data) {
-            const next = result.data.items.map((comment) =>
-                commentFromResponse(comment, profile),
+            const next = result.data.items.map((post) =>
+                postFromResponse(post, profile),
             );
             setFeed((current) => [...current, ...next]);
             setNextCursor(result.data.next_cursor);
@@ -182,23 +182,23 @@ export default function Tree({
                     id={`${tabsId}-${tab}-panel`}
                     aria-labelledby={`${tabsId}-${tab}`}
                 >
-                    {tab === "comments" ? (
-                        <Comments
-                            comments={feed}
+                    {tab === "posts" ? (
+                        <Posts
+                            posts={feed}
                             scrollRootRef={panelRef}
                             hasMore={hasMore}
                             loadingMore={loadingMore}
                             onLoadMore={() => {
                                 void loadMore();
                             }}
-                            {...(editable ? { onDelete: removeComment } : {})}
+                            {...(editable ? { onDelete: removePost } : {})}
                         />
                     ) : (
                         <Socials />
                     )}
                 </div>
-                {tab === "comments" && editable ? (
-                    <DrawerComment onAdd={addComment} />
+                {tab === "posts" && editable ? (
+                    <DrawerPost onAdd={addPost} />
                 ) : null}
             </div>
         </article>

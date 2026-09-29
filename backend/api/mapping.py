@@ -1,7 +1,7 @@
-from api.schemas.comment import CommentListResponse, CommentResponse
+from api.schemas.post import PostListResponse, PostResponse
 from api.schemas.user import UserLinkResponse, UserResponse
-from core.comment.domain.comment import Comment
-from core.comment.domain.comment_page import CommentPage
+from core.post.domain.post import Post
+from core.post.domain.post_page import PostPage
 from core.user.application.update_user import UNSET
 from core.user.domain.user import User
 from core.user.infrastructure.avatar_url import object_path, public_avatar_url
@@ -35,18 +35,18 @@ def to_user_response(user: User, supabase_url: str) -> UserResponse:
     )
 
 
-def to_comment_response(comment: Comment) -> CommentResponse:
-    return CommentResponse(
-        id=comment.id.value,
-        user_id=comment.user_id.value,
-        text=comment.text.value,
-        link=comment.link.value if comment.link else None,
-        created_at=comment.created_at.value,
+def to_post_response(post: Post) -> PostResponse:
+    return PostResponse(
+        id=post.id.value,
+        user_id=post.user_id.value,
+        text=post.text.value,
+        link=post.link.value if post.link else None,
+        created_at=post.created_at.value,
     )
 
 
-def to_comment_page(page: CommentPage) -> CommentListResponse:
-    return CommentListResponse(
-        items=[to_comment_response(comment) for comment in page.items],
+def to_post_page(page: PostPage) -> PostListResponse:
+    return PostListResponse(
+        items=[to_post_response(post) for post in page.items],
         next_cursor=page.next_cursor,
     )

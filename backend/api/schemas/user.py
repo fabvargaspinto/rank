@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from api.schemas.comment import CommentResponse
+from api.schemas.post import PostResponse
 
 
 class UserLinkResponse(BaseModel):
@@ -26,7 +26,7 @@ class UserResponse(BaseModel):
 
 
 class PublicProfileResponse(UserResponse):
-    comments: list[CommentResponse] = Field(default_factory=list)
+    posts: list[PostResponse] = Field(default_factory=list)
     next_cursor: str | None = None
 
 
