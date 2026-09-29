@@ -590,7 +590,7 @@ Propuesta: `lib/api/client.ts` (fetch con timeout, request id y parseo de errore
 - `getAuthSession` llama a `getUser()` y además a `getSession()` (`lib/supabase/session.ts:10-11`), mientras que `proxy.ts` ya usa `getClaims()`, que valida el token localmente con las claves asimétricas.
 - **La protección de rutas privadas está copiada en cada `page.tsx`.** Un `app/(private)/layout.tsx` que verifique la sesión evita que una página nueva quede pública por olvido.
 
-### 6.4 Componentes duplicados
+###  ✅ 6.4 Componentes duplicados
 
 `start-form.tsx` (onboarding) y `perfil-form.tsx` (edición) reimplementan el editor de links, el selector de foto, la validación del archivo y la liberación de object URLs, y ya divergieron: el nombre se sanea en uno y no en el otro. Extraer `ProfileLinksEditor`, `AvatarPicker` y un hook `useAvatarUpload` elimina unas 150 líneas y hace imposible que las reglas vuelvan a separarse.
 

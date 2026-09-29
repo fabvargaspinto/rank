@@ -1,7 +1,9 @@
 "use client";
 
 import Drawer from "@/components/ui/drawer/drawer";
-import PerfilForm, { isObjectUrl, type Profile } from "./perfil-form";
+import type { Profile } from "@/features/profile/model";
+import { isObjectUrl } from "@/features/profile/model";
+import PerfilForm from "./perfil-form";
 import styles from "./drawer-perfil.module.css";
 
 export { isObjectUrl };

@@ -4,16 +4,14 @@ import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import Avatar from "@/components/ui/avatar/avatar";
 import Button from "@/components/ui/button/button";
+import {
+    formatPostDate,
+    hostnameFromUrl,
+    type PostView,
+} from "@/features/post/model";
 import styles from "./posts.module.css";
 
-export type Post = {
-    id: string;
-    avatar: string;
-    user: string;
-    date: string;
-    text: string;
-    link?: string;
-};
+export type Post = PostView;
 
 type PostsProps = {
     posts: Post[];
@@ -23,30 +21,6 @@ type PostsProps = {
     onLoadMore: () => void;
     onDelete?: (id: string) => Promise<{ isError: boolean; message: string }>;
 };
-
-function formatPostDate(value: string): string {
-    const date = value.includes("T")
-        ? new Date(value)
-        : new Date(`${value}T00:00:00`);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return new Intl.DateTimeFormat("es", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    }).format(date);
-}
-
-function hostnameFromUrl(url: string): string {
-    try {
-        return new URL(url).hostname.replace(/^www\./, "");
-    } catch {
-        return url;
-    }
-}
 
 export default function Posts({
     posts,

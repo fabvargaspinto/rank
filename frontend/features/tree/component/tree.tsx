@@ -5,11 +5,18 @@ import Image from "next/image";
 import { POSTS_PAGE_SIZE } from "@/features/tree/post-constants";
 import { deletePostAction } from "@/features/tree/action/delete-post-action";
 import { getPostsAction } from "@/features/tree/action/get-posts-action";
+import { postViewFromResponse } from "@/features/post/model";
+import {
+    hasProfilePhoto,
+    isExternalProfilePhoto,
+    profileFromUserResponse,
+    type Profile,
+} from "@/features/profile/model";
 import { MAX_LINKS } from "@/lib/domain-limits";
 import type { PostResponse, UserResponse } from "@/lib/api/types";
 import Posts, { type Post } from "./post/posts";
 import DrawerPost from "./post/drawer-post";
-import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";
+import DrawerPerfil from "./perfil/drawer-perfil";
 import SocialLinkIcon, {
     socialLinkLabel,
     socialLinkTypeFromValue,
@@ -23,42 +30,6 @@ const TABS: { id: TabId; label: string }[] = [
     { id: "posts", label: "Publicaciones" },
     { id: "socials", label: "Redes" },
 ];
-
-function profileFromUser(user: UserResponse): Profile {
-    return {
-        name: user.name?.trim() || "Sin nombre",
-        displayName: user.display_name?.trim() || "",
-        description: user.description ?? "",
-        photo: user.avatar ?? "",
-        links: (user.links ?? []).map((link) => ({
-            id: link.id,
-            url: link.url,
-            type: link.type,
-        })),
-    };
-}
-
-function postFromResponse(
-    created: PostResponse,
-    profile: Profile,
-): Post {
-    return {
-        id: created.id,
-        avatar: profile.photo,
-        user: profile.displayName || profile.name,
-        date: created.created_at,
-        text: created.text,
-        ...(created.link ? { link: created.link } : {}),
-    };
-}
-
-function hasPhoto(photo: string): boolean {
-    return photo.trim().length > 0;
-}
-
-function isExternalPhoto(photo: string): boolean {
-    return isObjectUrl(photo) || /^https?:\/\//.test(photo);
-}
 
 export default function Tree({
     user,
@@ -75,10 +46,12 @@ export default function Tree({
     const panelRef = useRef<HTMLDivElement>(null);
     const loadingMoreRef = useRef(false);
     const [tab, setTab] = useState<TabId>("posts");
-    const [profile, setProfile] = useState<Profile>(() => profileFromUser(user));
+    const [profile, setProfile] = useState<Profile>(() =>
+        profileFromUserResponse(user),
+    );
     const [feed, setFeed] = useState<Post[]>(() =>
         initialPosts.map((post) =>
-            postFromResponse(post, profileFromUser(user)),
+            postViewFromResponse(post, profileFromUserResponse(user)),
         ),
     );
     const [nextCursor, setNextCursor] = useState<string | null>(
@@ -100,7 +73,10 @@ export default function Tree({
     }
 
     function addPost(created: PostResponse) {
-        setFeed((current) => [postFromResponse(created, profile), ...current]);
+        setFeed((current) => [
+            postViewFromResponse(created, profile),
+            ...current,
+        ]);
     }
 
     function onSaveProfile(next: Profile) {
@@ -129,7 +105,7 @@ export default function Tree({
 
         if (!result.isError && result.data) {
             const next = result.data.items.map((post) =>
-                postFromResponse(post, profile),
+                postViewFromResponse(post, profile),
             );
             setFeed((current) => [...current, ...next]);
             setNextCursor(result.data.next_cursor);
@@ -251,8 +227,8 @@ function TreeHeader({
 
     return (
         <header className={styles.header}>
-            {hasPhoto(profile.photo) ? (
-                isExternalPhoto(profile.photo) ? (
+            {hasProfilePhoto(profile.photo) ? (
+                isExternalProfilePhoto(profile.photo) ? (
                     <img
                         src={profile.photo}
                         alt=""

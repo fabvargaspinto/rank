@@ -9,7 +9,10 @@ import {
     firstLinkValidationError,
     linksForEditor,
     linksPayload,
-    trimProfileText,
+    profileFromUserResponse,
+    sanitizeName,
+    sanitizeUsername,
+    type Profile,
     type ProfileLink,
 } from "@/features/profile/model";
 import ProfileLinksEditor from "@/features/profile/profile-links-editor";
@@ -27,16 +30,8 @@ import styles from "./perfil-form.module.css";
 
 const PROFILE_HOST = "sellonomada.com/";
 
-export type { ProfileLink } from "@/features/profile/model";
+export type { Profile, ProfileLink } from "@/features/profile/model";
 export { isObjectUrl } from "@/features/profile/model";
-
-export type Profile = {
-    name: string;
-    displayName: string;
-    description: string;
-    photo: string;
-    links: ProfileLink[];
-};
 
 type PerfilFormProps = {
     profile: Profile;
@@ -82,7 +77,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
     async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const nextName = trimProfileText(name) || trimProfileText(profile.name);
+        const nextName = sanitizeUsername(name) || sanitizeUsername(profile.name);
         const shapeError = usernameShapeError(nextName);
 
         if (shapeError) {
@@ -113,8 +108,8 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
             const result = await updateUserAction({
                 name: nextName,
-                displayName: trimProfileText(displayName),
-                description: trimProfileText(description),
+                displayName: sanitizeName(displayName),
+                description: sanitizeName(description),
                 links: linksPayload(links),
             });
 
@@ -137,17 +132,11 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
             afterAvatarSave(nextPhoto);
 
-            onSave({
-                name: result.data.name?.trim() || nextName,
-                displayName: result.data.display_name?.trim() || "",
-                description: result.data.description ?? "",
-                photo: nextPhoto,
-                links: (result.data.links ?? []).map((link) => ({
-                    id: link.id,
-                    url: link.url,
-                    type: link.type,
-                })),
-            });
+            onSave(
+                profileFromUserResponse(result.data, {
+                    usernameFallback: nextName,
+                }),
+            );
         } catch {
             setError("No se pudo guardar tu perfil");
         } finally {
@@ -155,14 +144,14 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         }
     }
 
-    const trimmedName = trimProfileText(name);
+    const trimmedName = sanitizeUsername(name);
     const savedUsername = trimmedName.toLowerCase();
     const lowercaseHint =
         trimmedName && trimmedName !== savedUsername
             ? `Se guarda en minúsculas: ${savedUsername}`
             : "";
     const usernameChanged =
-        savedUsername !== trimProfileText(profile.name).toLowerCase();
+        savedUsername !== sanitizeUsername(profile.name).toLowerCase();
     const nameDescribedBy = [
         `${nameId}-url`,
         lowercaseHint ? `${nameId}-hint` : "",
@@ -183,7 +172,9 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         variant="banner"
                         previewUrl={photo}
                         fallbackName={
-                            trimProfileText(displayName) || trimmedName || profile.name
+                            sanitizeName(displayName) ||
+                            trimmedName ||
+                            profile.name
                         }
                         ariaLabelledBy={photoFieldId}
                         onChange={onPhotoChange}

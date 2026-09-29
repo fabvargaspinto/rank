@@ -3,12 +3,11 @@
 import { useId, useState, type FormEvent } from "react";
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
+import { parseCreatePostInput } from "@/features/post/model";
 import { createPostAction } from "@/features/tree/action/create-post-action";
 import {
-    httpsUrlError,
     LINK_MAX_LENGTH,
     POST_TEXT_MAX_LENGTH,
-    postTextError,
 } from "@/lib/domain-limits";
 import type { PostResponse } from "@/lib/api/types";
 import styles from "./post-form.module.css";
@@ -16,24 +15,6 @@ import styles from "./post-form.module.css";
 type PostFormProps = {
     onAdd: (post: PostResponse) => void;
 };
-
-function normalizeLink(value: string): string | undefined {
-    const trimmed = value.trim();
-
-    if (!trimmed) {
-        return undefined;
-    }
-
-    try {
-        return new URL(trimmed).toString();
-    } catch {
-        try {
-            return new URL(`https://${trimmed}`).toString();
-        } catch {
-            return trimmed;
-        }
-    }
-}
 
 export default function PostForm({ onAdd }: PostFormProps) {
     const textId = useId();
@@ -45,28 +26,18 @@ export default function PostForm({ onAdd }: PostFormProps) {
 
     async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const textError = postTextError(text);
 
-        if (textError) {
-            setError(textError);
-            return;
-        }
+        const parsed = parseCreatePostInput({ text, link });
 
-        const normalizedLink = normalizeLink(link);
-        const linkError = normalizedLink ? httpsUrlError(normalizedLink) : null;
-
-        if (linkError) {
-            setError(linkError);
+        if (!parsed.ok) {
+            setError(parsed.message);
             return;
         }
 
         setSaving(true);
         setError("");
 
-        const result = await createPostAction({
-            text: text.trim(),
-            link: normalizedLink,
-        });
+        const result = await createPostAction(parsed.payload);
 
         setSaving(false);
 

@@ -10,7 +10,8 @@ import {
     createEmptyLink,
     firstLinkValidationError,
     linksPayload,
-    trimProfileText,
+    sanitizeName,
+    sanitizeUsername,
     type ProfileLink,
 } from "@/features/profile/model";
 import ProfileLinksEditor from "@/features/profile/profile-links-editor";
@@ -55,7 +56,7 @@ export default function StartForm() {
         onFileChange,
     } = useAvatarUpload({ initialUrl: "" });
 
-    const trimmedName = trimProfileText(name);
+    const trimmedName = sanitizeUsername(name);
     const savedUsername = trimmedName.toLowerCase();
     const lowercaseHint =
         trimmedName && trimmedName !== savedUsername
@@ -85,8 +86,8 @@ export default function StartForm() {
     }
 
     async function continueFromName() {
-        const username = trimProfileText(name);
-        const visibleName = trimProfileText(displayName);
+        const username = sanitizeUsername(name);
+        const visibleName = sanitizeName(displayName);
 
         const shapeError = usernameShapeError(username);
 
@@ -137,8 +138,8 @@ export default function StartForm() {
 
             const result = await updateUserAction({
                 name: trimmedName,
-                displayName: trimProfileText(displayName),
-                description: trimProfileText(description),
+                displayName: sanitizeName(displayName),
+                description: sanitizeName(description),
                 links: linksPayload(links),
             });
 
@@ -274,7 +275,7 @@ export default function StartForm() {
                         variant="avatar"
                         previewUrl={photo}
                         fallbackName={
-                            trimProfileText(displayName) || trimmedName || name
+                            sanitizeName(displayName) || trimmedName || name
                         }
                         onChange={onPhotoChange}
                     />
@@ -338,7 +339,7 @@ export default function StartForm() {
                         checkingName ||
                         saving ||
                         (step === 0 &&
-                            (!trimProfileText(name) || !trimProfileText(displayName)))
+                            (!sanitizeUsername(name) || !sanitizeName(displayName)))
                     }
                 >
                     {checkingName
