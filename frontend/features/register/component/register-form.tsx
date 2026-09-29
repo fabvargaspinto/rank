@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import FormHero from "@/components/ui/form-hero/form-hero";
 import Input from "@/components/ui/input/input";
-import { emptyFetchResponse } from "@/lib/fetch_data";
+import { emptyFetchResponse } from "@/lib/api/types";
 import { registerCredentialAction } from "../action/register-credential-action";
 import { registerGoogleAction } from "../action/register-google-action";
 

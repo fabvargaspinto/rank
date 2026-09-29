@@ -1,6 +1,6 @@
 "use server";
 
-import { type FetchDataResponse } from "@/lib/fetch_data";
+import type { FetchDataResponse } from "@/lib/api/types";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/lib/supabase/server";
 import { emailSchema, invalidFormResponse } from "@/lib/validation/auth";

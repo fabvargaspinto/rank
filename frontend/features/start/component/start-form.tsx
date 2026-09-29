@@ -26,7 +26,7 @@ import {
     USERNAME_MAX_LENGTH,
     usernameShapeError,
 } from "@/lib/domain-limits";
-import { isUsernameFieldError } from "@/lib/fetch_data";
+import { isUsernameFieldError } from "@/lib/api/types";
 import { prepareAvatar } from "@/lib/prepare-avatar";
 import { checkNameAvailability } from "../action/check-name-action";
 import { updateUserAction } from "../action/update-user-action";

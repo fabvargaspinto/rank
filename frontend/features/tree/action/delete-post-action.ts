@@ -1,6 +1,7 @@
 "use server";
 
-import { deletePost, type FetchDataResponse } from "@/lib/fetch_data";
+import { deletePost } from "@/lib/api/posts";
+import type { FetchDataResponse } from "@/lib/api/types";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export async function deletePostAction(

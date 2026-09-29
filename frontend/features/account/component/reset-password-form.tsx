@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import FormHero from "@/components/ui/form-hero/form-hero";
 import Input from "@/components/ui/input/input";
-import { emptyFetchResponse } from "@/lib/fetch_data";
+import { emptyFetchResponse } from "@/lib/api/types";
 import { resetPasswordAction } from "../action/reset-password-action";
 
 export default function ResetPasswordForm() {

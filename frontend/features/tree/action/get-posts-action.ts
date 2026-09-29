@@ -1,10 +1,7 @@
 "use server";
 
-import {
-    fetchPostsByUsername,
-    type PostListResponse,
-    type FetchDataResponse,
-} from "@/lib/fetch_data";
+import { fetchPostsByUsername } from "@/lib/api/posts";
+import type { FetchDataResponse, PostListResponse } from "@/lib/api/types";
 import { POSTS_PAGE_SIZE } from "../post-constants";
 
 export async function getPostsAction(

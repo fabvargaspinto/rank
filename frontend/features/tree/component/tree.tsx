@@ -6,7 +6,7 @@ import { POSTS_PAGE_SIZE } from "@/features/tree/post-constants";
 import { deletePostAction } from "@/features/tree/action/delete-post-action";
 import { getPostsAction } from "@/features/tree/action/get-posts-action";
 import { MAX_LINKS } from "@/lib/domain-limits";
-import type { PostResponse, UserResponse } from "@/lib/fetch_data";
+import type { PostResponse, UserResponse } from "@/lib/api/types";
 import Posts, { type Post } from "./post/posts";
 import DrawerPost from "./post/drawer-post";
 import DrawerPerfil, { isObjectUrl, type Profile } from "./perfil/drawer-perfil";

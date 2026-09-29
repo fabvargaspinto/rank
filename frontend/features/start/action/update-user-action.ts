@@ -1,11 +1,8 @@
 "use server";
 
 import { httpsUrlError, MAX_LINKS } from "@/lib/domain-limits";
-import {
-    updateUser,
-    type FetchDataResponse,
-    type UserResponse,
-} from "@/lib/fetch_data";
+import { updateUser } from "@/lib/api/profile";
+import type { FetchDataResponse, UserResponse } from "@/lib/api/types";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export type UpdateUserLinkInput = {

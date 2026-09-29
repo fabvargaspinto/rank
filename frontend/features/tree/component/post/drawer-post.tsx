@@ -1,7 +1,7 @@
 "use client";
 
 import Drawer from "@/components/ui/drawer/drawer";
-import type { PostResponse } from "@/lib/fetch_data";
+import type { PostResponse } from "@/lib/api/types";
 import PostForm from "./post-form";
 import styles from "./drawer-post.module.css";
 

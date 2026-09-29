@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchUserByName } from "@/lib/fetch_data";
+import { fetchUserByName } from "@/lib/api/profile";
 
 export type NameAvailability = {
     available: boolean;

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { provisionSession } from "@/lib/fetch_data";
+import { provisionSession } from "@/lib/api/session";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 
 function fromPath(value: string | null) {

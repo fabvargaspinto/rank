@@ -6,10 +6,8 @@ import {
     isAvatarMimeType,
     MAX_AVATAR_BYTES,
 } from "@/lib/domain-limits";
-import {
-    uploadAvatar,
-    type FetchDataResponse,
-} from "@/lib/fetch_data";
+import { uploadAvatar } from "@/lib/api/profile";
+import type { FetchDataResponse } from "@/lib/api/types";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export async function uploadAvatarAction(

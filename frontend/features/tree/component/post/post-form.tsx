@@ -10,7 +10,7 @@ import {
     POST_TEXT_MAX_LENGTH,
     postTextError,
 } from "@/lib/domain-limits";
-import type { PostResponse } from "@/lib/fetch_data";
+import type { PostResponse } from "@/lib/api/types";
 import styles from "./post-form.module.css";
 
 type PostFormProps = {

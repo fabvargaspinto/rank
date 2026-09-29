@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { type FetchDataResponse } from "@/lib/fetch_data";
+import type { FetchDataResponse } from "@/lib/api/types";
 import { getPostAuthPath } from "@/lib/post-auth-path";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthSession } from "@/lib/supabase/session";

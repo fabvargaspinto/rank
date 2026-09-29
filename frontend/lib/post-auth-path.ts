@@ -1,4 +1,5 @@
-import { fetchCurrentUser, type UserResponse } from "@/lib/fetch_data";
+import { fetchCurrentUser } from "@/lib/api/profile";
+import type { UserResponse } from "@/lib/api/types";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export const LOGIN_PATH = "/login";

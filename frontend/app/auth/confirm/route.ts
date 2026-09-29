@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
-import { provisionSession } from "@/lib/fetch_data";
+import { provisionSession } from "@/lib/api/session";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { createClient } from "@/lib/supabase/server";
 

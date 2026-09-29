@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import FormHero from "@/components/ui/form-hero/form-hero";
 import Input from "@/components/ui/input/input";
-import { emptyFetchResponse } from "@/lib/fetch_data";
+import { emptyFetchResponse } from "@/lib/api/types";
 import { loginCredentialAction } from "../action/login-credential-action";
 import { loginGoogleAction } from "../action/login-google-action";
 import styles from "./login-form.module.css";

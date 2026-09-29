@@ -1,9 +1,6 @@
 import { cache } from "react";
-import {
-    fetchUserByName,
-    type FetchDataResponse,
-    type PublicProfileResponse,
-} from "@/lib/fetch_data";
+import { fetchUserByName } from "@/lib/api/profile";
+import type { FetchDataResponse, PublicProfileResponse } from "@/lib/api/types";
 import { POSTS_PAGE_SIZE } from "../post-constants";
 
 const getUserFromName = cache(

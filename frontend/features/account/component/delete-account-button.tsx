@@ -4,7 +4,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
-import { emptyFetchResponse } from "@/lib/fetch_data";
+import { emptyFetchResponse } from "@/lib/api/types";
 import { deleteAccountAction } from "../action/delete-account-action";
 import styles from "./delete-account-button.module.css";
 

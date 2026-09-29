@@ -1,11 +1,8 @@
 "use server";
 
 import { httpsUrlError, postTextError } from "@/lib/domain-limits";
-import {
-    createPost,
-    type FetchDataResponse,
-    type PostResponse,
-} from "@/lib/fetch_data";
+import { createPost } from "@/lib/api/posts";
+import type { FetchDataResponse, PostResponse } from "@/lib/api/types";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export type CreatePostInput = {
