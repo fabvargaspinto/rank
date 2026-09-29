@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { fetchData } from "@/lib/api/client";
 import type {
     AvatarUploadResponse,
@@ -8,16 +9,34 @@ import type {
     UpdateProfileRequest,
     UserResponse,
 } from "@/lib/api/types";
+import { getAuthSession } from "@/lib/supabase/session";
 
-export async function fetchCurrentUser(
-    accessToken: string,
-): Promise<FetchDataResponse<UserResponse>> {
-    return fetchData<UserResponse>("/me", {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
-    });
-}
+export const fetchCurrentUser = cache(
+    async (accessToken: string): Promise<FetchDataResponse<UserResponse>> => {
+        return fetchData<UserResponse>("/me", {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+    },
+);
+
+export const getCurrentUser = cache(
+    async (): Promise<FetchDataResponse<UserResponse>> => {
+        const session = await getAuthSession();
+
+        if (!session) {
+            return {
+                data: null,
+                isError: true,
+                message: "Tenés que iniciar sesión",
+                status: 401,
+            };
+        }
+
+        return fetchCurrentUser(session.accessToken);
+    },
+);
 
 export async function fetchUserByName(
     name: string,

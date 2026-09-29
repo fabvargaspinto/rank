@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthSession = {
@@ -5,14 +6,20 @@ export type AuthSession = {
     authId: string;
 };
 
-export async function getAuthSession(): Promise<AuthSession | null> {
+export const getAuthSession = cache(async (): Promise<AuthSession | null> => {
     const supabase = await createClient();
-    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getClaims();
+    const authId = data?.claims?.sub;
+
+    if (error || typeof authId !== "string" || !authId) {
+        return null;
+    }
+
+    // getClaims verifies the JWT. The API still needs the raw bearer token.
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
-    const authId = userData.user?.id ?? sessionData.session?.user?.id;
 
-    if (!authId || !accessToken) {
+    if (!accessToken) {
         return null;
     }
 
@@ -20,4 +27,4 @@ export async function getAuthSession(): Promise<AuthSession | null> {
         accessToken,
         authId,
     };
-}
+});

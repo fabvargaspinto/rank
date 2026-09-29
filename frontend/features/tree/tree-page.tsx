@@ -1,16 +1,17 @@
 import { redirect } from "next/navigation";
 import PageWrapper from "@/components/ui/page-wrapper/page-wrapper";
 import AccountMenu from "@/features/account/component/account-menu";
-import { POSTS_PAGE_SIZE } from "./post-constants";
+import { getCurrentUser } from "@/lib/api/profile";
+import { LOGIN_PATH } from "@/lib/post-auth-path";
 import { getPostsAction } from "./action/get-posts-action";
-import getUserFromJwt from "./action/get-user-from-jwt";
 import Tree from "./component/tree";
+import { POSTS_PAGE_SIZE } from "./post-constants";
 
 export default async function TreePage() {
-    const result = await getUserFromJwt();
+    const result = await getCurrentUser();
 
     if (result.status === 401) {
-        redirect("/login");
+        redirect(LOGIN_PATH);
     }
 
     if (result.isError || !result.data) {

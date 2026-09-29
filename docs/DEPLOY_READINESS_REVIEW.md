@@ -573,7 +573,7 @@ Hoy el contrato de independencia fallaría, y eso es lo buscado: vuelve visibles
 
 Criterio recomendado: el frontend valida la **forma** para dar feedback inmediato (campo vacío, largo máximo, formato de URL) con constantes de un único módulo (`lib/domain-limits.ts`), y el backend es la única autoridad sobre las **reglas de negocio**, devolviendo códigos de error que el frontend muestra junto al campo. Con tipos generados desde OpenAPI ([8.4](#84-contrato-con-el-backend-tipos-generados-desde-openapi)), cualquier divergencia en el contrato aparece al compilar.
 
-### 6.2 Acceso a la API
+### ✅ 6.2 Acceso a la API
 
 `frontend/lib/fetch_data.ts` concentra el cliente HTTP, todos los DTOs y todas las funciones de todos los contextos. Además:
 
@@ -584,7 +584,7 @@ Criterio recomendado: el frontend valida la **forma** para dar feedback inmediat
 
 Propuesta: `lib/api/client.ts` (fetch con timeout, request id y parseo de errores con `code`), un módulo por contexto (`profile.ts`, `posts.ts`, `session.ts`) con `import "server-only"`, y los tipos generados en un archivo aparte.
 
-### 6.3 Sesión y rutas privadas
+### ✅  6.3 Sesión y rutas privadas
 
 - **Doble carga en cada página privada.** `app/(private)/dashboard/tree/page.tsx` llama a `getPostAuthPath()` (sesión más `GET /users/{auth_id}`), y después `TreePage` llama a `getUserFromJwt()`, que vuelve a pedir la sesión y el usuario. Son dos `supabase.auth.getUser()` (cada uno es un viaje de red a Supabase Auth) y dos llamadas al backend por render, en serie. Envolver `getAuthSession` y la lectura del usuario actual con `cache()` de React los deduplica dentro del mismo request.
 - `getAuthSession` llama a `getUser()` y además a `getSession()` (`lib/supabase/session.ts:10-11`), mientras que `proxy.ts` ya usa `getClaims()`, que valida el token localmente con las claves asimétricas.

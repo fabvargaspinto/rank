@@ -1,6 +1,5 @@
-import { fetchCurrentUser } from "@/lib/api/profile";
+import { fetchCurrentUser, getCurrentUser } from "@/lib/api/profile";
 import type { UserResponse } from "@/lib/api/types";
-import { getAuthSession } from "@/lib/supabase/session";
 
 export const LOGIN_PATH = "/login";
 export const DASHBOARD_START_PATH = "/dashboard/start";
@@ -16,11 +15,11 @@ export async function postAuthPathForToken(accessToken: string) {
 }
 
 export async function getPostAuthPath() {
-    const session = await getAuthSession();
+    const result = await getCurrentUser();
 
-    if (!session) {
+    if (result.status === 401) {
         return LOGIN_PATH;
     }
 
-    return postAuthPathForToken(session.accessToken);
+    return postAuthPathForUser(result.data);
 }
