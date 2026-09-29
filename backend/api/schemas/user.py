@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from api.schemas.comment import CommentResponse
@@ -6,7 +8,7 @@ from api.schemas.comment import CommentResponse
 class UserLinkResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str
+    id: UUID
     type: str
     url: str
     sort_index: int
@@ -15,7 +17,7 @@ class UserLinkResponse(BaseModel):
 class UserResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str = Field(description="Id del usuario de negocio (public.users).")
+    id: UUID = Field(description="Id del usuario de negocio (public.users).")
     name: str | None = None
     display_name: str | None = None
     avatar: str | None = None

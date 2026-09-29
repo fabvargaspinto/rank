@@ -15,7 +15,7 @@ class UUID:
 
     def __post_init__(self) -> None:
         if not self.validate(self.value):
-            raise InvalidUUIDError(f"Invalid UUID: {self.value}")
+            raise InvalidUUIDError("El id no es válido")
 
     @classmethod
     def generate(cls) -> Self:

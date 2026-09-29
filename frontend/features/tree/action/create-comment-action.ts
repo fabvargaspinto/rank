@@ -53,7 +53,7 @@ export async function createCommentAction(
         };
     }
 
-    return createComment(session.authId, session.accessToken, {
+    return createComment(session.accessToken, {
         text,
         link: httpsLink(input.link),
     });

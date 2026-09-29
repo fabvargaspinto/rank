@@ -17,5 +17,5 @@ export async function deleteCommentAction(
         };
     }
 
-    return deleteComment(session.authId, session.accessToken, commentId);
+    return deleteComment(session.accessToken, commentId);
 }

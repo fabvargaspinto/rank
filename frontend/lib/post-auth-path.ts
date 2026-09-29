@@ -1,4 +1,4 @@
-import { fetchUserByAuthId, type UserResponse } from "@/lib/fetch_data";
+import { fetchCurrentUser, type UserResponse } from "@/lib/fetch_data";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export const LOGIN_PATH = "/login";
@@ -9,8 +9,8 @@ export function postAuthPathForUser(user: UserResponse | null | undefined) {
     return user?.name?.trim() ? DASHBOARD_TREE_PATH : DASHBOARD_START_PATH;
 }
 
-export async function postAuthPathForToken(authId: string, accessToken: string) {
-    const result = await fetchUserByAuthId(authId, accessToken);
+export async function postAuthPathForToken(accessToken: string) {
+    const result = await fetchCurrentUser(accessToken);
     return postAuthPathForUser(result.data);
 }
 
@@ -21,5 +21,5 @@ export async function getPostAuthPath() {
         return LOGIN_PATH;
     }
 
-    return postAuthPathForToken(session.authId, session.accessToken);
+    return postAuthPathForToken(session.accessToken);
 }

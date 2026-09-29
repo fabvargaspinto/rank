@@ -2,7 +2,8 @@ from core.shared.domain.domain_error import DomainError
 
 
 class InvalidEmailError(DomainError):
-    pass
+    code = "INVALID_EMAIL"
+    field = "email"
 
 
 class InvalidAuthProviderError(DomainError):

@@ -13,7 +13,7 @@ class Date:
 
     def __post_init__(self) -> None:
         if not self.validate(self.value):
-            raise InvalidDateError(f"Invalid date: {self.value}")
+            raise InvalidDateError("La fecha no es válida")
 
     @classmethod
     def now(cls) -> Self:

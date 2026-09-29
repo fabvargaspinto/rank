@@ -2,7 +2,7 @@ class DomainError(Exception):
     pass
 
 class InvalidUUIDError(DomainError):
-    pass
+    code = "INVALID_ID"
 
 class InvalidDateError(DomainError):
     pass

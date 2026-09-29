@@ -15,7 +15,7 @@ export async function deleteAccountAction(
         redirect("/login");
     }
 
-    const result = await deleteAccount(session.authId, session.accessToken);
+    const result = await deleteAccount(session.accessToken);
 
     if (result.isError) {
         return {

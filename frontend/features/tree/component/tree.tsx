@@ -121,7 +121,7 @@ export default function Tree({
         loadingMoreRef.current = true;
         setLoadingMore(true);
 
-        const result = await getCommentsAction(user.id, {
+        const result = await getCommentsAction(user.name ?? "", {
             limit: COMMENTS_PAGE_SIZE,
             cursor: nextCursor,
         });
@@ -139,7 +139,7 @@ export default function Tree({
 
         setLoadingMore(false);
         loadingMoreRef.current = false;
-    }, [hasMore, nextCursor, profile, user.id]);
+    }, [hasMore, nextCursor, profile, user.name]);
 
     return (
         <article className={styles.container}>

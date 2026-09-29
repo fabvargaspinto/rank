@@ -22,17 +22,19 @@ export default async function TreePage() {
         );
     }
 
-    const comments = await getCommentsAction(result.data.id, {
-        limit: COMMENTS_PAGE_SIZE,
-    });
+    const comments = result.data.name
+        ? await getCommentsAction(result.data.name, {
+              limit: COMMENTS_PAGE_SIZE,
+          })
+        : null;
 
     return (
         <PageWrapper>
             <AccountMenu />
             <Tree
                 user={result.data}
-                initialComments={comments.data?.items ?? []}
-                initialNextCursor={comments.data?.next_cursor ?? null}
+                initialComments={comments?.data?.items ?? []}
+                initialNextCursor={comments?.data?.next_cursor ?? null}
                 editable
             />
         </PageWrapper>

@@ -12,4 +12,7 @@ class SessionResponse(BaseModel):
 class ErrorResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    code: str
     detail: str
+    field: str | None = None
+    request_id: str

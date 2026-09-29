@@ -35,7 +35,6 @@ from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
-OTHER_AUTH_ID = "770e8400-e29b-41d4-a716-446655440000"
 SUPABASE_URL = "https://example.supabase.co"
 AVATAR_PATH = f"{AUTH_ID}/avatar.jpg"
 AVATAR_URL = public_avatar_url(SUPABASE_URL, AVATAR_PATH)
@@ -86,22 +85,11 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
 
 class TestGetUserByAuthId:
     def test_missing_authorization_returns_401(self):
-        response = _client().get(f"/users/{AUTH_ID}")
+        response = _client().get("/me")
 
         assert response.status_code == 401
-        assert response.json() == {"detail": "El token de autenticación no es válido"}
-
-    def test_other_auth_id_returns_404(self):
-        app_client = _client()
-        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
-            auth_id=AUTH_ID,
-            email="user@example.com",
-        )
-
-        response = app_client.get(f"/users/{OTHER_AUTH_ID}")
-
-        assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert response.json()["detail"] == "El token de autenticación no es válido"
+        assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
     def test_valid_current_user_returns_profile(self):
         repo = FakeUserRepo()
@@ -113,7 +101,7 @@ class TestGetUserByAuthId:
             email="user@example.com",
         )
 
-        response = app_client.get(f"/users/{AUTH_ID}")
+        response = app_client.get("/me")
 
         assert response.status_code == 200
         assert response.json() == {
@@ -132,10 +120,11 @@ class TestGetUserByAuthId:
             email="user@example.com",
         )
 
-        response = app_client.get(f"/users/{AUTH_ID}")
+        response = app_client.get("/me")
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert response.json()["detail"] == "El usuario no existe"
+        assert response.json()["code"] == "USER_NOT_FOUND"
 
 
 class TestGetUserByName:
@@ -145,7 +134,7 @@ class TestGetUserByName:
         repo.users_by_name[USERNAME] = user
         repo.users_by_id[user.id.value] = user
 
-        response = _client(repo).get(f"/users/name/{USERNAME}")
+        response = _client(repo).get(f"/profiles/{USERNAME}")
 
         assert response.status_code == 200
         assert response.json() == {
@@ -160,36 +149,23 @@ class TestGetUserByName:
         }
 
     def test_unknown_name_returns_404(self):
-        response = _client().get("/users/name/missing")
+        response = _client().get("/profiles/missing")
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert response.json()["detail"] == "El usuario no existe"
+        assert response.json()["code"] == "USER_NOT_FOUND"
 
 
 class TestUpdateUser:
     def test_missing_authorization_returns_401(self):
         response = _client().patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={"name": "luna"},
         )
 
         assert response.status_code == 401
-        assert response.json() == {"detail": "El token de autenticación no es válido"}
-
-    def test_other_auth_id_returns_404(self):
-        app_client = _client()
-        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
-            auth_id=AUTH_ID,
-            email="user@example.com",
-        )
-
-        response = app_client.patch(
-            f"/users/{OTHER_AUTH_ID}",
-            json={"name": "luna"},
-        )
-
-        assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert response.json()["detail"] == "El token de autenticación no es válido"
+        assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
     def test_updates_current_user_profile(self):
         repo = FakeUserRepo()
@@ -202,7 +178,7 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={
                 "name": "luna",
                 "avatar": AVATAR_URL,
@@ -230,7 +206,7 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={
                 "name": "luna",
                 "avatar": "https://otro-dominio.example/pixel.gif",
@@ -251,7 +227,7 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={"name": "luna", "description": "Nueva bio"},
         )
 
@@ -271,7 +247,7 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={
                 "name": "luna",
                 "links": [
@@ -298,12 +274,13 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={"name": "luna"},
         )
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert response.json()["detail"] == "El usuario no existe"
+        assert response.json()["code"] == "USER_NOT_FOUND"
 
     def test_taken_name_returns_409(self):
         repo = FakeUserRepo()
@@ -318,12 +295,15 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={"name": "LunaReyes"},
         )
 
         assert response.status_code == 409
-        assert response.json() == {
+        body = response.json()
+        assert body["request_id"]
+        del body["request_id"]
+        assert body == {
             "detail": "Ese nombre ya está en uso",
             "code": "USERNAME_TAKEN",
             "field": "name",
@@ -339,7 +319,7 @@ class TestUpdateUser:
         )
 
         response = app_client.patch(
-            f"/users/{AUTH_ID}",
+            "/me",
             json={"name": "Login"},
         )
 
@@ -350,27 +330,12 @@ class TestUpdateUser:
 
 class TestUploadAvatar:
     def test_missing_authorization_returns_401(self):
-        response = _client().post(
-            f"/users/{AUTH_ID}/avatar",
+        response = _client().put(
+            "/me/avatar",
             files={"file": ("avatar.jpg", b"jpeg-bytes", "image/jpeg")},
         )
 
         assert response.status_code == 401
-
-    def test_other_auth_id_returns_404(self):
-        app_client = _client()
-        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
-            auth_id=AUTH_ID,
-            email="user@example.com",
-        )
-
-        response = app_client.post(
-            f"/users/{OTHER_AUTH_ID}/avatar",
-            files={"file": ("avatar.jpg", b"jpeg-bytes", "image/jpeg")},
-        )
-
-        assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
 
     def test_uploads_avatar_for_current_user(self):
         repo = FakeUserRepo()
@@ -385,8 +350,8 @@ class TestUploadAvatar:
         image = BytesIO()
         Image.new("RGB", (8, 8), "red").save(image, format="PNG")
 
-        response = app_client.post(
-            f"/users/{AUTH_ID}/avatar",
+        response = app_client.put(
+            "/me/avatar",
             files={"file": ("avatar.png", image.getvalue(), "image/png")},
         )
 
@@ -407,33 +372,48 @@ class TestUploadAvatar:
         gif = BytesIO()
         Image.new("RGB", (8, 8), "blue").save(gif, format="GIF")
 
-        response = app_client.post(
-            f"/users/{AUTH_ID}/avatar",
+        response = app_client.put(
+            "/me/avatar",
             files={"file": ("avatar.gif", gif.getvalue(), "image/gif")},
         )
 
         assert response.status_code == 400
-        assert response.json() == {"detail": "La imagen debe ser JPEG, PNG o WebP"}
+        assert response.json()["detail"] == "La imagen debe ser JPEG, PNG o WebP"
+        assert response.json()["code"] == "INVALID_AVATAR_FILE"
 
-
-class TestDeleteAccountRoute:
-    def test_missing_authorization_returns_401(self):
-        response = _client().delete(f"/users/{AUTH_ID}")
-
-        assert response.status_code == 401
-        assert response.json() == {"detail": "El token de autenticación no es válido"}
-
-    def test_other_auth_id_returns_404(self):
-        app_client = _client()
+    def test_limits_repeated_uploads_for_the_same_token(self):
+        repo = FakeUserRepo()
+        repo.users_by_auth_id[AUTH_ID] = User.create_empty()
+        app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
             auth_id=AUTH_ID,
             email="user@example.com",
         )
+        image = BytesIO()
+        Image.new("RGB", (4, 4), "red").save(image, format="PNG")
+        payload = image.getvalue()
+        headers = {"Authorization": "Bearer avatar-rate-limit-token"}
 
-        response = app_client.delete(f"/users/{OTHER_AUTH_ID}")
+        last = None
+        for _ in range(11):
+            last = app_client.put(
+                "/me/avatar",
+                headers=headers,
+                files={"file": ("avatar.png", payload, "image/png")},
+            )
 
-        assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert last is not None
+        assert last.status_code == 429
+        assert last.json()["code"] == "RATE_LIMITED"
+
+
+class TestDeleteAccountRoute:
+    def test_missing_authorization_returns_401(self):
+        response = _client().delete("/me")
+
+        assert response.status_code == 401
+        assert response.json()["detail"] == "El token de autenticación no es válido"
+        assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
     def test_deletes_the_current_account(self):
         repo = FakeUserRepo()
@@ -451,7 +431,7 @@ class TestDeleteAccountRoute:
             lambda: DeleteAccount(repo, avatars, auth)
         )
 
-        response = app_client.delete(f"/users/{AUTH_ID}")
+        response = app_client.delete("/me")
 
         assert response.status_code == 204
         assert response.content == b""

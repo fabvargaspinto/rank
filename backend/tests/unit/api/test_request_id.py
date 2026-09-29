@@ -29,7 +29,7 @@ def test_error_response_propagates_request_id():
     )
 
     assert response.status_code == 401
-    assert response.json() == {
-        "detail": "El token de autenticación no es válido"
-    }
+    assert response.json()["detail"] == "El token de autenticación no es válido"
+    assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
+    assert response.json()["request_id"] == "session-error-1"
     assert response.headers[REQUEST_ID_HEADER] == "session-error-1"

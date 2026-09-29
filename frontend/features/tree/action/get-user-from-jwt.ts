@@ -1,4 +1,4 @@
-import { fetchUserByAuthId, type FetchDataResponse, type UserResponse } from "@/lib/fetch_data";
+import { fetchCurrentUser, type FetchDataResponse, type UserResponse } from "@/lib/fetch_data";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export default async function getUserFromJwt(): Promise<
@@ -15,5 +15,5 @@ export default async function getUserFromJwt(): Promise<
         };
     }
 
-    return fetchUserByAuthId(session.authId, session.accessToken);
+    return fetchCurrentUser(session.accessToken);
 }

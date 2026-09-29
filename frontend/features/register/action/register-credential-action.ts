@@ -72,9 +72,6 @@ export async function registerCredentialAction(
     }
 
     redirect(
-        await postAuthPathForToken(
-            data.session.user.id,
-            data.session.access_token,
-        ),
+        await postAuthPathForToken(data.session.access_token),
     );
 }

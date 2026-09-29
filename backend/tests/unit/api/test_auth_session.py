@@ -53,9 +53,8 @@ class TestAuthSession:
         response = _client().post("/auth/session")
 
         assert response.status_code == 401
-        assert response.json() == {
-            "detail": "El token de autenticación no es válido"
-        }
+        assert response.json()["detail"] == "El token de autenticación no es válido"
+        assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
     def test_token_in_body_is_not_accepted(self):
         response = _client().post(
@@ -131,7 +130,8 @@ class TestAuthSession:
         response = app_client.post("/auth/session")
 
         assert response.status_code == 409
-        assert response.json() == {"detail": "El email ya está registrado"}
+        assert response.json()["detail"] == "El email ya está registrado"
+        assert response.json()["code"] == "EMAIL_ALREADY_EXISTS"
         assert repo.find_by_id(AUTH_ID) is None
         assert repo.find_by_email(EMAIL) is existing
 
@@ -145,9 +145,8 @@ class TestAuthSession:
         response = app_client.post("/auth/session")
 
         assert response.status_code == 401
-        assert response.json() == {
-            "detail": "El token de autenticación no es válido"
-        }
+        assert response.json()["detail"] == "El token de autenticación no es válido"
+        assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
 
 def _session_openapi_schema():
@@ -178,5 +177,10 @@ class TestSessionOpenApi:
         assert "401" in responses
         assert "409" in responses
         error_schema = openapi["components"]["schemas"]["ErrorResponse"]
-        assert set(error_schema["properties"]) == {"detail"}
+        assert set(error_schema["properties"]) == {
+            "code",
+            "detail",
+            "field",
+            "request_id",
+        }
         assert "id" not in error_schema["properties"]

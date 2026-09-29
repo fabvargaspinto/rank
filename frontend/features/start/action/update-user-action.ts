@@ -68,7 +68,7 @@ export async function updateUserAction(
         };
     }
 
-    return updateUser(session.authId, session.accessToken, {
+    return updateUser(session.accessToken, {
         name,
         ...(input.displayName !== undefined
             ? { display_name: input.displayName?.trim() || null }

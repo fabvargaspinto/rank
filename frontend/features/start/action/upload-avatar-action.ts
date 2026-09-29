@@ -41,7 +41,7 @@ export async function uploadAvatarAction(
         };
     }
 
-    const result = await uploadAvatar(session.authId, session.accessToken, file);
+    const result = await uploadAvatar(session.accessToken, file);
 
     return {
         ...result,

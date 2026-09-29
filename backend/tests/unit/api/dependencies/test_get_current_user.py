@@ -89,7 +89,8 @@ def _unauthorized(client, **kwargs):
 
 def _assert_unauthorized(response):
     assert response.status_code == 401
-    assert response.json() == {"detail": "El token de autenticación no es válido"}
+    assert response.json()["detail"] == "El token de autenticación no es válido"
+    assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
 
 class TestGetCurrentUser:

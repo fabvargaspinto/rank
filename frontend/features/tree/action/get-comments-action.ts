@@ -1,19 +1,19 @@
 "use server";
 
 import {
-    fetchCommentsByUserId,
+    fetchPostsByUsername,
     type CommentListResponse,
     type FetchDataResponse,
 } from "@/lib/fetch_data";
 import { COMMENTS_PAGE_SIZE } from "../comment-constants";
 
 export async function getCommentsAction(
-    userId: string,
+    username: string,
     options: { limit?: number; cursor?: string | null } = {},
 ): Promise<FetchDataResponse<CommentListResponse>> {
-    const id = userId.trim();
+    const name = username.trim();
 
-    if (!id) {
+    if (!name) {
         return {
             data: null,
             isError: true,
@@ -22,7 +22,7 @@ export async function getCommentsAction(
         };
     }
 
-    return fetchCommentsByUserId(id, {
+    return fetchPostsByUsername(name, {
         limit: options.limit ?? COMMENTS_PAGE_SIZE,
         cursor: options.cursor,
     });

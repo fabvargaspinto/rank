@@ -97,11 +97,10 @@ export async function provisionSession(
     });
 }
 
-export async function fetchUserByAuthId(
-    authId: string,
+export async function fetchCurrentUser(
     accessToken: string,
 ): Promise<FetchDataResponse<UserResponse>> {
-    return fetchData<UserResponse>(`/users/${encodeURIComponent(authId)}`, {
+    return fetchData<UserResponse>("/me", {
         headers: {
             Authorization: `Bearer ${accessToken}`,
         },
@@ -119,15 +118,14 @@ export async function fetchUserByName(
     const query = params.toString();
 
     return fetchData<PublicProfileResponse>(
-        `/users/name/${encodeURIComponent(name)}${query ? `?${query}` : ""}`,
+        `/profiles/${encodeURIComponent(name)}${query ? `?${query}` : ""}`,
     );
 }
 
 export async function deleteAccount(
-    authId: string,
     accessToken: string,
 ): Promise<FetchDataResponse<null>> {
-    return fetchData<null>(`/users/${encodeURIComponent(authId)}`, {
+    return fetchData<null>("/me", {
         method: "DELETE",
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -136,7 +134,6 @@ export async function deleteAccount(
 }
 
 export async function updateUser(
-    authId: string,
     accessToken: string,
     profile: {
         name: string;
@@ -146,7 +143,7 @@ export async function updateUser(
         links?: { url: string }[] | null;
     },
 ): Promise<FetchDataResponse<UserResponse>> {
-    return fetchData<UserResponse>(`/users/${encodeURIComponent(authId)}`, {
+    return fetchData<UserResponse>("/me", {
         method: "PATCH",
         headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -177,8 +174,8 @@ export type PublicProfileResponse = UserResponse & {
     next_cursor: string | null;
 };
 
-export async function fetchCommentsByUserId(
-    userId: string,
+export async function fetchPostsByUsername(
+    username: string,
     options: { limit?: number; cursor?: string | null } = {},
 ): Promise<FetchDataResponse<CommentListResponse>> {
     const params = new URLSearchParams();
@@ -191,12 +188,11 @@ export async function fetchCommentsByUserId(
     const query = params.toString();
 
     return fetchData<CommentListResponse>(
-        `/users/id/${encodeURIComponent(userId)}/comments${query ? `?${query}` : ""}`,
+        `/profiles/${encodeURIComponent(username)}/posts${query ? `?${query}` : ""}`,
     );
 }
 
 export async function createComment(
-    authId: string,
     accessToken: string,
     comment: {
         text: string;
@@ -204,7 +200,7 @@ export async function createComment(
     },
 ): Promise<FetchDataResponse<CommentResponse>> {
     return fetchData<CommentResponse>(
-        `/users/${encodeURIComponent(authId)}/comments`,
+        "/me/posts",
         {
             method: "POST",
             headers: {
@@ -216,12 +212,11 @@ export async function createComment(
 }
 
 export async function deleteComment(
-    authId: string,
     accessToken: string,
     commentId: string,
 ): Promise<FetchDataResponse<null>> {
     return fetchData<null>(
-        `/users/${encodeURIComponent(authId)}/comments/${encodeURIComponent(commentId)}`,
+        `/me/posts/${encodeURIComponent(commentId)}`,
         {
             method: "DELETE",
             headers: {
@@ -232,7 +227,6 @@ export async function deleteComment(
 }
 
 export async function uploadAvatar(
-    authId: string,
     accessToken: string,
     file: File,
 ): Promise<FetchDataResponse<AvatarUploadResponse>> {
@@ -240,9 +234,9 @@ export async function uploadAvatar(
     body.append("file", file);
 
     return fetchData<AvatarUploadResponse>(
-        `/users/${encodeURIComponent(authId)}/avatar`,
+        "/me/avatar",
         {
-            method: "POST",
+            method: "PUT",
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },

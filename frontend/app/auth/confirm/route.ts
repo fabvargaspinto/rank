@@ -59,6 +59,6 @@ export async function GET(request: Request) {
     }
 
     redirect(
-        await postAuthPathForToken(session.user.id, session.access_token),
+        await postAuthPathForToken(session.access_token),
     );
 }

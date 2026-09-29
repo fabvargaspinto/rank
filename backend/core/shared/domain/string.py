@@ -23,4 +23,4 @@ class String:
         return
 
     def _reject_type(self) -> NoReturn:
-        raise InvalidStringError("Invalid string")
+        raise InvalidStringError("El texto no es válido")

@@ -1,9 +1,8 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 
-from api.dependencies.auth import CurrentUser, get_current_user
 from api.dependencies.current_profile import get_current_profile
 from api.schemas.auth import ErrorResponse
 from api.schemas.comment import (
@@ -15,7 +14,9 @@ from config.dependency_container import (
     get_comments_by_user_use_case,
     get_create_comment_use_case,
     get_delete_comment_use_case,
+    get_user_by_name_use_case,
 )
+from controller.rate_limit import limiter
 from core.comment.application.create_comment import CreateComment
 from core.comment.application.delete_comment import DeleteComment
 from core.comment.application.get_comments_by_user import (
@@ -25,7 +26,7 @@ from core.comment.application.get_comments_by_user import (
 )
 from core.comment.domain.comment import Comment
 from core.comment.domain.comment_page import CommentPage
-from core.user.application.application_error import UserNotFoundError
+from core.user.application.get_user_by_name import GetUserByName
 from core.user.domain.user import User
 
 router = APIRouter()
@@ -37,12 +38,12 @@ def _to_response(comment: Comment) -> CommentResponse:
         user_id=comment.user_id.value,
         text=comment.text.value,
         link=comment.link.value if comment.link else None,
-        created_at=comment.created_at.to_isoformat(),
+        created_at=comment.created_at.value,
     )
 
 
 @router.get(
-    "/users/id/{user_id}/comments",
+    "/profiles/{username}/posts",
     response_model=CommentListResponse,
     status_code=status.HTTP_200_OK,
     responses={
@@ -52,18 +53,20 @@ def _to_response(comment: Comment) -> CommentResponse:
         },
     },
 )
-def list_comments_by_user(
-    user_id: UUID,
+def list_posts(
+    username: str,
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
     cursor: Annotated[str | None, Query()] = None,
+    users: GetUserByName = Depends(get_user_by_name_use_case),
     use_case: GetCommentsByUser = Depends(get_comments_by_user_use_case),
 ) -> CommentListResponse:
-    page = use_case.execute(str(user_id), limit=limit, cursor=cursor)
+    user = users.execute(username)
+    page = use_case.execute(user.id.value, limit=limit, cursor=cursor)
     return _page_response(page)
 
 
 @router.post(
-    "/users/{auth_id}/comments",
+    "/me/posts",
     response_model=CommentResponse,
     status_code=status.HTTP_201_CREATED,
     responses={
@@ -79,18 +82,19 @@ def list_comments_by_user(
             "model": ErrorResponse,
             "description": "Usuario no encontrado",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Demasiadas solicitudes",
+        },
     },
 )
-def create_comment(
-    auth_id: str,
+@limiter.limit("20/minute")
+def create_post(
+    request: Request,
     body: CreateCommentRequest,
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
     profile: Annotated[User, Depends(get_current_profile)],
     use_case: CreateComment = Depends(get_create_comment_use_case),
 ) -> CommentResponse:
-    if auth_id != current_user.auth_id:
-        raise UserNotFoundError("El usuario no existe")
-
     return _to_response(
         use_case.execute(
             profile,
@@ -101,7 +105,7 @@ def create_comment(
 
 
 @router.delete(
-    "/users/{auth_id}/comments/{comment_id}",
+    "/me/posts/{post_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {
@@ -114,17 +118,12 @@ def create_comment(
         },
     },
 )
-def delete_comment(
-    auth_id: str,
-    comment_id: UUID,
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+def delete_post(
+    post_id: UUID,
     profile: Annotated[User, Depends(get_current_profile)],
     use_case: DeleteComment = Depends(get_delete_comment_use_case),
 ) -> Response:
-    if auth_id != current_user.auth_id:
-        raise UserNotFoundError("El usuario no existe")
-
-    use_case.execute(profile, str(comment_id))
+    use_case.execute(profile, str(post_id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

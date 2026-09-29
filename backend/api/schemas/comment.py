@@ -1,3 +1,6 @@
+from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -11,11 +14,11 @@ class CreateCommentRequest(BaseModel):
 class CommentResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str
-    user_id: str
+    id: UUID
+    user_id: UUID
     text: str
     link: str | None = None
-    created_at: str = Field(description="Fecha de creación en ISO 8601.")
+    created_at: datetime = Field(description="Fecha de creación en ISO 8601.")
 
 
 class CommentListResponse(BaseModel):

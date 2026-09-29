@@ -47,7 +47,7 @@ def _client() -> TestClient:
     @app.post("/raise/domain")
     def raise_domain(kind: str):
         errors = {
-            "email": InvalidEmailError("Invalid email address"),
+            "email": InvalidEmailError("El email no es válido"),
             "identity": IdentityAlreadyExistsError("La identidad ya existe"),
             "username": UsernameAlreadyTakenError("Ese nombre ya está en uso"),
             "provider": InvalidAuthProviderError(
@@ -72,7 +72,8 @@ class TestErrorHandlers:
         response = _client().post("/raise/application?kind=email")
 
         assert response.status_code == 409
-        assert response.json() == {"detail": "El email ya está registrado"}
+        assert response.json()["detail"] == "El email ya está registrado"
+        assert response.json()["code"] == "EMAIL_ALREADY_EXISTS"
 
     def test_auth_already_exists_is_409(self):
         response = _client().post("/raise/application?kind=auth")
@@ -83,7 +84,8 @@ class TestErrorHandlers:
         response = _client().post("/raise/application?kind=credentials")
 
         assert response.status_code == 401
-        assert response.json() == {"detail": "El token de autenticación no es válido"}
+        assert response.json()["detail"] == "El token de autenticación no es válido"
+        assert response.json()["code"] == "INVALID_AUTH_CREDENTIALS"
 
     def test_unsupported_provider_is_400(self):
         response = _client().post("/raise/application?kind=provider")
@@ -94,13 +96,16 @@ class TestErrorHandlers:
         response = _client().post("/raise/application?kind=user")
 
         assert response.status_code == 404
-        assert response.json() == {"detail": "El usuario no existe"}
+        assert response.json()["detail"] == "El usuario no existe"
+        assert response.json()["code"] == "USER_NOT_FOUND"
 
     def test_user_name_already_exists_is_409(self):
         response = _client().post("/raise/domain?kind=username")
 
         assert response.status_code == 409
-        assert response.json() == {
+        body = response.json()
+        assert body.pop("request_id")
+        assert body == {
             "detail": "Ese nombre ya está en uso",
             "code": "USERNAME_TAKEN",
             "field": "name",
@@ -110,7 +115,13 @@ class TestErrorHandlers:
         response = _client().post("/raise/domain?kind=email")
 
         assert response.status_code == 400
-        assert response.json() == {"detail": "Invalid email address"}
+        body = response.json()
+        assert body.pop("request_id")
+        assert body == {
+            "detail": "El email no es válido",
+            "code": "INVALID_EMAIL",
+            "field": "email",
+        }
 
     def test_domain_invalid_provider_is_400(self):
         response = _client().post("/raise/domain?kind=provider")
@@ -121,7 +132,8 @@ class TestErrorHandlers:
         response = _client().post("/raise/domain?kind=identity")
 
         assert response.status_code == 409
-        assert response.json() == {"detail": "La identidad ya existe"}
+        assert response.json()["detail"] == "La identidad ya existe"
+        assert response.json()["code"] == "IDENTITY_ALREADY_EXISTS"
 
     def test_infrastructure_error_is_500(self, caplog):
         token = "secret-access-token"
@@ -139,7 +151,9 @@ class TestErrorHandlers:
             )
 
         assert response.status_code == 500
-        assert response.json() == {"detail": "Error al guardar el usuario"}
+        assert response.json()["detail"] == "Error al guardar el usuario"
+        assert response.json()["code"] == "AUTH_CREATION"
+        assert response.json()["request_id"] == request_id
         assert response.headers[REQUEST_ID_HEADER] == request_id
         assert any(
             getattr(record, "request_id", None) == request_id
@@ -154,4 +168,30 @@ class TestErrorHandlers:
         response = _client().post("/raise/body", json={})
 
         assert response.status_code == 422
-        assert "detail" in response.json()
+        body = response.json()
+        assert body["code"] == "VALIDATION_ERROR"
+        assert body["field"] == "email"
+        assert body["detail"] == "Este campo es obligatorio"
+
+    def test_unexpected_error_is_json(self):
+        app = FastAPI()
+        register_request_id(app)
+        register_error_handlers(app)
+
+        @app.get("/boom")
+        def boom():
+            raise TypeError("no debería verse")
+
+        response = TestClient(app, raise_server_exceptions=False).get(
+            "/boom",
+            headers={REQUEST_ID_HEADER: "boom-1"},
+        )
+
+        assert response.status_code == 500
+        assert response.headers[REQUEST_ID_HEADER] == "boom-1"
+        assert response.json() == {
+            "code": "INTERNAL_ERROR",
+            "detail": "Error interno",
+            "request_id": "boom-1",
+        }
+        assert "no debería verse" not in response.text
