@@ -356,9 +356,10 @@ class TestUploadAvatar:
         )
 
         assert response.status_code == 200
-        assert response.json() == {
-            "url": public_avatar_url(SUPABASE_URL, f"{AUTH_ID}/avatar.webp")
-        }
+        assert response.json()["url"].startswith(
+            public_avatar_url(SUPABASE_URL, f"{user.id.value}/")
+        )
+        assert response.json()["url"].endswith(".webp")
 
     def test_rejects_unsupported_type(self):
         repo = FakeUserRepo()
@@ -437,4 +438,4 @@ class TestDeleteAccountRoute:
         assert response.content == b""
         assert AUTH_ID not in repo.users_by_auth_id
         assert auth.deleted_ids == [AUTH_ID]
-        assert avatars.deleted == [AUTH_ID]
+        assert avatars.deleted == [AVATAR_PATH]

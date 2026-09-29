@@ -4,6 +4,10 @@ from core.user.domain.user_avatar import UserAvatar
 from core.user.domain.user_error import InvalidUserAvatarError
 
 PATH = "550e8400-e29b-41d4-a716-446655440000/avatar.webp"
+NEW_PATH = (
+    "550e8400-e29b-41d4-a716-446655440000/"
+    "660e8400-e29b-41d4-a716-446655440000.webp"
+)
 
 
 class TestUserAvatar:
@@ -12,6 +16,9 @@ class TestUserAvatar:
         avatar = UserAvatar(PATH)
 
         assert avatar.value == PATH
+
+    def test_accepts_a_unique_webp_name(self):
+        assert UserAvatar(NEW_PATH).value == NEW_PATH
 
     def test_should_reject_foreign_url(self):
         with pytest.raises(InvalidUserAvatarError):

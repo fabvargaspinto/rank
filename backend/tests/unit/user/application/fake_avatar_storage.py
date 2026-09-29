@@ -6,5 +6,5 @@ class FakeAvatarStorage:
     def upload(self, path: str, content: bytes, content_type: str) -> None:
         self.uploads.append((path, content, content_type))
 
-    def delete(self, auth_id: str) -> None:
-        self.deleted.append(auth_id)
+    def delete(self, path: str) -> None:
+        self.deleted.append(path)

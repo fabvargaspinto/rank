@@ -29,9 +29,10 @@ class TestUploadAvatar:
     def test_recodes_a_jpeg_to_webp_and_saves_the_path(self):
         content = _image_bytes("JPEG")
 
-        path = self.use_case.execute(self.user, AUTH_ID, content)
+        path = self.use_case.execute(self.user, content)
 
-        assert path == f"{AUTH_ID}/avatar.webp"
+        assert path.startswith(f"{self.user.id.value}/")
+        assert path.endswith(".webp")
         stored_path, stored_bytes, stored_type = self.storage.uploads[0]
         assert stored_path == path
         assert stored_type == "image/webp"
@@ -40,24 +41,36 @@ class TestUploadAvatar:
         assert self.user.avatar.value == path
 
     def test_accepts_png_bytes_even_if_the_name_says_otherwise(self):
-        path = self.use_case.execute(self.user, AUTH_ID, _image_bytes("PNG"))
+        path = self.use_case.execute(self.user, _image_bytes("PNG"))
 
-        assert path.endswith("avatar.webp")
+        assert path.startswith(f"{self.user.id.value}/")
+        assert path.endswith(".webp")
+
+    def test_deletes_the_previous_object_after_saving(self):
+        previous = f"{self.user.id.value}/avatar.webp"
+        self.user.change_avatar(previous)
+
+        path = self.use_case.execute(self.user, _image_bytes("PNG"))
+
+        assert path != previous
+        assert self.storage.deleted == [previous]
+        assert self.user.avatar is not None
+        assert self.user.avatar.value == path
 
     def test_rejects_bytes_that_are_not_an_image(self):
         with pytest.raises(InvalidAvatarFileError, match="inválida"):
-            self.use_case.execute(self.user, AUTH_ID, b"png-bytes")
+            self.use_case.execute(self.user, b"png-bytes")
 
     def test_rejects_gif(self):
         with pytest.raises(InvalidAvatarFileError, match="JPEG, PNG o WebP"):
-            self.use_case.execute(self.user, AUTH_ID, _image_bytes("GIF"))
+            self.use_case.execute(self.user, _image_bytes("GIF"))
 
     def test_rejects_empty_file(self):
         with pytest.raises(InvalidAvatarFileError, match="inválida"):
-            self.use_case.execute(self.user, AUTH_ID, b"")
+            self.use_case.execute(self.user, b"")
 
     def test_rejects_oversized_file(self):
         content = b"x" * (MAX_AVATAR_BYTES + 1)
 
         with pytest.raises(InvalidAvatarFileError, match="2 MB"):
-            self.use_case.execute(self.user, AUTH_ID, content)
+            self.use_case.execute(self.user, content)

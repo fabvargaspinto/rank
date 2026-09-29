@@ -23,11 +23,21 @@ class TestDeleteAccount:
 
         assert user.id.value not in self.users.users_by_id
         assert AUTH_ID not in self.users.users_by_auth_id
-        assert self.avatars.deleted == [AUTH_ID]
+        assert self.avatars.deleted == []
         assert self.auth.deleted_ids == [AUTH_ID]
+
+    def test_deletes_the_stored_avatar(self):
+        user = User.create_empty()
+        user.change_avatar(f"{user.id.value}/avatar.webp")
+        self.users.users_by_id[user.id.value] = user
+        self.users.users_by_auth_id[AUTH_ID] = user
+
+        self.use_case.execute(AUTH_ID)
+
+        assert self.avatars.deleted == [f"{user.id.value}/avatar.webp"]
 
     def test_deletes_identity_when_profile_is_missing(self):
         self.use_case.execute(AUTH_ID)
 
-        assert self.avatars.deleted == [AUTH_ID]
+        assert self.avatars.deleted == []
         assert self.auth.deleted_ids == [AUTH_ID]

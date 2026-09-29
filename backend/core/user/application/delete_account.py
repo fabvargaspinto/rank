@@ -16,7 +16,8 @@ class DeleteAccount:
 
     def execute(self, auth_id: str) -> None:
         user = self.user_repo.get_user_by_auth_id(auth_id)
-        self.avatar_storage.delete(auth_id)
         if user is not None:
+            if user.avatar is not None:
+                self.avatar_storage.delete(user.avatar.value)
             self.user_repo.delete_user(user.id.value)
         self.auth_repo.delete_identity(auth_id)

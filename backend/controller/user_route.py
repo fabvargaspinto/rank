@@ -223,13 +223,12 @@ def update_me(
 @limiter.limit("10/minute")
 def upload_avatar(
     request: Request,
-    current_user: Annotated[CurrentUser, Depends(get_current_user)],
     profile: Annotated[User, Depends(get_current_profile)],
     use_case: UploadAvatar = Depends(get_upload_avatar_use_case),
     supabase_url: str = Depends(get_supabase_url),
     file: UploadFile = File(...),
 ) -> AvatarUploadResponse:
-    path = use_case.execute(profile, current_user.auth_id, _read_upload(file))
+    path = use_case.execute(profile, _read_upload(file))
     return AvatarUploadResponse(url=public_avatar_url(supabase_url, path))
 
 

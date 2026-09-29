@@ -23,7 +23,7 @@ class AvatarSupabaseStorage:
                 file_options={
                     "content-type": content_type,
                     "upsert": "true",
-                    "cache-control": "3600",
+                    "cache-control": "31536000",
                 },
             )
         except StorageApiError as exc:
@@ -31,15 +31,8 @@ class AvatarSupabaseStorage:
         except Exception as exc:
             raise AvatarUploadError("Error al subir la imagen") from exc
 
-    def delete(self, auth_id: str) -> None:
+    def delete(self, path: str) -> None:
         try:
-            listed = self._db.storage.from_(BUCKET).list(auth_id) or []
-            paths = [
-                f"{auth_id}/{item['name']}"
-                for item in listed
-                if isinstance(item, dict) and item.get("name")
-            ]
-            if paths:
-                self._db.storage.from_(BUCKET).remove(paths)
+            self._db.storage.from_(BUCKET).remove([path])
         except Exception:
             return

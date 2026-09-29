@@ -462,7 +462,7 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
 6. **Paginación por offset.** `GetCommentsByUser` pagina con `limit` y `offset`; si se publica algo mientras alguien carga la página siguiente, aparecen duplicados. Para un feed conviene paginar por cursor (`created_at`, `id`).
 7. **Casos de uso que faltan para producción:** `DeleteComment` (o `DeletePost`), `DeleteAccount`, `ChangeUsername` con la regla de [4.3](#43-la-regla-del-nombre-de-usuario-no-está-en-el-dominio-verificado), y un modelo de lectura `GetPublicProfile` que devuelva el perfil y la primera página de publicaciones en una sola llamada ([9.6](#96-rendimiento-percibido)).
 
-### 5.7 Presentación (API)
+### ✅ 5.7 Presentación (API)
 
 1. **Diseño de rutas.** Hoy conviven `/users/{auth_id}`, `/users/name/{username}`, `/users/id/{user_id}/comments` y `/users/{auth_id}/comments`: tres identificadores distintos en la misma posición. Además, todas las rutas con `{auth_id}` repiten `if auth_id != current_user.auth_id: raise UserNotFoundError` (`user_route.py:80`, `:110`, `:156` y `comment_route.py:84`), señal de que el parámetro sobra porque el token ya dice quién es. Propuesta:
 
@@ -488,7 +488,7 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
 7. **Logging.** Configurar `logging` al arrancar, con un formatter JSON que incluya los campos `extra` (hoy se pierden), y filtrar el access log de `/health`, que con el healthcheck cada 10 segundos ocupa casi todo el log.
 8. **Rate limiting.** No hay límites en la creación de comentarios, la actualización del perfil ni la subida de avatares. Alcanza con `slowapi` por usuario autenticado, o con el límite del proxy o CDN.
 
-### 5.8 Persistencia
+###  ✅ 5.8 Persistencia
 
 - **Una sola fuente de verdad:** `supabase/migrations/` ([4.1](#41-las-migraciones-no-crean-la-base-que-usa-el-código-verificado)).
 - **Mínimo privilegio** para `authenticated` ([4.2](#42-los-permisos-de-authenticated-permiten-saltear-el-dominio)).

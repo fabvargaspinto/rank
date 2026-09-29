@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from core.shared.domain.string import String
 from core.user.domain.user_error import InvalidUserAvatarError
 
+_UUID = (
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
 _PATH = re.compile(
-    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-    r"/avatar\.(?:jpg|png|webp)$"
+    rf"^{_UUID}/(?:{_UUID}\.webp|avatar\.(?:jpg|png|webp))$"
 )
 
 
