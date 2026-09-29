@@ -598,7 +598,7 @@ Propuesta: `lib/api/client.ts` (fetch con timeout, request id y parseo de errore
 
 Mucha lógica pura vive dentro de componentes o Server Actions: `sanitizeName`, `normalizeLink`, `httpsLink`, `formatCommentDate`, los mapeos de `UserResponse` a `Profile` y los de links. Moverla a módulos puros (`features/*/model.ts`) es lo que habilita TDD en el frontend sin levantar Next (sección [8](#8-tdd-en-el-frontend)). Es el patrón "núcleo funcional, cáscara imperativa": la Server Action solo lee el `FormData`, llama a la función pura y hace el fetch.
 
-### 6.6 Limpieza
+### ✅ 6.6 Limpieza
 
 - `app/api/auth/google/start` y `app/api/auth/google/callback` son directorios vacíos que sobraron de la implementación anterior.
 - `public/demo.jpg` pesa 2,5 MB y no se usa.
@@ -933,6 +933,8 @@ La base de tokens, en capas de primitivos, semánticos y componentes, es buena. 
 - Tamaño de 16 px para los campos en mobile.
 - Componentes reutilizables que hoy se repiten con CSS propio: `Field` (label, control, ayuda y error), `Textarea`, `FieldError`, `Toast` y `Skeleton`.
 - Nombres de la escala de espaciado: `--scale-3` vale 4 px y `--scale-4` vale 8 px, lo que dificulta leer el CSS. Algo como `--space-1` (4 px) o `--space-2` (8 px) es más claro. Es cosmético y no prioritario.
+
+### 9.8 separar el scroll del drawer con el contenido
 
 ---
 

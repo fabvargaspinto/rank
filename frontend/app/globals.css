@@ -2,10 +2,6 @@ html {
     color-scheme: dark;
 }
 
-html:has(body[data-scroll-locked]) {
-    scrollbar-gutter: auto;
-}
-
 body {
     font-family: var(--core-font-family);
     font-size: var(--core-font-size);
@@ -17,8 +13,6 @@ body {
 body[data-scroll-locked] {
     overflow: hidden;
     overscroll-behavior: contain;
-    position: relative;
-    margin-right: var(--removed-body-scroll-bar-size, 0px);
 }
 
 ::-webkit-scrollbar {

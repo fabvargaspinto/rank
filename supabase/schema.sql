@@ -2,6 +2,11 @@
 -- Las migraciones en supabase/migrations/ quedan como historial.
 -- Este archivo es la definición de una base nueva.
 
+DROP TABLE IF EXISTS public.posts CASCADE;
+DROP TABLE IF EXISTS public.user_links CASCADE;
+DROP TABLE IF EXISTS public.auth CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+
 CREATE TABLE public.users (
     id UUID PRIMARY KEY,
     name VARCHAR(255),
