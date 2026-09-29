@@ -594,7 +594,7 @@ Propuesta: `lib/api/client.ts` (fetch con timeout, request id y parseo de errore
 
 `start-form.tsx` (onboarding) y `perfil-form.tsx` (edición) reimplementan el editor de links, el selector de foto, la validación del archivo y la liberación de object URLs, y ya divergieron: el nombre se sanea en uno y no en el otro. Extraer `ProfileLinksEditor`, `AvatarPicker` y un hook `useAvatarUpload` elimina unas 150 líneas y hace imposible que las reglas vuelvan a separarse.
 
-### 6.5 Lógica pura fuera de los componentes
+### ✅ 6.5 Lógica pura fuera de los componentes
 
 Mucha lógica pura vive dentro de componentes o Server Actions: `sanitizeName`, `normalizeLink`, `httpsLink`, `formatCommentDate`, los mapeos de `UserResponse` a `Profile` y los de links. Moverla a módulos puros (`features/*/model.ts`) es lo que habilita TDD en el frontend sin levantar Next (sección [8](#8-tdd-en-el-frontend)). Es el patrón "núcleo funcional, cáscara imperativa": la Server Action solo lee el `FormData`, llama a la función pura y hace el fetch.
 
