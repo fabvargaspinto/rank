@@ -13,6 +13,19 @@ import Avatar from "@/components/ui/avatar/avatar";
 import Button from "@/components/ui/button/button";
 import Carousel from "@/components/ui/carousel/carousel";
 import Input from "@/components/ui/input/input";
+import {
+    AVATAR_ACCEPT,
+    AVATAR_TOO_LARGE_MESSAGE,
+    AVATAR_TYPE_MESSAGE,
+    DESCRIPTION_MAX_LENGTH,
+    DISPLAY_NAME_MAX_LENGTH,
+    httpsUrlError,
+    isAvatarMimeType,
+    MAX_AVATAR_BYTES,
+    MAX_LINKS,
+    USERNAME_MAX_LENGTH,
+    usernameShapeError,
+} from "@/lib/domain-limits";
 import { isUsernameFieldError } from "@/lib/fetch_data";
 import { prepareAvatar } from "@/lib/prepare-avatar";
 import { checkNameAvailability } from "../action/check-name-action";
@@ -20,13 +33,8 @@ import { updateUserAction } from "../action/update-user-action";
 import { uploadAvatarAction } from "../action/upload-avatar-action";
 import styles from "./start-form.module.css";
 
-const DISPLAY_NAME_MAX_LENGTH = 50;
-const DESCRIPTION_MAX_LENGTH = 250;
-const MAX_LINKS = 6;
 const PROFILE_HOST = "sellonomada.com/";
 const STEP_COUNT = 3;
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 type ProfileLink = {
     id: string;
@@ -101,15 +109,15 @@ export default function StartForm() {
             return;
         }
 
-        if (!AVATAR_MIME_TYPES.has(file.type)) {
-            setSaveError("La imagen debe ser JPEG, PNG o WebP");
+        if (!isAvatarMimeType(file.type)) {
+            setSaveError(AVATAR_TYPE_MESSAGE);
             return;
         }
 
         const prepared = await prepareAvatar(file);
 
         if (prepared.size > MAX_AVATAR_BYTES) {
-            setSaveError("La imagen no puede superar 2 MB");
+            setSaveError(AVATAR_TOO_LARGE_MESSAGE);
             return;
         }
 
@@ -156,15 +164,17 @@ export default function StartForm() {
         const username = name.trim();
         const visibleName = displayName.trim();
 
-        if (!username) {
-            setNameError("El usuario es obligatorio");
+        const shapeError = usernameShapeError(username);
+
+        if (shapeError) {
+            setNameError(shapeError);
         }
 
         if (!visibleName) {
             setDisplayNameError("El nombre es obligatorio");
         }
 
-        if (!username || !visibleName) {
+        if (shapeError || !visibleName) {
             return;
         }
 
@@ -189,6 +199,14 @@ export default function StartForm() {
                 .map((link) => ({ url: link.url.trim() }))
                 .filter((link) => link.url.length > 0)
                 .slice(0, MAX_LINKS);
+            const linkError = nextLinks
+                .map((link) => httpsUrlError(link.url))
+                .find((error) => error != null);
+
+            if (linkError) {
+                setSaveError(linkError);
+                return;
+            }
 
             if (photoFile) {
                 const uploaded = await uploadAvatarAction(photoFile);
@@ -274,6 +292,7 @@ export default function StartForm() {
                                 autoComplete="username"
                                 spellCheck={false}
                                 placeholder="usuario"
+                                maxLength={USERNAME_MAX_LENGTH}
                                 aria-invalid={Boolean(nameError)}
                                 aria-describedby={
                                     [
@@ -344,7 +363,7 @@ export default function StartForm() {
                         <input
                             className={styles.fileInput}
                             type="file"
-                            accept="image/jpeg,image/png,image/webp"
+                            accept={AVATAR_ACCEPT}
                             onChange={onPhotoChange}
                         />
                         <span className={styles.avatarHint}>

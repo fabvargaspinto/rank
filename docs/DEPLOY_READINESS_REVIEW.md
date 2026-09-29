@@ -559,7 +559,7 @@ Hoy el contrato de independencia fallaría, y eso es lo buscado: vuelve visibles
 
 ## 6. Arquitectura del frontend
 
-### 6.1 Reglas de negocio duplicadas
+### ✅ 6.1 Reglas de negocio duplicadas
 
 | Regla | Dónde se repite en el frontend | Estado respecto del backend |
 |---|---|---|

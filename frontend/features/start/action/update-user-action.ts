@@ -1,13 +1,12 @@
 "use server";
 
+import { httpsUrlError, MAX_LINKS } from "@/lib/domain-limits";
 import {
     updateUser,
     type FetchDataResponse,
     type UserResponse,
 } from "@/lib/fetch_data";
 import { getAuthSession } from "@/lib/supabase/session";
-
-const MAX_LINKS = 6;
 
 export type UpdateUserLinkInput = {
     url: string;
@@ -64,6 +63,19 @@ export async function updateUserAction(
             data: null,
             isError: true,
             message: `No se pueden agregar más de ${MAX_LINKS} links`,
+            status: 400,
+        };
+    }
+
+    const linkError = links
+        ?.map((link) => httpsUrlError(link.url))
+        .find((error) => error != null);
+
+    if (linkError) {
+        return {
+            data: null,
+            isError: true,
+            message: linkError,
             status: 400,
         };
     }

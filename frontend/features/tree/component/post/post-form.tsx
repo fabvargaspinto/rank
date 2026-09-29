@@ -4,6 +4,12 @@ import { useId, useState, type FormEvent } from "react";
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
 import { createPostAction } from "@/features/tree/action/create-post-action";
+import {
+    httpsUrlError,
+    LINK_MAX_LENGTH,
+    POST_TEXT_MAX_LENGTH,
+    postTextError,
+} from "@/lib/domain-limits";
 import type { PostResponse } from "@/lib/fetch_data";
 import styles from "./post-form.module.css";
 
@@ -39,10 +45,18 @@ export default function PostForm({ onAdd }: PostFormProps) {
 
     async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const nextText = text.trim();
+        const textError = postTextError(text);
 
-        if (!nextText) {
-            setError("La publicación es obligatoria");
+        if (textError) {
+            setError(textError);
+            return;
+        }
+
+        const normalizedLink = normalizeLink(link);
+        const linkError = normalizedLink ? httpsUrlError(normalizedLink) : null;
+
+        if (linkError) {
+            setError(linkError);
             return;
         }
 
@@ -50,8 +64,8 @@ export default function PostForm({ onAdd }: PostFormProps) {
         setError("");
 
         const result = await createPostAction({
-            text: nextText,
-            link: normalizeLink(link),
+            text: text.trim(),
+            link: normalizedLink,
         });
 
         setSaving(false);
@@ -77,7 +91,7 @@ export default function PostForm({ onAdd }: PostFormProps) {
                     name="text"
                     className={styles.textarea}
                     value={text}
-                    maxLength={280}
+                    maxLength={POST_TEXT_MAX_LENGTH}
                     rows={4}
                     placeholder="Escribí una publicación"
                     required
@@ -97,6 +111,7 @@ export default function PostForm({ onAdd }: PostFormProps) {
                     inputMode="url"
                     autoComplete="url"
                     placeholder="https:// (opcional)"
+                    maxLength={LINK_MAX_LENGTH}
                     disabled={saving}
                     onChange={(event) => setLink(event.target.value)}
                 />

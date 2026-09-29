@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/domain-limits";
 import type { FetchDataResponse } from "@/lib/fetch_data";
 
 const emailSchema = z
@@ -15,14 +16,14 @@ export const loginSchema = z.object({
 export const passwordSchema = z
     .string()
     .min(1, "La contraseña es obligatoria")
-    .min(8, "La contraseña debe tener al menos 8 caracteres")
-    .max(64, "La contraseña debe tener menos de 64 caracteres")
-    .refine((value) => !/\s/.test(value), {
-        message: "La contraseña no debe tener espacios",
-    })
-    .refine((value) => /\p{L}/u.test(value), {
-        message: "La contraseña debe incluir al menos una letra",
-    })
+    .min(
+        PASSWORD_MIN_LENGTH,
+        `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`,
+    )
+    .max(
+        PASSWORD_MAX_LENGTH,
+        `La contraseña no puede superar ${PASSWORD_MAX_LENGTH} caracteres`,
+    )
     .refine((value) => /\d/.test(value), {
         message: "La contraseña debe incluir al menos un número",
     })

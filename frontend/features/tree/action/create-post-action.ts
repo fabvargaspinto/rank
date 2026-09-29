@@ -1,23 +1,17 @@
 "use server";
 
+import { httpsUrlError, postTextError } from "@/lib/domain-limits";
 import {
     createPost,
-    type PostResponse,
     type FetchDataResponse,
+    type PostResponse,
 } from "@/lib/fetch_data";
 import { getAuthSession } from "@/lib/supabase/session";
-
-const TEXT_MAX_LENGTH = 280;
 
 export type CreatePostInput = {
     text: string;
     link?: string | null;
 };
-
-function httpsLink(value: string | null | undefined) {
-    const link = value?.trim() ?? "";
-    return link.startsWith("https://") ? link : null;
-}
 
 export async function createPostAction(
     input: CreatePostInput,
@@ -33,28 +27,31 @@ export async function createPostAction(
         };
     }
 
-    const text = input.text.trim();
+    const textError = postTextError(input.text);
 
-    if (!text) {
+    if (textError) {
         return {
             data: null,
             isError: true,
-            message: "La publicación es obligatoria",
+            message: textError,
             status: 400,
         };
     }
 
-    if (text.length > TEXT_MAX_LENGTH) {
+    const link = input.link?.trim() ?? "";
+    const linkError = httpsUrlError(link);
+
+    if (linkError) {
         return {
             data: null,
             isError: true,
-            message: `La publicación debe tener entre 1 y ${TEXT_MAX_LENGTH} caracteres`,
+            message: linkError,
             status: 400,
         };
     }
 
     return createPost(session.accessToken, {
-        text,
-        link: httpsLink(input.link),
+        text: input.text.trim(),
+        link: link || null,
     });
 }

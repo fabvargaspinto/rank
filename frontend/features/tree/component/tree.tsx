@@ -5,6 +5,7 @@ import Image from "next/image";
 import { POSTS_PAGE_SIZE } from "@/features/tree/post-constants";
 import { deletePostAction } from "@/features/tree/action/delete-post-action";
 import { getPostsAction } from "@/features/tree/action/get-posts-action";
+import { MAX_LINKS } from "@/lib/domain-limits";
 import type { PostResponse, UserResponse } from "@/lib/fetch_data";
 import Posts, { type Post } from "./post/posts";
 import DrawerPost from "./post/drawer-post";
@@ -235,7 +236,7 @@ function TreeHeader({
     const [linksExpanded, setLinksExpanded] = useState(false);
     const links = profile.links
         .filter((link) => link.url.trim().length > 0)
-        .slice(0, 6)
+        .slice(0, MAX_LINKS)
         .map((link) => {
             const type = socialLinkTypeFromValue(link.type);
 

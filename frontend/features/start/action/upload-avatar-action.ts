@@ -1,13 +1,16 @@
 "use server";
 
 import {
+    AVATAR_TOO_LARGE_MESSAGE,
+    AVATAR_TYPE_MESSAGE,
+    isAvatarMimeType,
+    MAX_AVATAR_BYTES,
+} from "@/lib/domain-limits";
+import {
     uploadAvatar,
     type FetchDataResponse,
 } from "@/lib/fetch_data";
 import { getAuthSession } from "@/lib/supabase/session";
-
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function uploadAvatarAction(
     file: File,
@@ -23,11 +26,11 @@ export async function uploadAvatarAction(
         };
     }
 
-    if (!AVATAR_MIME_TYPES.has(file.type)) {
+    if (!isAvatarMimeType(file.type)) {
         return {
             data: null,
             isError: true,
-            message: "La imagen debe ser JPEG, PNG o WebP",
+            message: AVATAR_TYPE_MESSAGE,
             status: 400,
         };
     }
@@ -36,7 +39,7 @@ export async function uploadAvatarAction(
         return {
             data: null,
             isError: true,
-            message: "La imagen no puede superar 2 MB",
+            message: AVATAR_TOO_LARGE_MESSAGE,
             status: 400,
         };
     }

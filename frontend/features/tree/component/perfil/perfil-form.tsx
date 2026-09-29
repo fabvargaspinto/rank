@@ -6,15 +6,24 @@ import Input from "@/components/ui/input/input";
 import DeleteAccountButton from "@/features/account/component/delete-account-button";
 import { updateUserAction } from "@/features/start/action/update-user-action";
 import { uploadAvatarAction } from "@/features/start/action/upload-avatar-action";
+import {
+    AVATAR_ACCEPT,
+    AVATAR_TOO_LARGE_MESSAGE,
+    AVATAR_TYPE_MESSAGE,
+    DESCRIPTION_MAX_LENGTH,
+    DISPLAY_NAME_MAX_LENGTH,
+    httpsUrlError,
+    isAvatarMimeType,
+    MAX_AVATAR_BYTES,
+    MAX_LINKS,
+    USERNAME_MAX_LENGTH,
+    usernameShapeError,
+} from "@/lib/domain-limits";
 import { isUsernameFieldError } from "@/lib/fetch_data";
 import { prepareAvatar } from "@/lib/prepare-avatar";
 import styles from "./perfil-form.module.css";
 
-const DESCRIPTION_MAX_LENGTH = 250;
 const PROFILE_HOST = "sellonomada.com/";
-const MAX_LINKS = 6;
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export type ProfileLink = {
     id: string;
@@ -94,15 +103,15 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             return;
         }
 
-        if (!AVATAR_MIME_TYPES.has(file.type)) {
-            setError("La imagen debe ser JPEG, PNG o WebP");
+        if (!isAvatarMimeType(file.type)) {
+            setError(AVATAR_TYPE_MESSAGE);
             return;
         }
 
         const prepared = await prepareAvatar(file);
 
         if (prepared.size > MAX_AVATAR_BYTES) {
-            setError("La imagen no puede superar 2 MB");
+            setError(AVATAR_TOO_LARGE_MESSAGE);
             return;
         }
 
@@ -148,9 +157,10 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const nextName = name.trim() || profile.name;
+        const shapeError = usernameShapeError(nextName);
 
-        if (!nextName) {
-            setNameError("El usuario es obligatorio");
+        if (shapeError) {
+            setNameError(shapeError);
             return;
         }
 
@@ -158,6 +168,14 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             .map((link) => ({ id: link.id, url: link.url.trim() }))
             .filter((link) => link.url.length > 0)
             .slice(0, MAX_LINKS);
+        const linkError = nextLinks
+            .map((link) => httpsUrlError(link.url))
+            .find((error) => error != null);
+
+        if (linkError) {
+            setError(linkError);
+            return;
+        }
 
         setSaving(true);
         setError("");
@@ -251,7 +269,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         <input
                             className={styles.photoInput}
                             type="file"
-                            accept="image/jpeg,image/png,image/webp"
+                            accept={AVATAR_ACCEPT}
                             aria-labelledby={`${nameId}-photo`}
                             onChange={onPhotoChange}
                         />
@@ -269,6 +287,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         autoComplete="username"
                         spellCheck={false}
                         placeholder="usuario"
+                        maxLength={USERNAME_MAX_LENGTH}
                         aria-invalid={Boolean(nameError)}
                         aria-describedby={nameDescribedBy}
                         onChange={(event) => {
@@ -307,7 +326,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         value={displayName}
                         autoComplete="name"
                         placeholder="Luna Reyes"
-                        maxLength={50}
+                        maxLength={DISPLAY_NAME_MAX_LENGTH}
                         aria-invalid={Boolean(displayNameError)}
                         aria-describedby={`${displayNameId}-hint`}
                         onChange={(event) => {
