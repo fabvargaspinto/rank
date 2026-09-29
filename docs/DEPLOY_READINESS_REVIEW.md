@@ -419,7 +419,7 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
 - `User.add_link`, `remove_link`, `reorder_links` y `has_name` (`user.py:68-139`), y `get_all` en `AuthProvider` y `UserLinkType`: solo los usan los tests. Sobre los métodos de links, ver [5.4](#54-agregados).
 - `AuthMethod.to_primitive` y `from_primitive` (`auth_method.py:39-50`): el mapeo de persistencia que se sacó de `Auth` y `User` sigue vivo en `AuthMethod`.
 
-### 5.4 Agregados
+### ✅ 5.4 Agregados
 
 **`User`**
 
@@ -438,6 +438,8 @@ Código muerto en el dominio (sin referencias fuera de sus propios archivos y te
 
 - `email: AuthEmail | None = None` (`auth.py:18`), pero `__post_init__` lo exige (`:20-22`). El tipo miente: debería ser `email: AuthEmail`, sin valor por defecto.
 - `AuthIdentity` (`auth_repo.py:17-21`) expone primitivos (`provider_id: str | None`, `email: str | None`) cuando los VOs ya existen.
+
+### ✅ 5.4.2 Hacer el start para name user y display name
 
 ### 5.5 Repositorios y puertos
 

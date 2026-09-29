@@ -20,6 +20,7 @@ import { updateUserAction } from "../action/update-user-action";
 import { uploadAvatarAction } from "../action/upload-avatar-action";
 import styles from "./start-form.module.css";
 
+const DISPLAY_NAME_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 250;
 const MAX_LINKS = 6;
 const PROFILE_HOST = "sellonomada.com/";
@@ -43,11 +44,14 @@ function createEmptyLink(id = crypto.randomUUID()): ProfileLink {
 export default function StartForm() {
     const router = useRouter();
     const nameId = useId();
+    const displayNameId = useId();
     const descriptionId = useId();
     const linksId = useId();
     const [step, setStep] = useState(0);
     const [name, setName] = useState("");
     const [nameError, setNameError] = useState("");
+    const [displayName, setDisplayName] = useState("");
+    const [displayNameError, setDisplayNameError] = useState("");
     const [checkingName, setCheckingName] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState("");
@@ -150,9 +154,17 @@ export default function StartForm() {
 
     async function continueFromName() {
         const username = name.trim();
+        const visibleName = displayName.trim();
 
         if (!username) {
             setNameError("El usuario es obligatorio");
+        }
+
+        if (!visibleName) {
+            setDisplayNameError("El nombre es obligatorio");
+        }
+
+        if (!username || !visibleName) {
             return;
         }
 
@@ -193,6 +205,7 @@ export default function StartForm() {
 
             const result = await updateUserAction({
                 name,
+                displayName,
                 avatar,
                 description,
                 links: nextLinks,
@@ -201,6 +214,12 @@ export default function StartForm() {
             if (result.isError) {
                 if (isUsernameFieldError(result)) {
                     setNameError(result.message || "Ese usuario no es válido");
+                    goTo(0);
+                    return;
+                }
+
+                if (result.field === "display_name") {
+                    setDisplayNameError(result.message || "Ese nombre no es válido");
                     goTo(0);
                     return;
                 }
@@ -239,11 +258,11 @@ export default function StartForm() {
                 <section className={styles.slide} aria-labelledby={`${nameId}-title`}>
                     <div className={styles.header}>
                         <h1 id={`${nameId}-title`} className={styles.title}>
-                            Elegí tu usuario
+                            Cómo te presentás
                         </h1>
                         <p className={styles.description}>
-                            Tiene que ser único: es la URL de tu perfil y se
-                            guarda en minúsculas.
+                            El nombre es el que se ve en tu perfil. El usuario
+                            es la URL y se guarda en minúsculas.
                         </p>
                     </div>
                     <div className={styles.field}>
@@ -283,6 +302,32 @@ export default function StartForm() {
                             </p>
                         ) : null}
                     </div>
+                    <div className={styles.field}>
+                        <label className={styles.fieldLabel} htmlFor={displayNameId}>
+                            Nombre
+                        </label>
+                        <Input
+                            id={displayNameId}
+                            name="displayName"
+                            value={displayName}
+                            autoComplete="name"
+                            placeholder="Sello Nómada"
+                            maxLength={DISPLAY_NAME_MAX_LENGTH}
+                            aria-invalid={Boolean(displayNameError)}
+                            aria-describedby={`${displayNameId}-hint`}
+                            onChange={(event) => {
+                                setDisplayName(event.target.value);
+                                setDisplayNameError("");
+                            }}
+                        />
+                        <p id={`${displayNameId}-hint`} className={styles.hint}>
+                            Así aparece en tu perfil. Podés usar mayúsculas,
+                            espacios y emojis.
+                        </p>
+                        {displayNameError ? (
+                            <p className={styles.error}>{displayNameError}</p>
+                        ) : null}
+                    </div>
                 </section>
 
                 <section className={styles.slide} aria-label="Foto de avatar">
@@ -296,7 +341,7 @@ export default function StartForm() {
                     <label className={styles.avatarPicker}>
                         <Avatar
                             src={photo || null}
-                            name={name}
+                            name={displayName.trim() || name}
                             size="lg"
                             className={styles.avatar}
                             alt="Vista previa del avatar"
@@ -418,7 +463,7 @@ export default function StartForm() {
                     disabled={
                         checkingName ||
                         saving ||
-                        (step === 0 && !name)
+                        (step === 0 && (!name.trim() || !displayName.trim()))
                     }
                 >
                     {checkingName

@@ -13,6 +13,7 @@ export default function StartSkeleton() {
                         <div className={styles.line} />
                     </div>
                     <div className={styles.field} />
+                    <div className={styles.field} />
                 </section>
                 <div className={formStyles.dots} aria-hidden="true">
                     <span className={`${formStyles.dot} ${formStyles.dotActive}`} />
