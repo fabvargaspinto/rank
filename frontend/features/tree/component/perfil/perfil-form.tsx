@@ -1,35 +1,34 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useId, useState, type ChangeEvent, type FormEvent } from "react";
 import Button from "@/components/ui/button/button";
 import Input from "@/components/ui/input/input";
 import DeleteAccountButton from "@/features/account/component/delete-account-button";
+import AvatarPicker from "@/features/profile/avatar-picker";
+import {
+    firstLinkValidationError,
+    linksForEditor,
+    linksPayload,
+    trimProfileText,
+    type ProfileLink,
+} from "@/features/profile/model";
+import ProfileLinksEditor from "@/features/profile/profile-links-editor";
+import { useAvatarUpload } from "@/features/profile/use-avatar-upload";
 import { updateUserAction } from "@/features/start/action/update-user-action";
 import { uploadAvatarAction } from "@/features/start/action/upload-avatar-action";
+import { isUsernameFieldError } from "@/lib/api/types";
 import {
-    AVATAR_ACCEPT,
-    AVATAR_TOO_LARGE_MESSAGE,
-    AVATAR_TYPE_MESSAGE,
     DESCRIPTION_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
-    httpsUrlError,
-    isAvatarMimeType,
-    MAX_AVATAR_BYTES,
-    MAX_LINKS,
     USERNAME_MAX_LENGTH,
     usernameShapeError,
 } from "@/lib/domain-limits";
-import { isUsernameFieldError } from "@/lib/api/types";
-import { prepareAvatar } from "@/lib/prepare-avatar";
 import styles from "./perfil-form.module.css";
 
 const PROFILE_HOST = "sellonomada.com/";
 
-export type ProfileLink = {
-    id: string;
-    url: string;
-    type?: string;
-};
+export type { ProfileLink } from "@/features/profile/model";
+export { isObjectUrl } from "@/features/profile/model";
 
 export type Profile = {
     name: string;
@@ -38,26 +37,6 @@ export type Profile = {
     photo: string;
     links: ProfileLink[];
 };
-
-export function isObjectUrl(value: string): boolean {
-    return value.startsWith("blob:") || value.startsWith("data:");
-}
-
-export function createEmptyLink(id = crypto.randomUUID()): ProfileLink {
-    return { id, url: "" };
-}
-
-function linksForForm(links: ProfileLink[]): ProfileLink[] {
-    if (links.length === 0) {
-        return [createEmptyLink("link-0")];
-    }
-
-    return links.slice(0, MAX_LINKS).map((link, index) => ({
-        id: link.id || `link-${index}`,
-        url: link.url,
-        type: link.type,
-    }));
-}
 
 type PerfilFormProps = {
     profile: Profile;
@@ -69,94 +48,41 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
     const displayNameId = useId();
     const descriptionId = useId();
     const linksId = useId();
+    const photoFieldId = useId();
     const [name, setName] = useState(profile.name);
     const [displayName, setDisplayName] = useState(profile.displayName);
     const [description, setDescription] = useState(profile.description);
-    const [photo, setPhoto] = useState(profile.photo);
-    const [photoFile, setPhotoFile] = useState<File | null>(null);
-    const [links, setLinks] = useState<ProfileLink[]>(() => linksForForm(profile.links));
+    const [links, setLinks] = useState<ProfileLink[]>(() =>
+        linksForEditor(profile.links),
+    );
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [nameError, setNameError] = useState("");
     const [displayNameError, setDisplayNameError] = useState("");
-    const photoRef = useRef(photo);
-    const savedPhotoRef = useRef(profile.photo);
-
-    photoRef.current = photo;
-    savedPhotoRef.current = profile.photo;
-
-    useEffect(() => {
-        return () => {
-            const draftPhoto = photoRef.current;
-
-            if (isObjectUrl(draftPhoto) && draftPhoto !== savedPhotoRef.current) {
-                URL.revokeObjectURL(draftPhoto);
-            }
-        };
-    }, []);
+    const {
+        previewUrl: photo,
+        file: photoFile,
+        onFileChange,
+        afterSave: afterAvatarSave,
+    } = useAvatarUpload({
+        initialUrl: profile.photo,
+        preservedUrl: profile.photo,
+    });
 
     async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
-        const file = event.target.files?.[0];
-        event.target.value = "";
+        const validationError = await onFileChange(event);
 
-        if (!file) {
-            return;
-        }
-
-        if (!isAvatarMimeType(file.type)) {
-            setError(AVATAR_TYPE_MESSAGE);
-            return;
-        }
-
-        const prepared = await prepareAvatar(file);
-
-        if (prepared.size > MAX_AVATAR_BYTES) {
-            setError(AVATAR_TOO_LARGE_MESSAGE);
+        if (validationError) {
+            setError(validationError);
             return;
         }
 
         setError("");
-        const url = URL.createObjectURL(prepared);
-        setPhotoFile(prepared);
-
-        setPhoto((current) => {
-            if (isObjectUrl(current) && current !== profile.photo) {
-                URL.revokeObjectURL(current);
-            }
-
-            return url;
-        });
-    }
-
-    function onLinkChange(id: string, url: string) {
-        setLinks((current) =>
-            current.map((link) => (link.id === id ? { ...link, url } : link)),
-        );
-    }
-
-    function addLink() {
-        setLinks((current) => {
-            if (current.length >= MAX_LINKS) {
-                return current;
-            }
-
-            return [...current, createEmptyLink()];
-        });
-    }
-
-    function removeLink(id: string) {
-        setLinks((current) => {
-            if (current.length <= 1) {
-                return current;
-            }
-
-            return current.filter((link) => link.id !== id);
-        });
     }
 
     async function onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const nextName = name.trim() || profile.name;
+        const nextName = trimProfileText(name) || trimProfileText(profile.name);
         const shapeError = usernameShapeError(nextName);
 
         if (shapeError) {
@@ -164,13 +90,7 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
             return;
         }
 
-        const nextLinks = links
-            .map((link) => ({ id: link.id, url: link.url.trim() }))
-            .filter((link) => link.url.length > 0)
-            .slice(0, MAX_LINKS);
-        const linkError = nextLinks
-            .map((link) => httpsUrlError(link.url))
-            .find((error) => error != null);
+        const linkError = firstLinkValidationError(links);
 
         if (linkError) {
             setError(linkError);
@@ -193,9 +113,9 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
 
             const result = await updateUserAction({
                 name: nextName,
-                displayName,
-                description: description.trim(),
-                links: nextLinks.map((link) => ({ url: link.url })),
+                displayName: trimProfileText(displayName),
+                description: trimProfileText(description),
+                links: linksPayload(links),
             });
 
             if (result.isError || !result.data) {
@@ -213,17 +133,15 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                 return;
             }
 
-            if (isObjectUrl(photo) && photo !== profile.photo) {
-                URL.revokeObjectURL(photo);
-            }
+            const nextPhoto = result.data.avatar ?? "";
 
-            setPhotoFile(null);
+            afterAvatarSave(nextPhoto);
 
             onSave({
                 name: result.data.name?.trim() || nextName,
                 displayName: result.data.display_name?.trim() || "",
                 description: result.data.description ?? "",
-                photo: result.data.avatar ?? "",
+                photo: nextPhoto,
                 links: (result.data.links ?? []).map((link) => ({
                     id: link.id,
                     url: link.url,
@@ -237,15 +155,14 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         }
     }
 
-    const canAddLink = links.length < MAX_LINKS;
-    const canRemoveLink = links.length > 1;
-    const trimmedName = name.trim();
+    const trimmedName = trimProfileText(name);
     const savedUsername = trimmedName.toLowerCase();
     const lowercaseHint =
         trimmedName && trimmedName !== savedUsername
             ? `Se guarda en minúsculas: ${savedUsername}`
             : "";
-    const usernameChanged = savedUsername !== profile.name.trim().toLowerCase();
+    const usernameChanged =
+        savedUsername !== trimProfileText(profile.name).toLowerCase();
     const nameDescribedBy = [
         `${nameId}-url`,
         lowercaseHint ? `${nameId}-hint` : "",
@@ -259,22 +176,18 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         <form className={styles.form} onSubmit={onSubmit}>
             <div className={styles.body}>
                 <div className={styles.field}>
-                    <span className={styles.fieldLabel} id={`${nameId}-photo`}>
+                    <span className={styles.fieldLabel} id={photoFieldId}>
                         Foto
                     </span>
-                    <label className={styles.photoPicker}>
-                        {photo ? (
-                            <img src={photo} alt="" className={styles.photoPreview} />
-                        ) : null}
-                        <input
-                            className={styles.photoInput}
-                            type="file"
-                            accept={AVATAR_ACCEPT}
-                            aria-labelledby={`${nameId}-photo`}
-                            onChange={onPhotoChange}
-                        />
-                        <span className={styles.photoHint}>Cambiar foto</span>
-                    </label>
+                    <AvatarPicker
+                        variant="banner"
+                        previewUrl={photo}
+                        fallbackName={
+                            trimProfileText(displayName) || trimmedName || profile.name
+                        }
+                        ariaLabelledBy={photoFieldId}
+                        onChange={onPhotoChange}
+                    />
                 </div>
                 <div className={styles.field}>
                     <label className={styles.fieldLabel} htmlFor={nameId}>
@@ -357,59 +270,11 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                         onChange={(event) => setDescription(event.target.value)}
                     />
                 </div>
-                <div className={styles.field}>
-                    <div className={styles.linksHeader}>
-                        <span className={styles.fieldLabel} id={linksId}>
-                            Links
-                        </span>
-                        <span className={styles.linksCounter} aria-live="polite">
-                            {links.length}/{MAX_LINKS}
-                        </span>
-                    </div>
-                    <ul className={styles.linksList} aria-labelledby={linksId}>
-                        {links.map((link, index) => {
-                            const inputId = `${linksId}-${link.id}`;
-
-                            return (
-                                <li key={link.id} className={styles.linkRow}>
-                                    <Input
-                                        id={inputId}
-                                        name={`link-${index}`}
-                                        type="url"
-                                        value={link.url}
-                                        inputMode="url"
-                                        autoComplete="url"
-                                        placeholder="https://"
-                                        aria-label={`Link ${index + 1}`}
-                                        onChange={(event) =>
-                                            onLinkChange(link.id, event.target.value)
-                                        }
-                                    />
-                                    {canRemoveLink ? (
-                                        <button
-                                            type="button"
-                                            className={styles.removeLink}
-                                            aria-label={`Quitar link ${index + 1}`}
-                                            onClick={() => removeLink(link.id)}
-                                        >
-                                            ×
-                                        </button>
-                                    ) : null}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                    {canAddLink ? (
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            className={styles.addLink}
-                            onClick={addLink}
-                        >
-                            Añadir link
-                        </Button>
-                    ) : null}
-                </div>
+                <ProfileLinksEditor
+                    id={linksId}
+                    links={links}
+                    onLinksChange={setLinks}
+                />
                 <div className={styles.deleteSection}>
                     <DeleteAccountButton username={profile.name} />
                 </div>

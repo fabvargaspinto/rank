@@ -1,0 +1,65 @@
+.avatarPicker {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--scale-4);
+    align-self: center;
+    cursor: pointer;
+}
+
+.avatar {
+    width: calc(var(--scale-7) + var(--scale-7));
+    height: calc(var(--scale-7) + var(--scale-7));
+    font-size: var(--font-size-lg);
+}
+
+.bannerPicker {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+    cursor: pointer;
+}
+
+.bannerPreview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+}
+
+.fileInput {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.bannerPicker .fileInput {
+    z-index: 2;
+}
+
+.avatarHint {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--accent-color);
+}
+
+.bannerHint {
+    position: absolute;
+    right: var(--scale-4);
+    bottom: var(--scale-4);
+    z-index: 1;
+    padding: var(--scale-2) var(--scale-4);
+    border-radius: var(--component-border-radius);
+    background-color: color-mix(in srgb, var(--color-black-0) 64%, transparent);
+    color: var(--accent-color);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    pointer-events: none;
+}

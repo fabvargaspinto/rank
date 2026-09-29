@@ -1,33 +1,28 @@
 "use client";
 
-import {
-    useEffect,
-    useId,
-    useRef,
-    useState,
-    type ChangeEvent,
-    type FormEvent,
-} from "react";
+import { useId, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Avatar from "@/components/ui/avatar/avatar";
 import Button from "@/components/ui/button/button";
 import Carousel from "@/components/ui/carousel/carousel";
 import Input from "@/components/ui/input/input";
+import AvatarPicker from "@/features/profile/avatar-picker";
 import {
-    AVATAR_ACCEPT,
-    AVATAR_TOO_LARGE_MESSAGE,
-    AVATAR_TYPE_MESSAGE,
+    createEmptyLink,
+    firstLinkValidationError,
+    linksPayload,
+    trimProfileText,
+    type ProfileLink,
+} from "@/features/profile/model";
+import ProfileLinksEditor from "@/features/profile/profile-links-editor";
+import { useAvatarUpload } from "@/features/profile/use-avatar-upload";
+import { isUsernameFieldError } from "@/lib/api/types";
+import {
     DESCRIPTION_MAX_LENGTH,
     DISPLAY_NAME_MAX_LENGTH,
-    httpsUrlError,
-    isAvatarMimeType,
-    MAX_AVATAR_BYTES,
     MAX_LINKS,
     USERNAME_MAX_LENGTH,
     usernameShapeError,
 } from "@/lib/domain-limits";
-import { isUsernameFieldError } from "@/lib/api/types";
-import { prepareAvatar } from "@/lib/prepare-avatar";
 import { checkNameAvailability } from "../action/check-name-action";
 import { updateUserAction } from "../action/update-user-action";
 import { uploadAvatarAction } from "../action/upload-avatar-action";
@@ -35,19 +30,6 @@ import styles from "./start-form.module.css";
 
 const PROFILE_HOST = "sellonomada.com/";
 const STEP_COUNT = 3;
-
-type ProfileLink = {
-    id: string;
-    url: string;
-};
-
-function isObjectUrl(value: string) {
-    return value.startsWith("blob:") || value.startsWith("data:");
-}
-
-function createEmptyLink(id = crypto.randomUUID()): ProfileLink {
-    return { id, url: "" };
-}
 
 export default function StartForm() {
     const router = useRouter();
@@ -63,25 +45,17 @@ export default function StartForm() {
     const [checkingName, setCheckingName] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState("");
-    const [photo, setPhoto] = useState("");
-    const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [description, setDescription] = useState("");
     const [links, setLinks] = useState<ProfileLink[]>(() => [
         createEmptyLink("link-0"),
     ]);
-    const photoRef = useRef(photo);
+    const {
+        previewUrl: photo,
+        file: photoFile,
+        onFileChange,
+    } = useAvatarUpload({ initialUrl: "" });
 
-    photoRef.current = photo;
-
-    useEffect(() => {
-        return () => {
-            if (isObjectUrl(photoRef.current)) {
-                URL.revokeObjectURL(photoRef.current);
-            }
-        };
-    }, []);
-
-    const trimmedName = name.trim();
+    const trimmedName = trimProfileText(name);
     const savedUsername = trimmedName.toLowerCase();
     const lowercaseHint =
         trimmedName && trimmedName !== savedUsername
@@ -89,8 +63,6 @@ export default function StartForm() {
             : "";
     const canSkip = step > 0;
     const isLast = step === STEP_COUNT - 1;
-    const canAddLink = links.length < MAX_LINKS;
-    const canRemoveLink = links.length > 1;
 
     function goTo(next: number) {
         setStep(Math.min(Math.max(next, 0), STEP_COUNT - 1));
@@ -102,67 +74,19 @@ export default function StartForm() {
     }
 
     async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
-        const file = event.target.files?.[0];
-        event.target.value = "";
+        const error = await onFileChange(event);
 
-        if (!file) {
-            return;
-        }
-
-        if (!isAvatarMimeType(file.type)) {
-            setSaveError(AVATAR_TYPE_MESSAGE);
-            return;
-        }
-
-        const prepared = await prepareAvatar(file);
-
-        if (prepared.size > MAX_AVATAR_BYTES) {
-            setSaveError(AVATAR_TOO_LARGE_MESSAGE);
+        if (error) {
+            setSaveError(error);
             return;
         }
 
         setSaveError("");
-        const url = URL.createObjectURL(prepared);
-        setPhotoFile(prepared);
-
-        setPhoto((current) => {
-            if (isObjectUrl(current)) {
-                URL.revokeObjectURL(current);
-            }
-
-            return url;
-        });
-    }
-
-    function onLinkChange(id: string, url: string) {
-        setLinks((current) =>
-            current.map((link) => (link.id === id ? { ...link, url } : link)),
-        );
-    }
-
-    function addLink() {
-        setLinks((current) => {
-            if (current.length >= MAX_LINKS) {
-                return current;
-            }
-
-            return [...current, createEmptyLink()];
-        });
-    }
-
-    function removeLink(id: string) {
-        setLinks((current) => {
-            if (current.length <= 1) {
-                return current;
-            }
-
-            return current.filter((link) => link.id !== id);
-        });
     }
 
     async function continueFromName() {
-        const username = name.trim();
-        const visibleName = displayName.trim();
+        const username = trimProfileText(name);
+        const visibleName = trimProfileText(displayName);
 
         const shapeError = usernameShapeError(username);
 
@@ -195,13 +119,7 @@ export default function StartForm() {
         setSaveError("");
 
         try {
-            const nextLinks = links
-                .map((link) => ({ url: link.url.trim() }))
-                .filter((link) => link.url.length > 0)
-                .slice(0, MAX_LINKS);
-            const linkError = nextLinks
-                .map((link) => httpsUrlError(link.url))
-                .find((error) => error != null);
+            const linkError = firstLinkValidationError(links);
 
             if (linkError) {
                 setSaveError(linkError);
@@ -218,10 +136,10 @@ export default function StartForm() {
             }
 
             const result = await updateUserAction({
-                name,
-                displayName,
-                description,
-                links: nextLinks,
+                name: trimmedName,
+                displayName: trimProfileText(displayName),
+                description: trimProfileText(description),
+                links: linksPayload(links),
             });
 
             if (result.isError) {
@@ -352,24 +270,14 @@ export default function StartForm() {
                             saltarlo y hacerlo después.
                         </p>
                     </div>
-                    <label className={styles.avatarPicker}>
-                        <Avatar
-                            src={photo || null}
-                            name={displayName.trim() || name}
-                            size="lg"
-                            className={styles.avatar}
-                            alt="Vista previa del avatar"
-                        />
-                        <input
-                            className={styles.fileInput}
-                            type="file"
-                            accept={AVATAR_ACCEPT}
-                            onChange={onPhotoChange}
-                        />
-                        <span className={styles.avatarHint}>
-                            {photo ? "Cambiar foto" : "Agregar foto"}
-                        </span>
-                    </label>
+                    <AvatarPicker
+                        variant="avatar"
+                        previewUrl={photo}
+                        fallbackName={
+                            trimProfileText(displayName) || trimmedName || name
+                        }
+                        onChange={onPhotoChange}
+                    />
                 </section>
 
                 <section className={styles.slide} aria-labelledby={descriptionId}>
@@ -395,59 +303,11 @@ export default function StartForm() {
                             onChange={(event) => setDescription(event.target.value)}
                         />
                     </div>
-                    <div className={styles.field}>
-                        <div className={styles.linksHeader}>
-                            <span className={styles.fieldLabel} id={linksId}>
-                                Links
-                            </span>
-                            <span className={styles.linksCounter} aria-live="polite">
-                                {links.length}/{MAX_LINKS}
-                            </span>
-                        </div>
-                        <ul className={styles.linksList} aria-labelledby={linksId}>
-                            {links.map((link, index) => {
-                                const inputId = `${linksId}-${link.id}`;
-
-                                return (
-                                    <li key={link.id} className={styles.linkRow}>
-                                        <Input
-                                            id={inputId}
-                                            name={`link-${index}`}
-                                            type="url"
-                                            value={link.url}
-                                            inputMode="url"
-                                            autoComplete="url"
-                                            placeholder="https://"
-                                            aria-label={`Link ${index + 1}`}
-                                            onChange={(event) =>
-                                                onLinkChange(link.id, event.target.value)
-                                            }
-                                        />
-                                        {canRemoveLink ? (
-                                            <button
-                                                type="button"
-                                                className={styles.removeLink}
-                                                aria-label={`Quitar link ${index + 1}`}
-                                                onClick={() => removeLink(link.id)}
-                                            >
-                                                ×
-                                            </button>
-                                        ) : null}
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                        {canAddLink ? (
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                className={styles.addLink}
-                                onClick={addLink}
-                            >
-                                Añadir link
-                            </Button>
-                        ) : null}
-                    </div>
+                    <ProfileLinksEditor
+                        id={linksId}
+                        links={links}
+                        onLinksChange={setLinks}
+                    />
                 </section>
             </Carousel>
 
@@ -477,7 +337,8 @@ export default function StartForm() {
                     disabled={
                         checkingName ||
                         saving ||
-                        (step === 0 && (!name.trim() || !displayName.trim()))
+                        (step === 0 &&
+                            (!trimProfileText(name) || !trimProfileText(displayName)))
                     }
                 >
                     {checkingName
