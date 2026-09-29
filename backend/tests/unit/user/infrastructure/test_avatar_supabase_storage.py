@@ -16,8 +16,6 @@ class _FakeBucket:
             raise StorageApiError("Access denied", "403", 403)
         self.uploads.append((path, file, file_options))
 
-    def get_public_url(self, path: str) -> str:
-        return f"https://example.supabase.co/storage/v1/object/public/avatars/{path}?download="
 
 
 class _FakeStorage:
@@ -42,26 +40,23 @@ class _FakeDBClient:
 
 
 class TestAvatarSupabaseStorage:
-    def test_uploads_to_auth_id_path_and_strips_query(self):
+    def test_uploads_to_the_given_path(self):
         bucket = _FakeBucket()
         storage = AvatarSupabaseStorage(_FakeDBClient(bucket))
+        path = f"{AUTH_ID}/avatar.jpg"
 
-        url = storage.upload(AUTH_ID, b"jpeg-bytes", "image/jpeg")
+        storage.upload(path, b"jpeg-bytes", "image/jpeg")
 
-        assert bucket.uploads[0][0] == f"{AUTH_ID}/avatar.jpg"
+        assert bucket.uploads[0][0] == path
         assert bucket.uploads[0][1] == b"jpeg-bytes"
         assert bucket.uploads[0][2]["upsert"] == "true"
         assert bucket.uploads[0][2]["content-type"] == "image/jpeg"
-        assert url == (
-            "https://example.supabase.co/storage/v1/object/public/"
-            f"avatars/{AUTH_ID}/avatar.jpg"
-        )
 
     def test_wraps_storage_errors(self):
         storage = AvatarSupabaseStorage(_FakeDBClient(_FakeBucket(fail=True)))
 
         try:
-            storage.upload(AUTH_ID, b"jpeg-bytes", "image/jpeg")
+            storage.upload(f"{AUTH_ID}/avatar.jpg", b"jpeg-bytes", "image/jpeg")
             raise AssertionError("expected AvatarUploadError")
         except AvatarUploadError as exc:
             assert str(exc) == "Error al subir la imagen"

@@ -17,8 +17,11 @@ from core.shared.domain.domain_error import DomainError
 from core.shared.infrastructure.infrastructure_error import InfrastructureError
 from core.user.application.application_error import (
     InvalidAvatarFileError,
-    UserNameAlreadyExistsError,
     UserNotFoundError,
+)
+from core.user.domain.user_error import (
+    UsernameAlreadyTakenError,
+    UserProfileNotFoundError,
 )
 
 logger = logging.getLogger("ig.errors")
@@ -40,7 +43,7 @@ def register_error_handlers(app: FastAPI) -> None:
         request: Request,
         exc: DomainError,
     ) -> JSONResponse:
-        status_code = 409 if isinstance(exc, IdentityAlreadyExistsError) else 400
+        status_code = _domain_status(exc)
         _log_error(request, exc, status_code)
         return _json_error(request, status_code, str(exc), exc)
 
@@ -105,10 +108,16 @@ def _status_for(exc: ApplicationError) -> int:
         return 401
     if isinstance(exc, (UserNotFoundError, CommentNotFoundError)):
         return 404
-    if isinstance(exc, UserNameAlreadyExistsError):
-        return 409
     if isinstance(exc, InvalidAvatarFileError):
         return 400
     if isinstance(exc, UnsupportedAuthProviderError):
         return 400
+    return 400
+
+
+def _domain_status(exc: DomainError) -> int:
+    if isinstance(exc, (IdentityAlreadyExistsError, UsernameAlreadyTakenError)):
+        return 409
+    if isinstance(exc, UserProfileNotFoundError):
+        return 404
     return 400

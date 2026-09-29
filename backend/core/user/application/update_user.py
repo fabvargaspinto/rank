@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from typing import Any
 
-from core.user.application.application_error import (
-    UserNameAlreadyExistsError,
-    UserNotFoundError,
-)
+from core.user.application.application_error import UserNotFoundError
 from core.user.domain.user import User
+from core.user.domain.user_error import (
+    UsernameAlreadyTakenError,
+    UserProfileNotFoundError,
+)
 from core.user.domain.user_repo import UserRepository
 
 UNSET: Any = object()
@@ -42,12 +43,16 @@ class UpdateUser:
 
         taken = self.user_repo.get_user_by_name(user.name.value)
         if taken is not None and taken.id != user.id:
-            raise UserNameAlreadyExistsError("Ese nombre ya está en uso")
+            raise UsernameAlreadyTakenError("Ese nombre ya está en uso")
 
-        updated = self.user_repo.update_user(user)
-        if updated is None:
-            raise UserNotFoundError("El usuario no existe")
-        return updated
+        self._save(user)
+        return user
+
+    def _save(self, user: User) -> None:
+        try:
+            self.user_repo.save(user)
+        except UserProfileNotFoundError as exc:
+            raise UserNotFoundError("El usuario no existe") from exc
 
     def _apply_display_name(
         self,

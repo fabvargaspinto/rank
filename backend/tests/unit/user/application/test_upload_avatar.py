@@ -22,10 +22,13 @@ class TestUploadAvatar:
     def test_uploads_valid_jpeg(self):
         content = b"\xff\xd8jpeg-bytes"
 
-        url = self.use_case.execute(AUTH_ID, content, "image/jpeg")
+        path = self.use_case.execute(AUTH_ID, content, "image/jpeg")
 
-        assert url == self.storage.url
-        assert self.storage.uploads == [(AUTH_ID, content, "image/jpeg")]
+        assert path == f"{AUTH_ID}/avatar.jpg"
+        assert self.storage.uploads == [(path, content, "image/jpeg")]
+        saved = self.repo.users_by_auth_id[AUTH_ID]
+        assert saved.avatar is not None
+        assert saved.avatar.value == path
 
     def test_normalizes_content_type_with_charset(self):
         self.use_case.execute(AUTH_ID, b"png-bytes", "image/png; charset=binary")

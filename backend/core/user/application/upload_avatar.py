@@ -3,6 +3,7 @@ from core.user.application.application_error import (
     UserNotFoundError,
 )
 from core.user.domain.avatar_storage import AvatarStorage
+from core.user.domain.user_error import UserProfileNotFoundError
 from core.user.domain.user_repo import UserRepository
 
 ALLOWED_AVATAR_TYPES = {
@@ -42,4 +43,12 @@ class UploadAvatar:
         if len(content) > MAX_AVATAR_BYTES:
             raise InvalidAvatarFileError("La imagen no puede superar 2 MB")
 
-        return self.avatar_storage.upload(auth_id, content, normalized_type)
+        extension = ALLOWED_AVATAR_TYPES[normalized_type]
+        path = f"{auth_id}/avatar.{extension}"
+        self.avatar_storage.upload(path, content, normalized_type)
+        user.change_avatar(path)
+        try:
+            self.user_repo.save(user)
+        except UserProfileNotFoundError as exc:
+            raise UserNotFoundError("El usuario no existe") from exc
+        return path

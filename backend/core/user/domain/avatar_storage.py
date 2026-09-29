@@ -4,10 +4,10 @@ from typing import Protocol
 class AvatarStorage(Protocol):
     def upload(
         self,
-        auth_id: str,
+        path: str,
         content: bytes,
         content_type: str,
-    ) -> str:
+    ) -> None:
         pass
 
     def delete(self, auth_id: str) -> None:

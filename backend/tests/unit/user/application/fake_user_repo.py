@@ -1,4 +1,5 @@
 from core.user.domain.user import User
+from core.user.domain.user_error import UserProfileNotFoundError
 from core.user.domain.user_repo import UserRepository
 
 
@@ -21,7 +22,7 @@ class FakeUserRepo(UserRepository):
                 return user
         return None
 
-    def update_user(self, user: User) -> User | None:
+    def save(self, user: User) -> None:
         auth_id = next(
             (
                 key
@@ -31,7 +32,7 @@ class FakeUserRepo(UserRepository):
             None,
         )
         if user.id.value not in self.users_by_id and auth_id is None:
-            return None
+            raise UserProfileNotFoundError("El usuario no existe")
 
         for name, stored in list(self.users_by_name.items()):
             if stored.id == user.id:
@@ -42,7 +43,6 @@ class FakeUserRepo(UserRepository):
             self.users_by_auth_id[auth_id] = user
         if user.name is not None:
             self.users_by_name[user.name.value] = user
-        return user
 
     def delete_user(self, user_id: str) -> None:
         user = self.users_by_id.pop(user_id, None)

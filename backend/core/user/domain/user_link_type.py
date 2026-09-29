@@ -12,9 +12,6 @@ class UserLinkType(StrEnum):
     KICK = "kick"
     FACEBOOK = "facebook"
     X = "x"
-    SOUNDCLOUD = "soundcloud"
-    BANDCAMP = "bandcamp"
-    APPLE_MUSIC = "apple_music"
     DEFAULT = "default"
 
     def hosts(self) -> tuple[str, ...]:
@@ -40,23 +37,11 @@ class UserLinkType(StrEnum):
             return ("facebook.com", "www.facebook.com", "fb.com", "www.fb.com")
         if self is UserLinkType.X:
             return ("x.com", "www.x.com", "twitter.com", "www.twitter.com")
-        if self is UserLinkType.SOUNDCLOUD:
-            return (
-                "soundcloud.com",
-                "www.soundcloud.com",
-                "m.soundcloud.com",
-                "on.soundcloud.com",
-            )
-        if self is UserLinkType.BANDCAMP:
-            return ("bandcamp.com", "www.bandcamp.com")
-        if self is UserLinkType.APPLE_MUSIC:
-            return ("music.apple.com", "www.music.apple.com")
         return ()
 
     def matches(self, host: str) -> bool:
         if host in self.hosts():
             return True
-        return self is UserLinkType.BANDCAMP and host.endswith(".bandcamp.com")
 
     def is_default(self) -> bool:
         return self is UserLinkType.DEFAULT

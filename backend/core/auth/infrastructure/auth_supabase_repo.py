@@ -15,6 +15,7 @@ from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.auth.infrastructure.error_infrastructure import (
     AuthCreationError,
     AuthDeletionError,
+    AuthLookupError,
 )
 from core.shared.infrastructure.postgres_error import is_unique_violation
 from core.user.domain.user import User
@@ -147,9 +148,7 @@ class AuthSupabaseRepo(AuthRepository):
         try:
             response = query.limit(1).execute()
         except Exception as exc:
-            raise AuthCreationError(
-                "Error al buscar el usuario"
-            ) from exc
+            raise AuthLookupError("Error al buscar el usuario") from exc
 
         rows = response.data or []
         if not rows:
@@ -157,7 +156,7 @@ class AuthSupabaseRepo(AuthRepository):
 
         row = rows[0]
         if not isinstance(row, dict):
-            raise AuthCreationError("Error al buscar el usuario")
+            raise AuthLookupError("Error al buscar el usuario")
         return self._mapper.to_domain(row)
 
     def delete_identity(self, auth_id: str) -> None:

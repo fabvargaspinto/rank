@@ -57,6 +57,25 @@ def test_anon_cannot_execute_create_user_and_auth(anon_client) -> None:
     raise AssertionError("anon no debería ejecutar create_user_and_auth")
 
 
+def test_anon_cannot_execute_update_profile(anon_client) -> None:
+    try:
+        anon_client.rpc(
+            "update_profile",
+            {
+                "p_user_id": str(uuid7()),
+                "p_name": "luna",
+                "p_display_name": None,
+                "p_avatar_url": None,
+                "p_description": None,
+                "p_updated_at": "2026-01-02T03:04:05+00:00",
+                "p_links": [],
+            },
+        ).execute()
+    except APIError:
+        return
+    raise AssertionError("anon no debería ejecutar update_profile")
+
+
 def test_service_role_rpc_create_user_and_auth(db_client: DBClient) -> None:
     supabase = db_client.get_db()
     email = f"rls-{uuid4().hex}@example.com"

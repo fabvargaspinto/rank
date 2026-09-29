@@ -378,12 +378,7 @@ class TestUploadAvatar:
         )
 
         assert response.status_code == 200
-        assert response.json() == {
-            "url": (
-                "https://example.supabase.co/storage/v1/object/public/"
-                "avatars/user/avatar.jpg"
-            )
-        }
+        assert response.json() == {"url": AVATAR_URL}
 
     def test_rejects_unsupported_type(self):
         repo = FakeUserRepo()

@@ -5,5 +5,13 @@ class AuthCreationError(InfrastructureError):
     pass
 
 
+class AuthLookupError(InfrastructureError):
+    pass
+
+
 class AuthDeletionError(InfrastructureError):
+    pass
+
+
+class EmailDecryptError(InfrastructureError):
     pass

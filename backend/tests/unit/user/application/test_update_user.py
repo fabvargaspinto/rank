@@ -1,12 +1,9 @@
 import pytest
 
-from core.user.application.application_error import (
-    UserNameAlreadyExistsError,
-    UserNotFoundError,
-)
+from core.user.application.application_error import UserNotFoundError
 from core.user.application.update_user import UpdateProfileCommand, UpdateUser
 from core.user.domain.user import User
-from core.user.domain.user_error import InvalidUserNameError
+from core.user.domain.user_error import InvalidUserNameError, UsernameAlreadyTakenError
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
@@ -120,7 +117,7 @@ class TestUpdateUser:
         self.repo.users_by_name["luna"] = taken
 
         with pytest.raises(
-            UserNameAlreadyExistsError, match="Ese nombre ya está en uso"
+            UsernameAlreadyTakenError, match="Ese nombre ya está en uso"
         ):
             self.use_case.execute(AUTH_ID, UpdateProfileCommand(name="Luna"))
 

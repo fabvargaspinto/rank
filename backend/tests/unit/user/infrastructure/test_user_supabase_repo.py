@@ -1,6 +1,13 @@
 from datetime import UTC, datetime
 
+import pytest
+from postgrest.exceptions import APIError
+
 from core.user.domain.user import User
+from core.user.domain.user_error import (
+    UsernameAlreadyTakenError,
+    UserProfileNotFoundError,
+)
 from core.user.infrastructure.user_supabase_repo import UserSupabaseRepo
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
@@ -94,6 +101,9 @@ class _FakeSupabase:
         self.updated: dict = {}
         self.deleted: dict = {}
         self.inserted: dict = {}
+        self.rpc_name = ""
+        self.rpc_params: dict = {}
+        self.fail_code = ""
 
     def table(self, name: str):
         return _Query(self, name)
@@ -115,6 +125,47 @@ class _FakeSupabase:
 
     def set_data(self, name: str, data):
         self._tables[name] = data
+
+    def rpc(self, name, params):
+        self.rpc_name = name
+        self.rpc_params = params
+        return _Rpc(self)
+
+
+class _Rpc:
+    def __init__(self, client: _FakeSupabase):
+        self._client = client
+
+    def execute(self):
+        if self._client.fail_code:
+            raise APIError({
+                "code": self._client.fail_code,
+                "message": "update_profile failed",
+            })
+
+        params = self._client.rpc_params
+        users = self._client._tables["users"]
+        match = next(
+            (row for row in users if row["id"] == params["p_user_id"]),
+            None,
+        )
+        if match is None:
+            raise APIError({"code": "P0002", "message": "user_not_found"})
+
+        match["name"] = params["p_name"]
+        match["display_name"] = params["p_display_name"]
+        match["avatar_url"] = params["p_avatar_url"]
+        match["description"] = params["p_description"]
+        match["updated_at"] = params["p_updated_at"]
+        self._client._tables["user_links"] = list(params["p_links"])
+        self._client.updated["users"] = {
+            "name": params["p_name"],
+            "display_name": params["p_display_name"],
+            "avatar_url": params["p_avatar_url"],
+            "description": params["p_description"],
+        }
+        self._client.inserted["user_links"] = list(params["p_links"])
+        return _Result(None)
 
 
 class _FakeDBClient:
@@ -185,8 +236,10 @@ class TestUserSupabaseRepoUpdate:
         user.change_avatar(AVATAR_PATH)
         user.describe("Cantautora")
 
-        updated = repo.update_user(user)
+        repo.save(user)
+        updated = repo.get_user(USER_ID)
 
+        assert client._client.rpc_name == "update_profile"
         assert updated is not None
         assert updated.name is not None
         assert updated.name.value == "luna"
@@ -196,7 +249,7 @@ class TestUserSupabaseRepoUpdate:
             == AVATAR_PATH
         )
         assert client._client.updated["users"]["description"] == "Cantautora"
-        assert client._client.deleted.get("user_links") is True
+        assert client._client.rpc_params["p_links"] == []
 
     def test_update_user_persists_links(self):
         client = _FakeDBClient([_user_row()])
@@ -206,7 +259,8 @@ class TestUserSupabaseRepoUpdate:
         user.rename("luna")
         user.replace_links(["https://www.youtube.com/@luna"])
 
-        updated = repo.update_user(user)
+        repo.save(user)
+        updated = repo.get_user(USER_ID)
 
         assert updated is not None
         assert len(updated.links) == 1
@@ -215,8 +269,20 @@ class TestUserSupabaseRepoUpdate:
         )
         assert client._client.inserted["user_links"][0]["type"] == "youtube"
 
-    def test_update_user_returns_none_when_no_row(self):
+    def test_save_raises_when_no_row(self):
         repo = UserSupabaseRepo(_FakeDBClient([]))
         user = User.create_empty()
 
-        assert repo.update_user(user) is None
+        with pytest.raises(UserProfileNotFoundError, match="El usuario no existe"):
+            repo.save(user)
+
+    def test_save_raises_when_name_is_taken(self):
+        client = _FakeDBClient([_user_row()])
+        client._client.fail_code = "23505"
+        repo = UserSupabaseRepo(client)
+        user = repo.get_user(USER_ID)
+        assert user is not None
+        user.rename("luna")
+
+        with pytest.raises(UsernameAlreadyTakenError, match="Ese nombre ya está en uso"):
+            repo.save(user)

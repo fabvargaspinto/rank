@@ -184,18 +184,19 @@ def upload_avatar(
     auth_id: str,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     use_case: UploadAvatar = Depends(get_upload_avatar_use_case),
+    supabase_url: str = Depends(get_supabase_url),
     file: UploadFile = File(...),
 ) -> AvatarUploadResponse:
     if auth_id != current_user.auth_id:
         raise UserNotFoundError("El usuario no existe")
 
     content = file.file.read()
-    url = use_case.execute(
+    path = use_case.execute(
         auth_id,
         content=content,
         content_type=file.content_type or "",
     )
-    return AvatarUploadResponse(url=url)
+    return AvatarUploadResponse(url=public_avatar_url(supabase_url, path))
 
 
 @router.delete(

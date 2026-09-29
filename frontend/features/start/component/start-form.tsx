@@ -190,8 +190,6 @@ export default function StartForm() {
                 .filter((link) => link.url.length > 0)
                 .slice(0, MAX_LINKS);
 
-            let avatar: string | null = null;
-
             if (photoFile) {
                 const uploaded = await uploadAvatarAction(photoFile);
 
@@ -199,14 +197,11 @@ export default function StartForm() {
                     setSaveError(uploaded.message || "No se pudo subir la imagen");
                     return;
                 }
-
-                avatar = uploaded.data;
             }
 
             const result = await updateUserAction({
                 name,
                 displayName,
-                avatar,
                 description,
                 links: nextLinks,
             });

@@ -41,3 +41,12 @@ class UserLinkNotFoundError(DomainError):
 
 class InvalidUserLinksReorderError(DomainError):
     pass
+
+
+class UsernameAlreadyTakenError(DomainError):
+    code = "USERNAME_TAKEN"
+    field = "name"
+
+
+class UserProfileNotFoundError(DomainError):
+    pass

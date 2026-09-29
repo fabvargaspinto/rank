@@ -1,8 +1,11 @@
 from postgrest.exceptions import APIError
 
 from core.shared.infrastructure.postgres_error import is_unique_violation
-from core.user.application.application_error import UserNameAlreadyExistsError
 from core.user.domain.user import User
+from core.user.domain.user_error import (
+    UsernameAlreadyTakenError,
+    UserProfileNotFoundError,
+)
 from core.user.domain.user_repo import UserRepository
 from core.user.infrastructure.error_infrastructure import (
     UserDeletionError,
@@ -71,50 +74,32 @@ class UserSupabaseRepo(UserRepository):
             raise UserLookupError("Error al buscar el usuario")
         return self.mapper.to_domain(row)
 
-    def update_user(self, user: User) -> User | None:
+    def save(self, user: User) -> None:
         row = self.mapper.to_row(user)
-        payload = {
-            "name": row["name"],
-            "display_name": row["display_name"],
-            "avatar_url": row["avatar_url"],
-            "description": row["description"],
-            "updated_at": row["updated_at"],
-        }
 
         try:
-            response = (
-                self._db.table("users")
-                .update(payload)
-                .eq("id", user.id.value)
-                .execute()
-            )
+            self._db.rpc(
+                "update_profile",
+                {
+                    "p_user_id": row["id"],
+                    "p_name": row["name"],
+                    "p_display_name": row["display_name"],
+                    "p_avatar_url": row["avatar_url"],
+                    "p_description": row["description"],
+                    "p_updated_at": row["updated_at"],
+                    "p_links": self.mapper.links_to_rows(user),
+                },
+            ).execute()
         except APIError as exc:
             if is_unique_violation(exc):
-                raise UserNameAlreadyExistsError(
+                raise UsernameAlreadyTakenError(
                     "Ese nombre ya está en uso"
                 ) from exc
+            if str(exc.code) == "P0002":
+                raise UserProfileNotFoundError("El usuario no existe") from exc
             raise UserUpdateError("Error al actualizar el usuario") from exc
         except Exception as exc:
             raise UserUpdateError("Error al actualizar el usuario") from exc
-
-        rows = response.data or []
-        if not rows:
-            return None
-
-        try:
-            (
-                self._db.table("user_links")
-                .delete()
-                .eq("user_id", user.id.value)
-                .execute()
-            )
-            link_rows = self.mapper.links_to_rows(user)
-            if link_rows:
-                self._db.table("user_links").insert(link_rows).execute()
-        except Exception as exc:
-            raise UserUpdateError("Error al actualizar los links") from exc
-
-        return self.get_user(user.id.value)
 
     def delete_user(self, user_id: str) -> None:
         try:

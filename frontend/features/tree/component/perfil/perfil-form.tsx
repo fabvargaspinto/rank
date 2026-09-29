@@ -164,8 +164,6 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
         setNameError("");
 
         try {
-            let avatar: string | undefined;
-
             if (photoFile) {
                 const uploaded = await uploadAvatarAction(photoFile);
 
@@ -173,8 +171,6 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                     setError(uploaded.message || "No se pudo subir la imagen");
                     return;
                 }
-
-                avatar = uploaded.data;
             }
 
             const result = await updateUserAction({
@@ -182,7 +178,6 @@ export default function PerfilForm({ profile, onSave }: PerfilFormProps) {
                 displayName,
                 description: description.trim(),
                 links: nextLinks.map((link) => ({ url: link.url })),
-                ...(avatar !== undefined ? { avatar } : {}),
             });
 
             if (result.isError || !result.data) {

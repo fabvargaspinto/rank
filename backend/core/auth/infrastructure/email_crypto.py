@@ -2,10 +2,12 @@ import hashlib
 import hmac
 import os
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from config.crypto_setings import CryptoSettings
 from core.auth.domain.auth_email import AuthEmail
+from core.auth.infrastructure.error_infrastructure import EmailDecryptError
 
 
 class EmailCrypto:
@@ -33,11 +35,14 @@ class EmailCrypto:
         nonce = data[:12]
         ciphertext = data[12:]
 
-        decrypted = self._aes.decrypt(
-            nonce,
-            ciphertext,
-            None,
-        )
+        try:
+            decrypted = self._aes.decrypt(
+                nonce,
+                ciphertext,
+                None,
+            )
+        except InvalidTag as exc:
+            raise EmailDecryptError("No se pudo leer el email") from exc
 
         return AuthEmail(decrypted.decode("utf-8"))
 
