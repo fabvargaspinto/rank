@@ -49,10 +49,8 @@
     min-width: 0;
     background-color: var(--drawer-background-color);
     color: var(--drawer-color);
-    padding: var(--drawer-padding);
+    padding-block: var(--drawer-padding);
     padding-bottom: max(var(--drawer-padding), env(safe-area-inset-bottom));
-    padding-right: max(var(--drawer-padding), env(safe-area-inset-right));
-    padding-left: max(var(--drawer-padding), env(safe-area-inset-left));
     outline: none;
     transition: transform 240ms ease;
 }
@@ -102,6 +100,7 @@
     border-radius: 999px;
     background-color: var(--drawer-handle-color);
     align-self: center;
+    flex-shrink: 0;
 }
 
 .header {
@@ -110,6 +109,9 @@
     justify-content: space-between;
     gap: var(--component-inner-gap);
     min-width: 0;
+    flex-shrink: 0;
+    padding-left: max(var(--drawer-padding), env(safe-area-inset-left));
+    padding-right: max(var(--drawer-padding), env(safe-area-inset-right));
 }
 
 .title {
@@ -150,7 +152,26 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable both-edges;
+    padding-left: max(var(--drawer-padding), env(safe-area-inset-left));
+    padding-right: max(var(--drawer-padding), env(safe-area-inset-right));
+}
+
+.content > * {
+    flex: 1 0 auto;
+    min-height: 100%;
+}
+
+.content:hover::-webkit-scrollbar-thumb,
+.content:focus-within::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb-color);
+}
+
+.content:hover::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-color-hover);
 }
 
 @media (prefers-reduced-motion: reduce) {

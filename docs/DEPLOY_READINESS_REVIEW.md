@@ -117,7 +117,7 @@ Se usa la numeración del backlog anotado al final de `ARCHITECTURE_AUDIT.md`. S
 # BACKLOG 
 ---------------------------
 
-## 4. Bloqueantes de despliegue (P0)
+## ✅ 4. Bloqueantes de despliegue (P0)
 
 Cada bloqueante incluye el test que conviene escribir **antes** del arreglo, para verlo fallar y asegurar que el problema no vuelva.
 
@@ -332,7 +332,7 @@ El pipeline mínimo propuesto está en [10.4](#104-cicd).
 
 ---
 
-## 5. DDD en el backend
+##  ✅ 5. DDD en el backend
 
 ### ✅ 5.1 Mapa de contextos
 
@@ -557,7 +557,7 @@ Hoy el contrato de independencia fallaría, y eso es lo buscado: vuelve visibles
 
 ---
 
-## 6. Arquitectura del frontend
+##  ✅ 6. Arquitectura del frontend
 
 ### ✅ 6.1 Reglas de negocio duplicadas
 
@@ -608,7 +608,7 @@ Mucha lógica pura vive dentro de componentes o Server Actions: `sanitizeName`, 
 
 ---
 
-## 7. TDD en el backend
+## 7. TDD en el backend (no es momento)
 
 ### 7.1 Estado actual
 
@@ -707,7 +707,7 @@ Lo mismo aplica a `CommentRepository`, `AuthRepository` y `AvatarStorage`.
 
 ---
 
-## 8. TDD en el frontend
+## 8. TDD en el frontend (no es momento)
 
 ### 8.1 Estado
 
@@ -802,7 +802,7 @@ test("el onboarding acepta una foto de 1,5 MB", async ({ page }) => {
 
 ---
 
-## 9. UX/UI
+## 9. UX/UI (no es momento)
 
 ### 9.1 Hallazgos por flujo
 
@@ -934,11 +934,11 @@ La base de tokens, en capas de primitivos, semánticos y componentes, es buena. 
 - Componentes reutilizables que hoy se repiten con CSS propio: `Field` (label, control, ayuda y error), `Textarea`, `FieldError`, `Toast` y `Skeleton`.
 - Nombres de la escala de espaciado: `--scale-3` vale 4 px y `--scale-4` vale 8 px, lo que dificulta leer el CSS. Algo como `--space-1` (4 px) o `--space-2` (8 px) es más claro. Es cosmético y no prioritario.
 
-### 9.8 separar el scroll del drawer con el contenido
+### ✅ 9.8 separar el scroll del drawer con el contenido
 
 ---
 
-## 10. Operación y despliegue
+## 10. Operación y despliegue 
 
 ### 10.1 Supabase de producción
 
