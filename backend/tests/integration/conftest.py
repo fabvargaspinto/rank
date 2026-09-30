@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from postgrest.exceptions import APIError
@@ -15,8 +16,17 @@ from tests.integration.local_supabase import (
 )
 
 
+def _instagram_only(session: pytest.Session) -> bool:
+    items = getattr(session, "items", [])
+    if not items:
+        return False
+    return all("/instagram/" in Path(str(item.fspath)).as_posix() for item in items)
+
+
 @pytest.fixture(scope="session", autouse=True)
-def require_local_supabase() -> None:
+def require_local_supabase(request: pytest.FixtureRequest) -> None:
+    if _instagram_only(request.session):
+        return
     url = configure_local_supabase_env()
     if not ensure_local_supabase_running(url):
         pytest.skip(

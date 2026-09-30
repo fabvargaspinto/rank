@@ -48,6 +48,10 @@ def configure_logging() -> None:
             handler.setFormatter(formatter)
     root.setLevel(logging.INFO)
 
+    # httpx loguea URLs completas; Meta manda tokens en query string.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         logger = logging.getLogger(name)
         for handler in logger.handlers:

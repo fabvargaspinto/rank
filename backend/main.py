@@ -8,6 +8,7 @@ from api.logging import configure_logging
 from api.rate_limit import register_rate_limit
 from api.request_id import register_request_id
 from api.routers.health import router as health_router
+from api.routers.instagram import router as instagram_router
 from api.routers.me import router as me_router
 from api.routers.profiles import router as profiles_router
 from api.routers.session import router as session_router
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(session_router)
     app.include_router(me_router)
+    app.include_router(instagram_router)
     app.include_router(profiles_router)
     return app
 

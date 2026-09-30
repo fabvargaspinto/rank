@@ -68,3 +68,10 @@ Thumbs.db
 # ─────────────────────────────────────
 supabase/.temp/
 supabase/.branches/
+
+# Instagram Analytics local SQLite
+backend/instagram.db
+
+# Local TLS for Instagram OAuth HTTPS redirect
+backend/certs/*.pem
+

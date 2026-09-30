@@ -1,0 +1,246 @@
+from datetime import UTC, datetime
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from api.dependencies.auth import (
+    AuthJwtSettings,
+    CurrentUser,
+    get_auth_jwt_settings,
+    get_current_user,
+    get_jwks_client,
+)
+from api.dependencies.container import (
+    get_capture_instagram_followers_use_case,
+    get_complete_instagram_oauth_use_case,
+    get_disconnect_instagram_use_case,
+    get_follower_history_use_case,
+    get_instagram_connection_use_case,
+    get_start_instagram_connection_use_case,
+    get_user_use_case,
+)
+from api.errors import register_error_handlers
+from api.rate_limit import register_rate_limit
+from api.routers.instagram import get_instagram_settings
+from api.routers.instagram import router as instagram_router
+from config.instagram_settings import InstagramSettings
+from core.instagram.application.capture_instagram_followers import (
+    CaptureInstagramFollowers,
+)
+from core.instagram.application.complete_instagram_oauth import CompleteInstagramOAuth
+from core.instagram.application.disconnect_instagram import DisconnectInstagram
+from core.instagram.application.get_follower_history import GetFollowerHistory
+from core.instagram.application.get_instagram_connection import GetInstagramConnection
+from core.instagram.application.start_instagram_connection import (
+    StartInstagramConnection,
+)
+from core.user.application.get_user import GetUser
+from core.user.domain.user import User
+from tests.unit.instagram.application.fake_repos import (
+    FakeConnectionRepo,
+    FakeSnapshotRepo,
+)
+from tests.unit.instagram.application.fakes import (
+    AUTH_URL,
+    FakeInstagramGraph,
+    FakeOAuthStateCodec,
+    FakeTokenCipher,
+)
+from tests.unit.user.application.fake_user_repo import FakeUserRepo
+
+AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
+NOW = datetime(2026, 10, 7, 12, 0, tzinfo=UTC)
+ISSUER = "https://example.supabase.co/auth/v1"
+
+
+class _UnusedJwksClient:
+    def get_signing_key_from_jwt(self, token: str):
+        raise AssertionError("JWKS should not be used without a Bearer token")
+
+
+def _settings() -> InstagramSettings:
+    return InstagramSettings(
+        instagram_app_id="123",
+        instagram_app_secret="secret",
+        instagram_redirect_uri="http://testserver/instagram/oauth/callback",
+        instagram_token_encryption_key="00" * 32,
+        frontend_url="http://localhost:3000",
+        instagram_snapshot_job_token="job-secret",
+    )
+
+
+class _Harness:
+    def __init__(self) -> None:
+        self.user = User.create_empty()
+        self.users = FakeUserRepo()
+        self.users.users_by_auth_id[AUTH_ID] = self.user
+        self.graph = FakeInstagramGraph()
+        self.connections = FakeConnectionRepo()
+        self.snapshots = FakeSnapshotRepo()
+        self.cipher = FakeTokenCipher()
+        self.codec = FakeOAuthStateCodec()
+        self.clock = lambda: NOW
+        self.capture = CaptureInstagramFollowers(
+            self.graph,
+            self.connections,
+            self.snapshots,
+            self.cipher,
+            clock=self.clock,
+        )
+        self.client = self._client()
+
+    def _client(self) -> TestClient:
+        app = FastAPI()
+        register_error_handlers(app)
+        register_rate_limit(app)
+        app.include_router(instagram_router)
+        app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
+            jwks_url=f"{ISSUER}/.well-known/jwks.json",
+            issuer=ISSUER,
+        )
+        app.dependency_overrides[get_jwks_client] = lambda: _UnusedJwksClient()
+        app.dependency_overrides[get_user_use_case] = lambda: GetUser(self.users)
+        app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="luna@example.com",
+        )
+        app.dependency_overrides[get_instagram_settings] = _settings
+        app.dependency_overrides[get_start_instagram_connection_use_case] = (
+            lambda: StartInstagramConnection(
+                self.graph,
+                self.codec,
+                nonce_factory=lambda: "nonce-1",
+                clock=self.clock,
+            )
+        )
+        app.dependency_overrides[get_complete_instagram_oauth_use_case] = (
+            lambda: CompleteInstagramOAuth(
+                self.graph,
+                self.connections,
+                self.cipher,
+                self.codec,
+                self.capture,
+                clock=self.clock,
+            )
+        )
+        app.dependency_overrides[get_instagram_connection_use_case] = (
+            lambda: GetInstagramConnection(self.connections, self.snapshots)
+        )
+        app.dependency_overrides[get_follower_history_use_case] = (
+            lambda: GetFollowerHistory(self.connections, self.snapshots)
+        )
+        app.dependency_overrides[get_disconnect_instagram_use_case] = (
+            lambda: DisconnectInstagram(self.connections, self.snapshots)
+        )
+        app.dependency_overrides[get_capture_instagram_followers_use_case] = (
+            lambda: self.capture
+        )
+        return TestClient(app, follow_redirects=False)
+
+
+def test_connect_requires_auth():
+    app = FastAPI()
+    register_error_handlers(app)
+    register_rate_limit(app)
+    app.include_router(instagram_router)
+    app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
+        jwks_url=f"{ISSUER}/.well-known/jwks.json",
+        issuer=ISSUER,
+    )
+    app.dependency_overrides[get_jwks_client] = lambda: _UnusedJwksClient()
+    response = TestClient(app).get("/me/instagram/connect")
+
+    assert response.status_code == 401
+
+
+def test_connect_returns_authorization_url_without_secret():
+    harness = _Harness()
+
+    response = harness.client.get("/me/instagram/connect")
+
+    assert response.status_code == 200
+    url = response.json()["authorization_url"]
+    assert url.startswith(AUTH_URL)
+    assert "secret" not in url
+    assert "access_token" not in response.text
+
+
+def test_callback_connects_and_hides_token_from_connection_payload():
+    harness = _Harness()
+    connect = harness.client.get("/me/instagram/connect")
+    state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
+
+    callback = harness.client.get(
+        "/instagram/oauth/callback",
+        params={"code": "auth-code", "state": state},
+    )
+    connection = harness.client.get("/me/instagram")
+    history = harness.client.get("/me/instagram/followers")
+
+    assert callback.status_code == 302
+    assert callback.headers["location"] == (
+        "http://localhost:3000/dashboard/tree?instagram=connected"
+    )
+    body = connection.json()
+    assert body["connected"] is True
+    assert body["username"] == "luna.reyes"
+    assert body["followers_count"] == 1250
+    assert "token" not in body
+    assert "ig-access-token" not in connection.text
+    assert history.json()["items"][0]["followers_count"] == 1250
+    assert history.json()["items"][0]["week_start"] == "2026-10-05"
+
+
+def test_callback_error_redirects_to_frontend():
+    harness = _Harness()
+
+    response = harness.client.get(
+        "/instagram/oauth/callback",
+        params={"error": "access_denied", "state": "x"},
+    )
+
+    assert response.status_code == 302
+    assert "instagram=error" in response.headers["location"]
+
+
+def test_user_cannot_read_another_users_connection():
+    harness = _Harness()
+    connect = harness.client.get("/me/instagram/connect")
+    state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
+    harness.client.get(
+        "/instagram/oauth/callback",
+        params={"code": "auth-code", "state": state},
+    )
+    stranger = User.create_empty()
+    harness.users.users_by_auth_id["770e8400-e29b-41d4-a716-446655440000"] = stranger
+    harness.client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+        auth_id="770e8400-e29b-41d4-a716-446655440000",
+        email="other@example.com",
+    )
+
+    response = harness.client.get("/me/instagram")
+
+    assert response.json()["connected"] is False
+
+
+def test_disconnect_and_job():
+    harness = _Harness()
+    connect = harness.client.get("/me/instagram/connect")
+    state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
+    harness.client.get(
+        "/instagram/oauth/callback",
+        params={"code": "auth-code", "state": state},
+    )
+
+    denied = harness.client.post("/internal/instagram/snapshots")
+    allowed = harness.client.post(
+        "/internal/instagram/snapshots",
+        headers={"X-Job-Token": "job-secret"},
+    )
+    deleted = harness.client.delete("/me/instagram")
+    missing = harness.client.get("/me/instagram/followers")
+
+    assert denied.status_code == 401
+    assert allowed.json() == {"captured": 1, "failed": 0}
+    assert deleted.status_code == 204
+    assert missing.status_code == 404

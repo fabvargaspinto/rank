@@ -81,3 +81,26 @@ export type CreatePostRequest = {
     text: string;
     link?: string | null;
 };
+
+export type InstagramConnectResponse = {
+    authorization_url: string;
+};
+
+export type InstagramConnectionResponse = {
+    connected: boolean;
+    username: string | null;
+    instagram_account_id: string | null;
+    followers_count: number | null;
+    followers_delta: number | null;
+};
+
+export type FollowerHistoryItemResponse = {
+    week_start: string;
+    followers_count: number;
+    captured_at: string;
+    delta: number | null;
+};
+
+export type FollowerHistoryResponse = {
+    items: FollowerHistoryItemResponse[];
+};

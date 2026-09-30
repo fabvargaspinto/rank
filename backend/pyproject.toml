@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "cryptography>=50.0.1",
     "fastapi[standard]>=0.141.1",
+    "httpx>=0.28.1",
     "pillow>=12.3.0",
     "pydantic-settings>=2.15.0",
     "pyjwt[crypto]>=2.13.0",
@@ -34,7 +35,7 @@ addopts = [
 ]
 markers = [
     "unit: tests aislados, sin Supabase ni red",
-    "integration: tests contra Supabase local en Docker",
+    "integration: tests contra Supabase local o SQLite/Turso de Instagram",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
@@ -73,7 +74,7 @@ include_external_packages = true
 [[tool.importlinter.contracts]]
 name = "Capas dentro de cada contexto"
 type = "layers"
-containers = ["core.auth", "core.user", "core.post"]
+containers = ["core.auth", "core.user", "core.post", "core.instagram"]
 layers = ["infrastructure", "application", "domain"]
 
 [[tool.importlinter.contracts]]
@@ -86,6 +87,8 @@ source_modules = [
     "core.user.application",
     "core.post.domain",
     "core.post.application",
+    "core.instagram.domain",
+    "core.instagram.application",
     "core.shared.domain",
 ]
 forbidden_modules = [
@@ -94,12 +97,13 @@ forbidden_modules = [
     "pydantic_settings",
     "supabase",
     "postgrest",
+    "httpx",
 ]
 
 [[tool.importlinter.contracts]]
 name = "Contextos independientes: solo comparten core.shared"
 type = "independence"
-modules = ["core.auth", "core.user", "core.post"]
+modules = ["core.auth", "core.user", "core.post", "core.instagram"]
 ignore_imports = [
     # El aprovisionamiento crea Auth y User en la misma transacción.
     "core.auth.domain.auth_repo -> core.user.domain.user",

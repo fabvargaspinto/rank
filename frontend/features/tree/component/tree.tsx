@@ -13,7 +13,13 @@ import {
     type Profile,
 } from "@/features/profile/model";
 import { MAX_LINKS } from "@/lib/domain-limits";
-import type { PostResponse, UserResponse } from "@/lib/api/types";
+import type {
+    FollowerHistoryItemResponse,
+    InstagramConnectionResponse,
+    PostResponse,
+    UserResponse,
+} from "@/lib/api/types";
+import type { InstagramOAuthStatus } from "@/features/instagram/model";
 import Posts, { type Post } from "./post/posts";
 import DrawerPost from "./post/drawer-post";
 import DrawerPerfil from "./perfil/drawer-perfil";
@@ -36,11 +42,17 @@ export default function Tree({
     initialPosts,
     initialNextCursor = null,
     editable = false,
+    instagramStatus,
+    instagramConnection,
+    instagramHistory = [],
 }: {
     user: UserResponse;
     initialPosts: PostResponse[];
     initialNextCursor?: string | null;
     editable?: boolean;
+    instagramStatus?: InstagramOAuthStatus;
+    instagramConnection?: InstagramConnectionResponse;
+    instagramHistory?: FollowerHistoryItemResponse[];
 }) {
     const tabsId = useId();
     const panelRef = useRef<HTMLDivElement>(null);
@@ -171,7 +183,12 @@ export default function Tree({
                             {...(editable ? { onDelete: removePost } : {})}
                         />
                     ) : (
-                        <Socials />
+                        <Socials
+                            editable={editable}
+                            oauthStatus={instagramStatus}
+                            initialConnection={instagramConnection}
+                            initialHistory={instagramHistory}
+                        />
                     )}
                 </div>
                 {tab === "posts" && editable ? (

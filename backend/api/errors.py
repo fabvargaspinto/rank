@@ -21,6 +21,12 @@ _APPLICATION_STATUS = {
     "PostNotFoundError": 404,
     "InvalidAvatarFileError": 400,
     "UnsupportedAuthProviderError": 400,
+    "InstagramNotConnectedError": 404,
+    "InstagramOAuthDeniedError": 400,
+    "InstagramOAuthStateError": 400,
+    "InstagramAccountAlreadyLinkedError": 409,
+    "InstagramTokenExpiredError": 401,
+    "InstagramGraphError": 502,
 }
 
 _DOMAIN_STATUS = {

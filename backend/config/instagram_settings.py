@@ -1,0 +1,42 @@
+from pydantic import AliasChoices, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class InstagramSettings(BaseSettings):
+    instagram_app_id: str = Field(
+        validation_alias=AliasChoices(
+            "INSTAGRAM_APP_ID",
+            "META_APP_ID",
+            "META_ID_APP",
+        ),
+    )
+    instagram_app_secret: str = Field(
+        validation_alias=AliasChoices(
+            "INSTAGRAM_APP_SECRET",
+            "META_APP_SECRET",
+        ),
+    )
+    instagram_redirect_uri: str = Field(
+        validation_alias=AliasChoices(
+            "INSTAGRAM_REDIRECT_URI",
+            "META_INSTAGRAM_REDIRECT_URI",
+            "META_CALLBACK_URL",
+        ),
+    )
+    instagram_token_encryption_key: str
+    frontend_url: str = Field(
+        default="http://localhost:3000",
+        validation_alias=AliasChoices("FRONTEND_URL", "NEXT_PUBLIC_SITE_URL"),
+    )
+    instagram_snapshot_job_token: str = ""
+
+    model_config = SettingsConfigDict(
+        env_file="../.env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    @property
+    def token_encryption_key_bytes(self) -> bytes:
+        return bytes.fromhex(self.instagram_token_encryption_key)
