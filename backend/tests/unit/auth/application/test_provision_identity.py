@@ -86,10 +86,7 @@ class TestProvisionIdentity:
 
         assert result.provider_method.provider is AuthProvider.GOOGLE
         assert result.provider_method.provider_id.value == GOOGLE_ID
-        assert (
-            self.repo.find_by_provider_id(AuthProvider.GOOGLE, GOOGLE_ID)
-            is result
-        )
+        assert self.repo.find_by_provider_id(AuthProvider.GOOGLE, GOOGLE_ID) is result
 
     def test_returns_existing_google_identity(self):
         user = User.create_empty()

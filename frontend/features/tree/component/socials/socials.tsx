@@ -165,6 +165,9 @@ export default function Socials({
                                 </button>
                             </li>
                         </ul>
+                        <div>
+                            <p>Más redes pronto...</p>
+                        </div>
                         {connected ? (
                             <Button
                                 type="button"

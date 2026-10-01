@@ -24,9 +24,7 @@ class ProvisionIdentity:
 
         identity = self.auth_repo.get_identity(auth_id)
         if identity is None:
-            raise InvalidAuthCredentialsError(
-                "El token de autenticación no es válido"
-            )
+            raise InvalidAuthCredentialsError("El token de autenticación no es válido")
 
         if identity.provider.is_email():
             return self._provision_email(auth_id, email)
@@ -36,13 +34,9 @@ class ProvisionIdentity:
                 "El proveedor debe ser un proveedor OAuth"
             )
 
-        provider_id = (
-            identity.provider_id.value if identity.provider_id else None
-        )
+        provider_id = identity.provider_id.value if identity.provider_id else None
         if not provider_id:
-            raise InvalidAuthCredentialsError(
-                "El token de autenticación no es válido"
-            )
+            raise InvalidAuthCredentialsError("El token de autenticación no es válido")
 
         existing_by_provider = self.auth_repo.find_by_provider_id(
             identity.provider,
@@ -96,6 +90,4 @@ class ProvisionIdentity:
         try:
             return self.auth_repo.save(user=user, auth=auth)
         except IdentityAlreadyExistsError as exc:
-            raise EmailAlreadyExistsError(
-                "El email ya está registrado"
-            ) from exc
+            raise EmailAlreadyExistsError("El email ya está registrado") from exc
