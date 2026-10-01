@@ -38,6 +38,7 @@ def _handler(request: httpx.Request) -> httpx.Response:
                 "user_id": "17841400000000000",
                 "username": "luna.reyes",
                 "followers_count": 1390,
+                "profile_picture_url": "https://scontent.cdninstagram.com/v/t51.2885-19/avatar.jpg",
             },
         )
     if "refresh_access_token" in url:
@@ -77,6 +78,8 @@ def test_complete_login_maps_meta_payload_to_domain():
 
     assert login.account.id.value == "17841400000000000"
     assert login.account.username.value == "luna.reyes"
+    assert login.account.avatar_url is not None
+    assert login.account.avatar_url.value.endswith("/avatar.jpg")
     assert login.followers_count == 1390
     assert login.token.value == TOKEN
     assert TOKEN not in repr(login.token)

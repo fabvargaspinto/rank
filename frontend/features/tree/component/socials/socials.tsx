@@ -42,6 +42,7 @@ export default function Socials({
                 connected: false,
                 username: null,
                 instagram_account_id: null,
+                avatar_url: null,
                 followers_count: null,
                 followers_delta: null,
             },
@@ -87,6 +88,7 @@ export default function Socials({
                 connected: false,
                 username: null,
                 instagram_account_id: null,
+                avatar_url: null,
                 followers_count: null,
                 followers_delta: null,
             });
@@ -255,7 +257,11 @@ function ConnectedView({
             </div>
 
             <article className={styles.accountCard}>
-                <Avatar name={username} size="md" />
+                <Avatar
+                    name={username}
+                    src={connection.avatar_url}
+                    size="md"
+                />
                 <div className={styles.accountMeta}>
                     <p className={styles.accountUser}>@{username}</p>
                     <p className={styles.accountNetwork}>Instagram</p>

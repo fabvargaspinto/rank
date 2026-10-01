@@ -204,6 +204,9 @@ class TestDisconnectAndQueries:
 
         assert view.connected is True
         assert view.username == "luna.reyes"
+        assert view.avatar_url == (
+            "https://scontent.cdninstagram.com/v/t51.2885-19/avatar.jpg"
+        )
         assert view.followers_count == 1250
         assert view.followers_delta is None
         assert len(history) == 1

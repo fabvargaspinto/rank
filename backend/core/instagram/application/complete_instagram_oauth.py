@@ -64,18 +64,25 @@ class CompleteInstagramOAuth:
             )
 
         existing = self._connections.get_by_owner(payload.owner_user_id.value)
+        avatar_url = (
+            login.account.avatar_url.value
+            if login.account.avatar_url is not None
+            else None
+        )
         if existing is None:
             connection = InstagramConnection.connect(
                 payload.owner_user_id.value,
                 login.account.id.value,
                 login.account.username.value,
                 login.token.expires_at,
+                avatar_url,
             )
         else:
             connection = existing.connection.reauthorize(
                 login.account.id.value,
                 login.account.username.value,
                 login.token.expires_at,
+                avatar_url,
             )
 
         self._connections.save(

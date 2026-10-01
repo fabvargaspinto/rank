@@ -90,6 +90,7 @@ export type InstagramConnectionResponse = {
     connected: boolean;
     username: string | null;
     instagram_account_id: string | null;
+    avatar_url: string | null;
     followers_count: number | null;
     followers_delta: number | null;
 };

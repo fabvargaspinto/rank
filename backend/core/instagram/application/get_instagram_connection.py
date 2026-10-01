@@ -11,6 +11,7 @@ class InstagramConnectionView:
     connected: bool
     username: str | None
     instagram_account_id: str | None
+    avatar_url: str | None
     followers_count: int | None
     previous_followers_count: int | None
 
@@ -37,6 +38,7 @@ class GetInstagramConnection:
                 connected=False,
                 username=None,
                 instagram_account_id=None,
+                avatar_url=None,
                 followers_count=None,
                 previous_followers_count=None,
             )
@@ -44,10 +46,12 @@ class GetInstagramConnection:
         history = self._snapshots.list_by_account(stored.connection.account.id.value)
         latest = history[-1] if history else None
         previous = history[-2] if len(history) > 1 else None
+        avatar = stored.connection.account.avatar_url
         return InstagramConnectionView(
             connected=True,
             username=stored.connection.account.username.value,
             instagram_account_id=stored.connection.account.id.value,
+            avatar_url=avatar.value if avatar is not None else None,
             followers_count=latest.followers_count.value if latest else None,
             previous_followers_count=(
                 previous.followers_count.value if previous else None

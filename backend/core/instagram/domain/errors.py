@@ -9,6 +9,10 @@ class InvalidInstagramUsernameError(DomainError):
     code = "INVALID_INSTAGRAM_USERNAME"
 
 
+class InvalidInstagramAvatarUrlError(DomainError):
+    code = "INVALID_INSTAGRAM_AVATAR_URL"
+
+
 class InvalidFollowersCountError(DomainError):
     code = "INVALID_FOLLOWERS_COUNT"
 

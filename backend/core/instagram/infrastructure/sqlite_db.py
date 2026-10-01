@@ -35,6 +35,15 @@ class SqliteDatabase:
             try:
                 for statement in SCHEMA_STATEMENTS:
                     self._connection.execute(statement)
+                columns = self._connection.execute(
+                    "PRAGMA table_info(instagram_connections)"
+                ).fetchall()
+                names = {str(row["name"]) for row in columns}
+                if "instagram_avatar_url" not in names:
+                    self._connection.execute(
+                        "ALTER TABLE instagram_connections "
+                        "ADD COLUMN instagram_avatar_url TEXT"
+                    )
                 self._connection.commit()
             except sqlite3.Error as exc:
                 raise InstagramDbError("No se pudo preparar la base de Instagram") from exc

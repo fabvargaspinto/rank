@@ -184,6 +184,9 @@ def test_callback_connects_and_hides_token_from_connection_payload():
     body = connection.json()
     assert body["connected"] is True
     assert body["username"] == "luna.reyes"
+    assert body["avatar_url"] == (
+        "https://scontent.cdninstagram.com/v/t51.2885-19/avatar.jpg"
+    )
     assert body["followers_count"] == 1250
     assert "token" not in body
     assert "ig-access-token" not in connection.text

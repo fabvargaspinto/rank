@@ -11,15 +11,17 @@ INSERT INTO instagram_connections (
     owner_user_id,
     instagram_account_id,
     instagram_username,
+    instagram_avatar_url,
     access_token_encrypted,
     token_expires_at,
     created_at,
     updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(id) DO UPDATE SET
     owner_user_id = excluded.owner_user_id,
     instagram_account_id = excluded.instagram_account_id,
     instagram_username = excluded.instagram_username,
+    instagram_avatar_url = excluded.instagram_avatar_url,
     access_token_encrypted = excluded.access_token_encrypted,
     token_expires_at = excluded.token_expires_at,
     updated_at = excluded.updated_at

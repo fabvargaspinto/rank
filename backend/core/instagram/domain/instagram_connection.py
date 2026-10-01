@@ -24,12 +24,17 @@ class InstagramConnection:
         instagram_account_id: str,
         username: str,
         token_expires_at: datetime,
+        avatar_url: str | None = None,
     ) -> "InstagramConnection":
         now = ConnectionCreatedAt.now()
         return InstagramConnection(
             id=ConnectionId.generate(),
             owner_user_id=OwnerUserId(owner_user_id),
-            account=InstagramAccount.create(instagram_account_id, username),
+            account=InstagramAccount.create(
+                instagram_account_id,
+                username,
+                avatar_url,
+            ),
             token_expires_at=TokenExpiresAt(token_expires_at),
             created_at=now,
             updated_at=ConnectionUpdatedAt(now.value),
@@ -43,11 +48,16 @@ class InstagramConnection:
         instagram_account_id: str,
         username: str,
         token_expires_at: datetime,
+        avatar_url: str | None = None,
     ) -> "InstagramConnection":
         return InstagramConnection(
             id=self.id,
             owner_user_id=self.owner_user_id,
-            account=InstagramAccount.create(instagram_account_id, username),
+            account=InstagramAccount.create(
+                instagram_account_id,
+                username,
+                avatar_url,
+            ),
             token_expires_at=TokenExpiresAt(token_expires_at),
             created_at=self.created_at,
             updated_at=ConnectionUpdatedAt.now(),

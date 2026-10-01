@@ -51,6 +51,7 @@ export function disconnectedConnection(): InstagramConnectionResponse {
         connected: false,
         username: null,
         instagram_account_id: null,
+        avatar_url: null,
         followers_count: null,
         followers_delta: null,
     };

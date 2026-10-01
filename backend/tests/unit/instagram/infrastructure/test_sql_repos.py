@@ -29,6 +29,7 @@ def test_connection_round_trip_does_not_store_plain_token():
             ACCOUNT_ID,
             "luna.reyes",
             NOW,
+            "https://scontent.cdninstagram.com/v/t51.2885-19/avatar.jpg",
         ),
         "enc:ig-token",
     )
@@ -38,6 +39,8 @@ def test_connection_round_trip_does_not_store_plain_token():
 
     assert loaded is not None
     assert loaded.connection.account.username.value == "luna.reyes"
+    assert loaded.connection.account.avatar_url is not None
+    assert loaded.connection.account.avatar_url.value.endswith("/avatar.jpg")
     assert loaded.access_token_encrypted == "enc:ig-token"
     assert connections.get_by_account(ACCOUNT_ID) is not None
 

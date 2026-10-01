@@ -110,16 +110,25 @@ class MetaInstagramClient(InstagramGraph):
         payload = self._get_json(
             f"{_GRAPH_URL}/me",
             {
-                "fields": "user_id,username,followers_count",
+                "fields": "user_id,username,followers_count,profile_picture_url",
                 "access_token": access_token,
             },
         )
         account_id = str(payload.get("user_id") or payload.get("id") or "").strip()
         username = str(payload.get("username") or "").strip()
         followers = _as_int(payload.get("followers_count"))
+        avatar_raw = payload.get("profile_picture_url")
+        avatar_url = (
+            avatar_raw.strip()
+            if isinstance(avatar_raw, str) and avatar_raw.strip()
+            else None
+        )
         if not account_id or not username or followers is None:
             raise InstagramGraphError("Instagram no está disponible")
-        return InstagramAccount.create(account_id, username), followers
+        return (
+            InstagramAccount.create(account_id, username, avatar_url),
+            followers,
+        )
 
     def _token_from_payload(
         self,

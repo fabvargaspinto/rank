@@ -14,6 +14,7 @@ def to_instagram_connection_response(
         connected=view.connected,
         username=view.username,
         instagram_account_id=view.instagram_account_id,
+        avatar_url=view.avatar_url,
         followers_count=view.followers_count,
         followers_delta=view.followers_delta,
     )

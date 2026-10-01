@@ -15,6 +15,7 @@ class InstagramConnectionResponse(BaseModel):
     connected: bool
     username: str | None = None
     instagram_account_id: str | None = None
+    avatar_url: str | None = None
     followers_count: int | None = None
     followers_delta: int | None = None
 

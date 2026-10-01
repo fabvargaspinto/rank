@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 
 from core.instagram.infrastructure.error_infrastructure import InstagramDbError
-from core.instagram.infrastructure.sql import SCHEMA_STATEMENTS
+from core.instagram.infrastructure.sql import SCHEMA_STATEMENTS, ensure_optional_columns
 
 
 def turso_pipeline_url(database_url: str) -> str:
@@ -62,6 +62,7 @@ class TursoHttpDatabase:
         ]
         requests.append({"type": "close"})
         self._pipeline(requests)
+        ensure_optional_columns(self)
 
     def execute(
         self,

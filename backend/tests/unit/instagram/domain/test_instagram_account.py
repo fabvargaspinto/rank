@@ -21,10 +21,16 @@ TOKEN_EXPIRES_AT = datetime(2026, 11, 30, 12, 0, tzinfo=UTC)
 
 class TestInstagramAccount:
     def test_creates_account_from_meta_id_and_username(self):
-        account = InstagramAccount.create(ACCOUNT_ID, f"@{USERNAME}")
+        account = InstagramAccount.create(
+            ACCOUNT_ID,
+            f"@{USERNAME}",
+            "https://scontent.cdninstagram.com/v/t51.2885-19/avatar.jpg",
+        )
 
         assert account.id.value == ACCOUNT_ID
         assert account.username.value == USERNAME
+        assert account.avatar_url is not None
+        assert account.avatar_url.value.endswith("/avatar.jpg")
 
     def test_username_is_not_the_identity(self):
         original = InstagramAccount.create(ACCOUNT_ID, USERNAME)
@@ -40,6 +46,12 @@ class TestInstagramAccount:
     def test_rejects_blank_username(self):
         with pytest.raises(InvalidInstagramUsernameError):
             InstagramAccount.create(ACCOUNT_ID, "   ")
+
+    def test_rejects_non_https_avatar_url(self):
+        from core.instagram.domain.errors import InvalidInstagramAvatarUrlError
+
+        with pytest.raises(InvalidInstagramAvatarUrlError):
+            InstagramAccount.create(ACCOUNT_ID, USERNAME, "http://example.com/a.jpg")
 
 
 class TestInstagramConnection:

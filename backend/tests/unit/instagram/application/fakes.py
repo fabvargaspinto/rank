@@ -18,6 +18,7 @@ class FakeInstagramGraph(InstagramGraph):
     def __init__(self) -> None:
         self.account_id = ACCOUNT_ID
         self.username = USERNAME
+        self.avatar_url = "https://scontent.cdninstagram.com/v/t51.2885-19/avatar.jpg"
         self.access_token = ACCESS_TOKEN
         self.followers = 1250
         self.expires_at = datetime(2026, 12, 1, tzinfo=UTC)
@@ -39,7 +40,11 @@ class FakeInstagramGraph(InstagramGraph):
             raise InstagramGraphError("Instagram no está disponible")
         return CompletedInstagramLogin(
             token=InstagramAccessToken(self.access_token, self.expires_at),
-            account=InstagramAccount.create(self.account_id, self.username),
+            account=InstagramAccount.create(
+                self.account_id,
+                self.username,
+                self.avatar_url,
+            ),
             followers_count=self.followers,
         )
 
