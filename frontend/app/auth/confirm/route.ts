@@ -49,6 +49,7 @@ export async function GET(request: Request) {
     const provisioned = await provisionSession(session.access_token);
 
     if (provisioned.isError) {
+        await supabase.auth.signOut(); // trial testers
         redirect(
             `/login?error=${encodeURIComponent(provisioned.message)}`,
         );

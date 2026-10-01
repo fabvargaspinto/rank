@@ -32,6 +32,7 @@ export async function GET(request: Request) {
     const response = await provisionSession(data.session.access_token);
 
     if (response.isError) {
+        await supabase.auth.signOut(); // trial testers
         redirect(`${from}?error=${encodeURIComponent(response.message)}`);
     }
 
