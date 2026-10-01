@@ -2,10 +2,308 @@
     display: flex;
     flex-direction: column;
     gap: var(--component-inner-gap);
+    padding: var(--scale-5);
+    min-height: 100%;
 }
 
-.empty {
+.emptyPublic {
     font-size: var(--font-size-xs);
     color: var(--muted-color);
     padding: var(--scale-5);
+}
+
+.message {
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--scale-5);
+    flex: 1;
+    min-height: 220px;
+    padding: var(--scale-5);
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+}
+
+.emptyCopy {
+    margin: 0;
+    max-width: 28ch;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    line-height: 1.45;
+    color: var(--muted-color);
+    text-wrap: pretty;
+}
+
+.syncButton {
+    width: auto;
+    min-width: 12rem;
+}
+
+.connected {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-5);
+}
+
+.linkedBlock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-3);
+}
+
+.linkedLabel {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted-color);
+}
+
+.linkedRow {
+    display: flex;
+    align-items: center;
+    gap: var(--scale-3);
+}
+
+.networkChip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+    color: var(--accent-color);
+    cursor: pointer;
+}
+
+.networkChip:hover {
+    background-color: color-mix(
+        in srgb,
+        var(--core-on-background-color-2) 70%,
+        var(--accent-color)
+    );
+}
+
+.networkChip:focus-visible {
+    outline: var(--scale-1) solid var(--color-gray-light);
+    outline-offset: var(--scale-2);
+}
+
+.networkChip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.networkChipActive {
+    background-color: var(--button-background-color);
+    color: var(--button-color);
+}
+
+.accountCard {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--scale-4);
+    padding: var(--scale-5);
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+}
+
+.accountMeta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-1);
+    min-width: 0;
+}
+
+.accountUser {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--accent-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.accountNetwork {
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
+}
+
+.accountFollowers {
+    font-size: var(--font-size-xs);
+    color: var(--accent-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.deltaUp {
+    color: var(--accent-color);
+}
+
+.deltaDown {
+    color: var(--muted-color);
+}
+
+.accountMenu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--component-border-radius);
+    color: var(--muted-color);
+    cursor: pointer;
+}
+
+.accountMenu:hover {
+    color: var(--accent-color);
+}
+
+.accountMenu:focus-visible {
+    outline: var(--scale-1) solid var(--color-gray-light);
+    outline-offset: var(--scale-2);
+}
+
+.chartBlock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-4);
+    padding: var(--scale-5);
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+    min-height: 180px;
+}
+
+.chartEmpty {
+    margin: auto;
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
+    text-align: center;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+    padding: var(--scale-2) 0;
+    text-align: left;
+    border-bottom: 1px solid
+        color-mix(in srgb, var(--muted-color) 20%, transparent);
+}
+
+.table th {
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-color);
+}
+
+.table th:last-child,
+.table td:last-child {
+    text-align: right;
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.drawerBody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-5);
+    padding-inline: var(--drawer-padding);
+}
+
+.drawerHint {
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    color: var(--muted-color);
+    text-wrap: pretty;
+}
+
+.networkList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.networkOption {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: var(--scale-4);
+    padding: var(--scale-4);
+    border-radius: var(--component-border-radius);
+    background-color: var(--core-on-background-color-2);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.networkOption:hover:not(:disabled) {
+    background-color: color-mix(
+        in srgb,
+        var(--core-on-background-color-2) 75%,
+        var(--accent-color)
+    );
+}
+
+.networkOption:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+.networkOption:focus-visible {
+    outline: var(--scale-1) solid var(--color-gray-light);
+    outline-offset: var(--scale-2);
+}
+
+.networkOptionIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--component-border-radius);
+    background-color: var(--button-background-color);
+    color: var(--button-color);
+}
+
+.networkOptionText {
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-1);
+    min-width: 0;
+}
+
+.networkOptionName {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--accent-color);
+}
+
+.networkOptionStatus {
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
 }

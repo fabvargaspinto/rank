@@ -185,17 +185,23 @@ export default function Chart({
                 />
                 <path d={areaPath(points)} style={{ fill: `url(#${gradientId})` }} />
                 <path className={styles.line} d={linePath(points)} />
+                {points.map((point) => (
+                    <circle
+                        key={point.label}
+                        className={styles.point}
+                        cx={point.x}
+                        cy={point.y}
+                        r="4"
+                    />
+                ))}
                 {active ? (
-                    <>
-                        <line
-                            className={styles.guide}
-                            x1={active.x}
-                            x2={active.x}
-                            y1={PAD.top}
-                            y2={VIEW_HEIGHT - PAD.bottom}
-                        />
-                        <circle className={styles.point} cx={active.x} cy={active.y} r="4" />
-                    </>
+                    <line
+                        className={styles.guide}
+                        x1={active.x}
+                        x2={active.x}
+                        y1={PAD.top}
+                        y2={VIEW_HEIGHT - PAD.bottom}
+                    />
                 ) : null}
             </svg>
             <div className={styles.labels} aria-hidden="true">
