@@ -6,17 +6,22 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const NETWORK_ERROR_MESSAGE = "No se pudo conectar con el servidor";
 const UNREADABLE_ERROR_MESSAGE = "No se pudo completar la solicitud";
 
-function requireBackendUrl(): string {
+let cachedBackendUrl: string | undefined;
+
+export function backendUrl(): string {
+    if (cachedBackendUrl) {
+        return cachedBackendUrl;
+    }
+
     const url = process.env.BACKEND_URL?.trim();
 
     if (!url) {
         throw new Error("Falta BACKEND_URL");
     }
 
-    return url.replace(/\/$/, "");
+    cachedBackendUrl = url.replace(/\/$/, "");
+    return cachedBackendUrl;
 }
-
-const backendUrl = requireBackendUrl();
 
 function messageFromBackend(data: unknown): string {
     if (!data || typeof data !== "object" || !("detail" in data)) {
@@ -63,7 +68,7 @@ export async function fetchData<T = unknown>(
     path: string,
     options: RequestInit = {},
 ): Promise<FetchDataResponse<T>> {
-    const url = path.startsWith("http") ? path : `${backendUrl}${path}`;
+    const url = path.startsWith("http") ? path : `${backendUrl()}${path}`;
     const requestId = crypto.randomUUID();
     const { signal: callerSignal, headers, body, ...rest } = options;
     const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
