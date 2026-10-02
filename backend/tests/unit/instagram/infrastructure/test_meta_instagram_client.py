@@ -90,3 +90,32 @@ def test_fetch_followers_and_refresh():
     assert client.fetch_followers(TOKEN) == 1390
     refreshed = client.refresh_access_token(TOKEN)
     assert refreshed.value == "IGQWB-refreshed"
+
+
+def test_complete_login_fails_when_long_lived_exchange_fails():
+    from core.instagram.application.application_error import InstagramGraphError
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if request.method == "POST" and request.url.path.endswith("/oauth/access_token"):
+            return httpx.Response(
+                200,
+                json={"access_token": SHORT_TOKEN, "user_id": "17841400000000000"},
+            )
+        if "grant_type=ig_exchange_token" in url:
+            return httpx.Response(
+                400,
+                json={"error": {"message": "Invalid token", "type": "OAuthException"}},
+            )
+        return httpx.Response(404, json={"error": {"message": "missing"}})
+
+    client = MetaInstagramClient(
+        _settings(),
+        http=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    try:
+        client.complete_login("AUTHCODE")
+        raise AssertionError("expected InstagramGraphError")
+    except InstagramGraphError:
+        pass

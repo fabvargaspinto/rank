@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from logging import getLogger
 from urllib.parse import urlencode
 
 import httpx
@@ -13,6 +14,8 @@ from core.instagram.domain.instagram_graph import (
     InstagramAccessToken,
     InstagramGraph,
 )
+
+logger = getLogger("ig.instagram.meta")
 
 _AUTHORIZE_URL = "https://www.instagram.com/oauth/authorize"
 _TOKEN_URL = "https://api.instagram.com/oauth/access_token"
@@ -101,10 +104,8 @@ class MetaInstagramClient(InstagramGraph):
             )
             return self._token_from_payload(payload, default_seconds=60 * 60 * 24 * 60)
         except InstagramGraphError:
-            return InstagramAccessToken(
-                short_token,
-                datetime.now(UTC) + timedelta(seconds=_SHORT_LIVED_SECONDS),
-            )
+            logger.exception("instagram_long_lived_token_exchange_failed")
+            raise
 
     def _fetch_profile(self, access_token: str) -> tuple[InstagramAccount, int]:
         payload = self._get_json(

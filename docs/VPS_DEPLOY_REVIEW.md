@@ -549,7 +549,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero) | ~~Turso cae a SQLite efímero~~ — fail-fast en producción | — | — |
 | [5.2](#52-nadie-ejecuta-el-job-de-snapshots) | ~~Nadie ejecuta el job de snapshots~~ — cron diario + exit ≠ 0 | — | — |
 | [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | ~~Error de infra corta el job~~ — `except Exception` y sigue | — | — |
-| [5.4](#54-token-de-una-hora-aceptado-en-silencio) | Token de una hora aceptado en silencio | Conexiones que mueren a la hora | XS |
+| [5.4](#54-token-de-una-hora-aceptado-en-silencio) | ~~Token de una hora aceptado en silencio~~ — canje fallido aborta la conexión | — | — |
 | [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | La foto y el usuario de Instagram no se actualizan | Imagen rota a los pocos días | S |
 | [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | Si el backend falla, un usuario con perfil termina en el onboarding | Confusión y renombres accidentales | XS |
 | [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | Nombres de usuario que chocan con rutas | Perfiles inalcanzables | XS |
@@ -570,11 +570,9 @@ Cron diario en el host ([7.5](#75-job-de-snapshots)). `run_instagram_snapshots.p
 
 `execute_all` captura `Exception`, registra con `logger.exception` y sigue con el resto. Un `TokenDecryptError` o fallo de Turso en una cuenta no frena a las demás.
 
-### 5.4 Token de una hora aceptado en silencio
+### ✅ 5.4 Token de una hora aceptado en silencio
 
-`_exchange_long_lived` (`backend/core/instagram/infrastructure/meta_instagram_client.py:92-107`) captura el error del canje y sigue con el token de corta duración, que vence en una hora. El usuario ve "Instagram quedó conectado" y a la hora la conexión está muerta: Meta solo permite renovar tokens de larga duración.
-
-**Arreglo:** si el canje falla, fallar la conexión con `InstagramGraphError` y registrarlo, para que el usuario reintente.
+Si el canje a token de larga duración falla, `_exchange_long_lived` registra y propaga `InstagramGraphError`. Ya no se acepta el token de una hora.
 
 ### 5.5 La foto y el usuario de Instagram no se actualizan
 
