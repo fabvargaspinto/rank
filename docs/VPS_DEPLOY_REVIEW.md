@@ -365,7 +365,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.11](#411-base-de-datos) | Perfil huérfano al borrar un usuario desde el dashboard; `GRANT SELECT` sin uso | Baja | XS |
 | [4.12](#412-claves-de-cifrado) | Claves de cifrado: custodia, versión y rotación | Media | S |
 
-### 4.1 La vinculación de Instagram no está atada a la sesión
+### ✅ 4.1 La vinculación de Instagram no está atada a la sesión
 
 El `state` de OAuth firma `owner_user_id:nonce:expiración` (`backend/core/instagram/infrastructure/oauth_state_codec.py:17-24`) y vale 10 minutos. El callback es público y no sabe quién está logueado: vincula la cuenta de Instagram que autorizó con el `owner_user_id` que trae el `state` (`backend/core/instagram/application/complete_instagram_oauth.py:54-94`). El nonce no se guarda en ningún lado ni se compara con nada del navegador.
 
@@ -407,7 +407,7 @@ Hoy el perfil público no muestra métricas ("Todavía no hay métricas para mos
 
 **Test que debe fallar antes del arreglo:** con fakes, `CompleteInstagramOAuth` con un `state` emitido para otro usuario lanza `InstagramOAuthStateError` y no guarda ninguna conexión.
 
-### 4.2 La misma clave cifra los tokens y firma el state
+### ✅  4.2 La misma clave cifra los tokens y firma el state
 
 `SignedOAuthStateCodec` usa como clave HMAC `token_encryption_key_bytes` (`oauth_state_codec.py:14-15`), la misma que `TokenCrypto` usa para AES-GCM (`backend/core/instagram/infrastructure/token_crypto.py:11-12`). No hay un ataque práctico conocido para esta combinación, pero reutilizar una clave en dos primitivas acopla su ciclo de vida: rotar una obliga a rotar la otra, y una filtración en un uso compromete el otro.
 

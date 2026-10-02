@@ -57,3 +57,11 @@ def test_oauth_state_rejects_tampering():
 
     with pytest.raises(InstagramOAuthStateError):
         codec.loads(token + "x")
+
+
+def test_oauth_state_signing_key_differs_from_encryption_key():
+    settings = _settings()
+    codec = SignedOAuthStateCodec(settings)
+
+    assert codec._key != settings.token_encryption_key_bytes
+    assert len(codec._key) == 32

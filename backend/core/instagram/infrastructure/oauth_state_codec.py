@@ -5,14 +5,24 @@ from base64 import urlsafe_b64decode, urlsafe_b64encode
 from datetime import UTC, datetime
 from hashlib import sha256
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
 from config.instagram_settings import InstagramSettings
 from core.instagram.application.application_error import InstagramOAuthStateError
 from core.instagram.domain.oauth_state import InstagramOAuthState
 
+_STATE_KEY_INFO = b"instagram-oauth-state"
+
 
 class SignedOAuthStateCodec:
     def __init__(self, settings: InstagramSettings) -> None:
-        self._key = settings.token_encryption_key_bytes
+        self._key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=_STATE_KEY_INFO,
+        ).derive(settings.token_encryption_key_bytes)
 
     def dumps(self, state: InstagramOAuthState) -> str:
         payload = (
