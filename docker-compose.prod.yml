@@ -24,7 +24,7 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
-    networks: [edge, app]
+    networks: [edge]
     logging: *logging
 
   # Uso puntual: ./deploy/obtain-cert.sh y ./deploy/renew-certs.sh

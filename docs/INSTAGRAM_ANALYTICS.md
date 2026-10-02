@@ -17,9 +17,8 @@ Ver `.env.example`. Canónicas:
 
 - `INSTAGRAM_APP_ID` (aliases: `META_APP_ID`, `META_ID_APP`) — Instagram App ID, no el App ID de Facebook
 - `INSTAGRAM_APP_SECRET` (alias: `META_APP_SECRET`)
-- `INSTAGRAM_REDIRECT_URI` (aliases: `META_INSTAGRAM_REDIRECT_URI`, `META_CALLBACK_URL`) — callback del backend; debe coincidir con Meta. En local Meta suele exigir `https://localhost:8000/instagram/oauth/callback`
+- `INSTAGRAM_REDIRECT_URI` (aliases: `META_INSTAGRAM_REDIRECT_URI`, `META_CALLBACK_URL`) — callback de Next (`/auth/instagram/callback`); debe coincidir con Meta
 - `INSTAGRAM_TOKEN_ENCRYPTION_KEY` — 64 caracteres hex (32 bytes) para AES-GCM
-- `FRONTEND_URL` (alias: `NEXT_PUBLIC_SITE_URL`)
 - `TURSO_URL` (alias: `TURSO_DATABASE_URL`) — `libsql://...` o `file:./instagram.db`
 - `TURSO_TOKEN` (alias: `TURSO_AUTH_TOKEN`)
 - `INSTAGRAM_SNAPSHOT_JOB_TOKEN` — opcional; protege `POST /internal/instagram/snapshots`
@@ -37,38 +36,18 @@ TURSO_URL=file:./instagram.db
 TURSO_TOKEN=
 ```
 
-### OAuth redirect HTTPS en localhost
+### OAuth redirect en localhost
 
-Meta exige un redirect `https://...`. Para desarrollo local usamos TLS con **mkcert** (certificado de confianza en tu Mac):
-
-```bash
-brew install mkcert nss
-mkcert -install   # pide tu password una vez; confía la CA local
-mkdir -p backend/certs
-mkcert -cert-file backend/certs/localhost-cert.pem \
-  -key-file backend/certs/localhost-key.pem \
-  localhost 127.0.0.1 ::1
-docker compose up -d --force-recreate backend
-```
-
-En Meta y en `.env`:
-
-```env
-INSTAGRAM_REDIRECT_URI=https://localhost:8000/instagram/oauth/callback
-```
-
-Si ves `Your connection is not private` / `ERR_CERT_AUTHORITY_INVALID`, falta `mkcert -install` (la CA local no está en el Keychain).
-
-Sin certs en `backend/certs/`, el backend arranca en HTTP y el callback HTTPS de Meta no funciona.
+El callback vive en Next (`/auth/instagram/callback`). En Meta registrá exactamente el mismo URI que `INSTAGRAM_REDIRECT_URI` (Meta suele exigir `https://`).
 
 ## API
 
 - `GET /me/instagram/connect` — URL de Instagram Login (JWT)
-- `GET /instagram/oauth/callback` — callback de Meta; redirige a `/dashboard/tree?instagram=connected|error`
+- `POST /me/instagram/oauth` — completa el OAuth (JWT); lo llama el route handler de Next
 - `GET /me/instagram` — estado de la conexión y último snapshot (sin token)
 - `GET /me/instagram/followers` — historial semanal
 - `DELETE /me/instagram`
-- `POST /internal/instagram/snapshots` — job semanal (`X-Job-Token`)
+- `POST /internal/instagram/snapshots` — job semanal (`X-Job-Token`); en producción preferí `docker compose exec`
 
 Permiso de Meta: `instagram_business_basic` (incluye `followers_count`).
 

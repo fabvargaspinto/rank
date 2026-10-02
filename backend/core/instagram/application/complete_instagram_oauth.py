@@ -38,6 +38,7 @@ class CompleteInstagramOAuth:
 
     def execute(
         self,
+        owner_user_id: str,
         state: str,
         code: str | None,
         error: str | None = None,
@@ -53,6 +54,10 @@ class CompleteInstagramOAuth:
 
         payload = self._parse_state(state.strip())
         payload.ensure_valid(self._clock())
+        if payload.owner_user_id.value.lower() != owner_user_id.strip().lower():
+            raise InstagramOAuthStateError(
+                "El inicio de sesión de Instagram no es válido"
+            )
         login = self._graph.complete_login(code.strip())
 
         linked = self._connections.get_by_account(login.account.id.value)

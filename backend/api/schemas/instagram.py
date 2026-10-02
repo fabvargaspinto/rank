@@ -40,3 +40,11 @@ class SnapshotJobResponse(BaseModel):
 
     captured: int
     failed: int
+
+
+class CompleteInstagramOAuthRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str | None = None
+    state: str | None = None
+    error: str | None = None

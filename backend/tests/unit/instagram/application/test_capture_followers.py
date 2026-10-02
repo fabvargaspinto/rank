@@ -57,7 +57,7 @@ def _wired(now: datetime):
 class TestCaptureInstagramFollowers:
     def test_second_run_in_the_same_week_is_idempotent(self):
         graph, connections, snapshots, _, capture, complete, start = _wired(NOW)
-        complete.execute(start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
         graph.followers = 1260
 
         first = snapshots.snapshots[0]
@@ -70,7 +70,7 @@ class TestCaptureInstagramFollowers:
 
     def test_next_week_creates_a_new_snapshot(self):
         graph, connections, snapshots, _, capture, complete, start = _wired(NOW)
-        complete.execute(start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
         graph.followers = 1341
         later = CaptureInstagramFollowers(
             graph,
@@ -90,7 +90,7 @@ class TestCaptureInstagramFollowers:
 
     def test_execute_all_captures_every_connection(self):
         graph, connections, snapshots, cipher, capture, complete, start = _wired(NOW)
-        complete.execute(start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
         other = StartInstagramConnection(
             graph,
             FakeOAuthStateCodec(),
@@ -107,7 +107,11 @@ class TestCaptureInstagramFollowers:
             other_codec,
             capture,
             clock=lambda: NOW,
-        ).execute(url.removeprefix(AUTH_URL), "code-2")
+        ).execute(
+            "770e8400-e29b-41d4-a716-446655440000",
+            url.removeprefix(AUTH_URL),
+            "code-2",
+        )
 
         graph.followers = 2000
         result = capture.execute_all()
@@ -118,7 +122,7 @@ class TestCaptureInstagramFollowers:
 
     def test_execute_all_continues_when_one_account_fails(self):
         graph, connections, snapshots, _, capture, complete, start = _wired(NOW)
-        complete.execute(start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
         graph.fail_followers = True
 
         result = capture.execute_all()
@@ -131,7 +135,7 @@ class TestCaptureInstagramFollowers:
             NOW
         )
         graph.expires_at = NOW + timedelta(days=3)
-        complete.execute(start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
         graph.fetch_followers_tokens.clear()
 
         capture.execute_for_owner(OWNER_ID)

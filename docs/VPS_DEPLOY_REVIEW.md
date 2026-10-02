@@ -321,7 +321,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 
 **Arreglo:** un `docker-compose.prod.yml` separado, con Caddy como proxy reverso con TLS automático, una red sin puertos publicados para el backend, rotación de logs y un archivo de variables por servicio. Está completo en la sección [7](#7-el-vps).
 
-### 3.6 Imagen del backend, healthcheck y callback público [verificado]
+### ✅ 3.6 Imagen del backend, healthcheck y callback público [verificado]
 
 **Imagen.** La etapa de producción (`backend/Dockerfile:18-24`) corre como root, con un único proceso y sin `HEALTHCHECK`. `backend/.dockerignore` no excluye `certs/`, donde hay una clave privada TLS de desarrollo (`backend/certs/localhost-key.pem`), ni `tests/` ni `*.db`, así que `COPY . .` los mete en la imagen.
 

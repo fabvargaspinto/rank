@@ -24,10 +24,6 @@ class InstagramSettings(BaseSettings):
         ),
     )
     instagram_token_encryption_key: str
-    frontend_url: str = Field(
-        default="http://localhost:3000",
-        validation_alias=AliasChoices("FRONTEND_URL", "NEXT_PUBLIC_SITE_URL"),
-    )
     instagram_snapshot_job_token: str = ""
 
     model_config = SettingsConfigDict(

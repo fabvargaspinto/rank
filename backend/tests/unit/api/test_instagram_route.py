@@ -62,9 +62,8 @@ def _settings() -> InstagramSettings:
     return InstagramSettings(
         instagram_app_id="123",
         instagram_app_secret="secret",
-        instagram_redirect_uri="http://testserver/instagram/oauth/callback",
+        instagram_redirect_uri="http://localhost:3000/auth/instagram/callback",
         instagram_token_encryption_key="00" * 32,
-        frontend_url="http://localhost:3000",
         instagram_snapshot_job_token="job-secret",
     )
 
@@ -165,23 +164,20 @@ def test_connect_returns_authorization_url_without_secret():
     assert "access_token" not in response.text
 
 
-def test_callback_connects_and_hides_token_from_connection_payload():
+def test_oauth_connects_and_hides_token_from_connection_payload():
     harness = _Harness()
     connect = harness.client.get("/me/instagram/connect")
     state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
 
-    callback = harness.client.get(
-        "/instagram/oauth/callback",
-        params={"code": "auth-code", "state": state},
+    oauth = harness.client.post(
+        "/me/instagram/oauth",
+        json={"code": "auth-code", "state": state},
     )
     connection = harness.client.get("/me/instagram")
     history = harness.client.get("/me/instagram/followers")
 
-    assert callback.status_code == 302
-    assert callback.headers["location"] == (
-        "http://localhost:3000/dashboard/tree?instagram=connected"
-    )
-    body = connection.json()
+    assert oauth.status_code == 200
+    body = oauth.json()
     assert body["connected"] is True
     assert body["username"] == "luna.reyes"
     assert body["avatar_url"] == (
@@ -194,25 +190,45 @@ def test_callback_connects_and_hides_token_from_connection_payload():
     assert history.json()["items"][0]["week_start"] == "2026-10-05"
 
 
-def test_callback_error_redirects_to_frontend():
+def test_oauth_error_returns_400():
     harness = _Harness()
 
-    response = harness.client.get(
-        "/instagram/oauth/callback",
-        params={"error": "access_denied", "state": "x"},
+    response = harness.client.post(
+        "/me/instagram/oauth",
+        json={"error": "access_denied", "state": "x"},
     )
 
-    assert response.status_code == 302
-    assert "instagram=error" in response.headers["location"]
+    assert response.status_code == 400
+
+
+def test_oauth_rejects_state_for_another_owner():
+    harness = _Harness()
+    connect = harness.client.get("/me/instagram/connect")
+    state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
+    stranger = User.create_empty()
+    harness.users.users_by_auth_id["770e8400-e29b-41d4-a716-446655440000"] = stranger
+    harness.client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+        auth_id="770e8400-e29b-41d4-a716-446655440000",
+        email="other@example.com",
+    )
+
+    response = harness.client.post(
+        "/me/instagram/oauth",
+        json={"code": "auth-code", "state": state},
+    )
+
+    assert response.status_code == 400
+    assert harness.connections.get_by_owner(harness.user.id.value) is None
+    assert harness.connections.get_by_owner(stranger.id.value) is None
 
 
 def test_user_cannot_read_another_users_connection():
     harness = _Harness()
     connect = harness.client.get("/me/instagram/connect")
     state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
-    harness.client.get(
-        "/instagram/oauth/callback",
-        params={"code": "auth-code", "state": state},
+    harness.client.post(
+        "/me/instagram/oauth",
+        json={"code": "auth-code", "state": state},
     )
     stranger = User.create_empty()
     harness.users.users_by_auth_id["770e8400-e29b-41d4-a716-446655440000"] = stranger
@@ -230,9 +246,9 @@ def test_disconnect_and_job():
     harness = _Harness()
     connect = harness.client.get("/me/instagram/connect")
     state = connect.json()["authorization_url"].removeprefix(AUTH_URL)
-    harness.client.get(
-        "/instagram/oauth/callback",
-        params={"code": "auth-code", "state": state},
+    harness.client.post(
+        "/me/instagram/oauth",
+        json={"code": "auth-code", "state": state},
     )
 
     denied = harness.client.post("/internal/instagram/snapshots")
@@ -244,6 +260,7 @@ def test_disconnect_and_job():
     missing = harness.client.get("/me/instagram/followers")
 
     assert denied.status_code == 401
+    assert allowed.status_code == 200
     assert allowed.json() == {"captured": 1, "failed": 0}
     assert deleted.status_code == 204
     assert missing.status_code == 404

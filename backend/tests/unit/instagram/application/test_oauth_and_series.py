@@ -99,7 +99,7 @@ class TestCompleteInstagramOAuth:
         return url.removeprefix(AUTH_URL)
 
     def test_connects_account_and_captures_first_snapshot(self):
-        connection = self.use_case.execute(self._state(), "auth-code")
+        connection = self.use_case.execute(OWNER_ID, self._state(), "auth-code")
 
         stored = self.connections.get_by_owner(OWNER_ID)
         assert stored is not None
@@ -112,7 +112,7 @@ class TestCompleteInstagramOAuth:
 
     def test_denies_when_user_rejects_permissions(self):
         with pytest.raises(InstagramOAuthDeniedError):
-            self.use_case.execute(self._state(), None, error="access_denied")
+            self.use_case.execute(OWNER_ID, self._state(), None, error="access_denied")
 
         assert self.connections.list_all() == []
 
@@ -120,7 +120,17 @@ class TestCompleteInstagramOAuth:
         self.codec.invalid = True
 
         with pytest.raises(InstagramOAuthStateError):
-            self.use_case.execute("tampered", "auth-code")
+            self.use_case.execute(OWNER_ID, "tampered", "auth-code")
+
+    def test_rejects_state_issued_for_another_owner(self):
+        state = self._state()
+
+        with pytest.raises(InstagramOAuthStateError):
+            self.use_case.execute(OTHER_OWNER_ID, state, "auth-code")
+
+        assert self.connections.get_by_owner(OWNER_ID) is None
+        assert self.connections.get_by_owner(OTHER_OWNER_ID) is None
+        assert self.graph.complete_login_calls == []
 
     def test_rejects_account_linked_to_another_owner(self):
         other = InstagramConnection.connect(
@@ -134,14 +144,14 @@ class TestCompleteInstagramOAuth:
         )
 
         with pytest.raises(InstagramAccountAlreadyLinkedError):
-            self.use_case.execute(self._state(), "auth-code")
+            self.use_case.execute(OWNER_ID, self._state(), "auth-code")
 
     def test_reauthorize_replaces_token_for_same_owner(self):
-        first = self.use_case.execute(self._state(), "auth-code")
+        first = self.use_case.execute(OWNER_ID, self._state(), "auth-code")
         self.graph.access_token = "ig-new-token"
         self.graph.username = "luna.nueva"
 
-        updated = self.use_case.execute(self._state(), "auth-code-2")
+        updated = self.use_case.execute(OWNER_ID, self._state(), "auth-code-2")
 
         assert updated.id == first.id
         stored = self.connections.get_by_owner(OWNER_ID)
@@ -182,7 +192,7 @@ class TestDisconnectAndQueries:
 
     def _connect(self) -> None:
         url = self.start.execute(OWNER_ID)
-        self.complete.execute(url.removeprefix(AUTH_URL), "auth-code")
+        self.complete.execute(OWNER_ID, url.removeprefix(AUTH_URL), "auth-code")
 
     def test_get_connection_when_disconnected(self):
         view = GetInstagramConnection(self.connections, self.snapshots).execute(

@@ -13,9 +13,8 @@ def _settings() -> InstagramSettings:
     return InstagramSettings(
         instagram_app_id="104977",
         instagram_app_secret="app-secret",
-        instagram_redirect_uri="http://localhost:8000/instagram/oauth/callback",
+        instagram_redirect_uri="http://localhost:3000/auth/instagram/callback",
         instagram_token_encryption_key="00" * 32,
-        frontend_url="http://localhost:3000",
     )
 
 

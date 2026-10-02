@@ -1,10 +1,8 @@
 import hmac
 from hashlib import sha256
 from typing import Annotated
-from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
-from fastapi.responses import RedirectResponse
 
 from api.dependencies.container import (
     get_capture_instagram_followers_use_case,
@@ -22,6 +20,7 @@ from api.instagram_mapping import (
 from api.rate_limit import limiter
 from api.schemas.auth import ErrorResponse
 from api.schemas.instagram import (
+    CompleteInstagramOAuthRequest,
     FollowerHistoryResponse,
     InstagramConnectionResponse,
     InstagramConnectResponse,
@@ -38,8 +37,6 @@ from core.instagram.application.get_instagram_connection import GetInstagramConn
 from core.instagram.application.start_instagram_connection import (
     StartInstagramConnection,
 )
-from core.shared.application.application_error import ApplicationError
-from core.shared.domain.domain_error import DomainError
 from core.user.domain.user import User
 
 router = APIRouter()
@@ -72,29 +69,39 @@ def connect_instagram(
     )
 
 
-@router.get(
-    "/instagram/oauth/callback",
-    status_code=status.HTTP_302_FOUND,
-    response_class=RedirectResponse,
+@router.post(
+    "/me/instagram/oauth",
+    response_model=InstagramConnectionResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "Token ausente o inválido"},
+        400: {"model": ErrorResponse, "description": "OAuth inválido o denegado"},
+        404: {"model": ErrorResponse, "description": "Usuario no encontrado"},
+        409: {
+            "model": ErrorResponse,
+            "description": "Cuenta de Instagram ya vinculada",
+        },
+        429: {"model": ErrorResponse, "description": "Demasiadas solicitudes"},
+    },
 )
-def instagram_oauth_callback(
+@limiter.limit("10/minute")
+def complete_instagram_oauth(
+    request: Request,
+    body: CompleteInstagramOAuthRequest,
+    profile: Annotated[User, Depends(get_current_profile)],
     use_case: CompleteInstagramOAuth = Depends(get_complete_instagram_oauth_use_case),
-    settings: InstagramSettings = Depends(get_instagram_settings),
-    code: str | None = None,
-    state: str | None = None,
-    error: str | None = None,
-) -> RedirectResponse:
-    frontend = settings.frontend_url.rstrip("/")
-    try:
-        use_case.execute(state or "", code, error)
-    except (ApplicationError, DomainError):
-        return RedirectResponse(
-            f"{frontend}/dashboard/tree?{urlencode({'instagram': 'error'})}",
-            status_code=status.HTTP_302_FOUND,
-        )
-    return RedirectResponse(
-        f"{frontend}/dashboard/tree?{urlencode({'instagram': 'connected'})}",
-        status_code=status.HTTP_302_FOUND,
+    connection_use_case: GetInstagramConnection = Depends(
+        get_instagram_connection_use_case
+    ),
+) -> InstagramConnectionResponse:
+    use_case.execute(
+        profile.id.value,
+        body.state or "",
+        body.code,
+        body.error,
+    )
+    return to_instagram_connection_response(
+        connection_use_case.execute(profile.id.value)
     )
 
 

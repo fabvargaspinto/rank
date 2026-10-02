@@ -1,8 +1,10 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from api.body_limit import register_body_limit
+from api.dependencies.container import get_dependency_container
 from api.errors import register_error_handlers
 from api.logging import configure_logging
 from api.rate_limit import register_rate_limit
@@ -13,11 +15,14 @@ from api.routers.me import router as me_router
 from api.routers.profiles import router as profiles_router
 from api.routers.session import router as session_router
 from config.app_settings import AppSettings
+from config.instagram_settings import InstagramSettings
 
 
 @asynccontextmanager
-async def _lifespan(_app: FastAPI):
+async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
+    get_dependency_container()
+    InstagramSettings()  # type: ignore[call-arg]
     yield
 
 

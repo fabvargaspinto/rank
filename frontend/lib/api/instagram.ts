@@ -18,6 +18,23 @@ export async function startInstagramConnect(
     });
 }
 
+export async function completeInstagramConnect(
+    accessToken: string,
+    body: {
+        code: string | null;
+        state: string | null;
+        error: string | null;
+    },
+): Promise<FetchDataResponse<InstagramConnectionResponse>> {
+    return fetchData<InstagramConnectionResponse>("/me/instagram/oauth", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(body),
+    });
+}
+
 export async function fetchInstagramConnection(
     accessToken: string,
 ): Promise<FetchDataResponse<InstagramConnectionResponse>> {
