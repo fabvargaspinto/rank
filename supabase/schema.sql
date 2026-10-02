@@ -19,15 +19,31 @@ CREATE TABLE public.users (
             AND name NOT IN (
                 'admin',
                 'api',
+                'assets',
                 'auth',
+                'ayuda',
+                'contacto',
                 'dashboard',
+                'favicon.ico',
                 'first',
+                'forgot-password',
+                'icon',
+                'instagram',
+                'legal',
                 'login',
+                'opengraph-image',
+                'privacy',
+                'privacidad',
                 'register',
-                'settings',
+                'reset-password',
                 'robots.txt',
+                'settings',
                 'sitemap.xml',
-                'favicon.ico'
+                'soporte',
+                'static',
+                'terms',
+                'terminos',
+                'www'
             )
         )
     ),

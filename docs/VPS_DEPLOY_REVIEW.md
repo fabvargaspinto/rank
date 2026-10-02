@@ -552,7 +552,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.4](#54-token-de-una-hora-aceptado-en-silencio) | ~~Token de una hora aceptado en silencio~~ — canje fallido aborta la conexión | — | — |
 | [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | ~~Foto y usuario de Instagram no se actualizan~~ — el job refresca perfil | — | — |
 | [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | ~~Backend caído manda al onboarding~~ — solo 200 sin name; si no, Reintentar | — | — |
-| [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | Nombres de usuario que chocan con rutas | Perfiles inalcanzables | XS |
+| [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | ~~Nombres que chocan con rutas~~ — RESERVED + CHECK + test CI | — | — |
 | [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | El cursor de publicaciones llega crudo a Postgres | 500 en lugar de 400 | XS |
 | [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | El callback de Instagram ante errores de infraestructura | JSON 500 en lugar de volver al dashboard | XS |
 | [5.10](#510-el-login-oculta-el-email-sin-confirmar) | El login oculta "email sin confirmar" y "demasiados intentos" | Usuarios bloqueados sin saber por qué | XS |
@@ -582,11 +582,9 @@ El job usa `fetch_profile` y guarda usuario y `profile_picture_url` en cada capt
 
 `postAuthPathForToken` / `getPostAuthPath` solo mandan a `/dashboard/start` si `GET /me` responde 200 sin `name`. Ante cualquier otro error van a `/dashboard/unavailable` con "Reintentar".
 
-### 5.7 Nombres de usuario que chocan con rutas [verificado]
+### ✅ 5.7 Nombres de usuario que chocan con rutas [verificado]
 
-`UserName` acepta `forgot-password`, `reset-password`, `icon` y `opengraph-image`, que son rutas existentes de `frontend/app`. Las rutas estáticas tienen prioridad sobre `/[name]`, así que esos perfiles serían inalcanzables. También acepta `privacidad` y `terminos`, que van a hacer falta para las páginas legales ([6.4](#64-páginas-legales)).
-
-**Arreglo:** agregarlos a `RESERVED` en `backend/core/user/domain/user_name.py` y al `CHECK` de la base (`supabase/schema.sql:22-34`), las dos cosas en la misma migración. Sugerencia: las cuatro rutas actuales más `privacidad`, `terminos`, `privacy`, `terms`, `legal`, `ayuda`, `soporte`, `contacto`, `instagram`, `www`, `static` y `assets`. En CI, un chequeo que liste los segmentos de primer nivel de `frontend/app` (sin grupos ni rutas dinámicas) y falle si alguno no está reservado.
+`UserName.RESERVED` y el `CHECK` de `users_name_format` (migración `20261002140000_reserved_usernames.sql`) incluyen las rutas de `frontend/app` y nombres legales previstos. Un test de unitarios falla si aparece un segmento de primer nivel que no esté reservado, o si el schema se desincroniza.
 
 ### 5.8 El cursor de publicaciones llega crudo a Postgres [verificado en parte]
 
