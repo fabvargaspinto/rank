@@ -548,7 +548,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 |---|---|---|---|
 | [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero) | ~~Turso cae a SQLite efímero~~ — fail-fast en producción | — | — |
 | [5.2](#52-nadie-ejecuta-el-job-de-snapshots) | ~~Nadie ejecuta el job de snapshots~~ — cron diario + exit ≠ 0 | — | — |
-| [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | Un error de infraestructura corta el job completo | Un token roto frena a todos los usuarios siguientes | XS |
+| [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | ~~Error de infra corta el job~~ — `except Exception` y sigue | — | — |
 | [5.4](#54-token-de-una-hora-aceptado-en-silencio) | Token de una hora aceptado en silencio | Conexiones que mueren a la hora | XS |
 | [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | La foto y el usuario de Instagram no se actualizan | Imagen rota a los pocos días | S |
 | [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | Si el backend falla, un usuario con perfil termina en el onboarding | Confusión y renombres accidentales | XS |
@@ -566,22 +566,9 @@ En producción el `lifespan` llama `TursoSettings.require_remote_for_production(
 
 Cron diario en el host ([7.5](#75-job-de-snapshots)). `run_instagram_snapshots.py` imprime `captured=` / `failed=` y termina con exit `1` si `failed > 0`. Preferí `docker compose exec` frente al endpoint HTTP (el token del job queda opcional).
 
-### 5.3 Un error de infraestructura corta el job completo
+### ✅ 5.3 Un error de infraestructura corta el job completo
 
-`execute_all` (`capture_instagram_followers.py:54-67`) solo captura `ApplicationError` y `DomainError`. `TokenDecryptError` (un token corrupto o una clave cambiada) e `InstagramDbError` (un corte de Turso) son `InfrastructureError` (`backend/core/instagram/infrastructure/error_infrastructure.py:4-13`): cortan el loop, los usuarios que siguen no se procesan y el job no reporta el resultado.
-
-**Arreglo:** en el borde de un job por lotes es razonable capturar todo, registrarlo y seguir:
-
-```python
-            except Exception:
-                logger.exception(
-                    "instagram_snapshot_failed",
-                    extra={"owner_user_id": stored.connection.owner_user_id.value},
-                )
-                failed += 1
-```
-
-**Test:** con fakes, si una conexión tiene un token que no se puede descifrar, las demás se capturan igual y el resultado es `failed == 1`.
+`execute_all` captura `Exception`, registra con `logger.exception` y sigue con el resto. Un `TokenDecryptError` o fallo de Turso en una cuenta no frena a las demás.
 
 ### 5.4 Token de una hora aceptado en silencio
 

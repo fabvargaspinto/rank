@@ -16,8 +16,6 @@ from core.instagram.domain.instagram_connection_repo import (
     StoredInstagramConnection,
 )
 from core.instagram.domain.instagram_graph import InstagramGraph
-from core.shared.application.application_error import ApplicationError
-from core.shared.domain.domain_error import DomainError
 
 logger = getLogger("ig.instagram.snapshots")
 
@@ -58,8 +56,8 @@ class CaptureInstagramFollowers:
             try:
                 self._capture(stored)
                 captured += 1
-            except (ApplicationError, DomainError):
-                logger.warning(
+            except Exception:
+                logger.exception(
                     "instagram_snapshot_failed",
                     extra={"owner_user_id": stored.connection.owner_user_id.value},
                 )

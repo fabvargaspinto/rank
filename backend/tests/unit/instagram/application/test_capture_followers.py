@@ -130,6 +130,60 @@ class TestCaptureInstagramFollowers:
         assert result.captured == 0
         assert result.failed == 1
 
+    def test_execute_all_continues_when_token_decrypt_fails(self):
+        from core.instagram.infrastructure.error_infrastructure import TokenDecryptError
+
+        graph, connections, snapshots, cipher, capture, complete, start = _wired(NOW)
+        complete.execute(
+            OWNER_ID,
+            start.execute(OWNER_ID).removeprefix(AUTH_URL),
+            "code",
+        )
+        other_owner = "770e8400-e29b-41d4-a716-446655440000"
+        other_start = StartInstagramConnection(
+            graph,
+            FakeOAuthStateCodec(),
+            nonce_factory=lambda: "nonce-2",
+            clock=lambda: NOW,
+        )
+        graph.account_id = "17841411111111111"
+        url = other_start.execute(other_owner)
+        CompleteInstagramOAuth(
+            graph,
+            connections,
+            cipher,
+            other_start._state_codec,
+            capture,
+            clock=lambda: NOW,
+        ).execute(other_owner, url.removeprefix(AUTH_URL), "code-2")
+
+        broken = connections.get_by_owner(OWNER_ID)
+        assert broken is not None
+        fail_id = broken.connection.id.value
+
+        class DecryptFailCipher(FakeTokenCipher):
+            def decrypt(self, encrypted: str, *, associated_data: str) -> str:
+                if associated_data == fail_id:
+                    raise TokenDecryptError("No se pudo leer el token de Instagram")
+                return super().decrypt(encrypted, associated_data=associated_data)
+
+        job = CaptureInstagramFollowers(
+            graph,
+            connections,
+            snapshots,
+            DecryptFailCipher(),
+            clock=lambda: NOW,
+        )
+        graph.followers = 2000
+        result = job.execute_all()
+
+        assert result.captured == 1
+        assert result.failed == 1
+        assert any(
+            snap.instagram_account_id.value == "17841411111111111"
+            for snap in snapshots.snapshots
+        )
+
     def test_refreshes_token_near_expiry(self):
         graph, connections, snapshots, cipher, capture, complete, start = _wired(
             NOW
