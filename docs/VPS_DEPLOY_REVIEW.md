@@ -551,7 +551,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | ~~Error de infra corta el job~~ — `except Exception` y sigue | — | — |
 | [5.4](#54-token-de-una-hora-aceptado-en-silencio) | ~~Token de una hora aceptado en silencio~~ — canje fallido aborta la conexión | — | — |
 | [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | ~~Foto y usuario de Instagram no se actualizan~~ — el job refresca perfil | — | — |
-| [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | Si el backend falla, un usuario con perfil termina en el onboarding | Confusión y renombres accidentales | XS |
+| [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | ~~Backend caído manda al onboarding~~ — solo 200 sin name; si no, Reintentar | — | — |
 | [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | Nombres de usuario que chocan con rutas | Perfiles inalcanzables | XS |
 | [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | El cursor de publicaciones llega crudo a Postgres | 500 en lugar de 400 | XS |
 | [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | El callback de Instagram ante errores de infraestructura | JSON 500 en lugar de volver al dashboard | XS |
@@ -578,11 +578,9 @@ Si el canje a token de larga duración falla, `_exchange_long_lived` registra y 
 
 El job usa `fetch_profile` y guarda usuario y `profile_picture_url` en cada captura, así la URL firmada del CDN no queda vencida entre autorizaciones.
 
-### 5.6 Si el backend falla, el usuario va al onboarding
+### ✅ 5.6 Si el backend falla, el usuario va al onboarding
 
-`postAuthPathForToken` y `getPostAuthPath` (`frontend/lib/post-auth-path.ts:12-24`) mandan al onboarding (`/dashboard/start`) siempre que `GET /me` no traiga datos, salvo un 401. Si el backend está caído o tarda más de 10 segundos, un usuario que ya tiene perfil inicia sesión y aterriza en "Elegí tu usuario". Si el backend vuelve mientras está ahí, puede renombrarse sin querer y romper los enlaces que ya compartió.
-
-**Arreglo:** ir al onboarding solo si el backend responde 200 sin `name`; ante cualquier otro error, mostrar una pantalla con "Reintentar".
+`postAuthPathForToken` / `getPostAuthPath` solo mandan a `/dashboard/start` si `GET /me` responde 200 sin `name`. Ante cualquier otro error van a `/dashboard/unavailable` con "Reintentar".
 
 ### 5.7 Nombres de usuario que chocan con rutas [verificado]
 
