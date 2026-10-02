@@ -1,0 +1,62 @@
+name: sellonomada
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?definí DOMAIN}
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/templates:/etc/nginx/templates:ro
+      - ./deploy/nginx/docker-entrypoint.d/30-ensure-certs.sh:/docker-entrypoint.d/30-ensure-certs.sh:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_certs:/etc/letsencrypt
+    depends_on:
+      frontend:
+        condition: service_healthy
+    networks: [edge, app]
+    logging: *logging
+
+  # Uso puntual: ./deploy/obtain-cert.sh y ./deploy/renew-certs.sh
+  certbot:
+    image: certbot/certbot:v3.1.0
+    profiles: ["certs"]
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    networks: [edge]
+
+  frontend:
+    image: ghcr.io/fabvargaspinto/rank-frontend:${TAG:?definí TAG}
+    restart: unless-stopped
+    env_file: ./deploy/frontend.env
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [edge, app]
+    logging: *logging
+
+  backend:
+    image: ghcr.io/fabvargaspinto/rank-backend:${TAG:?definí TAG}
+    restart: unless-stopped
+    env_file: ./deploy/backend.env
+    networks: [app]
+    logging: *logging
+
+networks:
+  edge:
+  app:
+
+volumes:
+  certbot_www:
+  certbot_certs:

@@ -305,7 +305,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 - API: un `PATCH /me` con el avatar de otro usuario no cambia el avatar.
 - Integración: el `CHECK` rechaza un `avatar_url` cuya carpeta no es el `id` de la fila.
 
-### 3.5 No existe configuración de producción para el VPS
+### ✅ 3.5 No existe configuración de producción para el VPS
 
 `docker-compose.yml` es solo para desarrollo, y usarlo en el servidor sería inseguro:
 
