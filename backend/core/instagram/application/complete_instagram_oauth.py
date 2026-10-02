@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
+from logging import getLogger
 
 from core.instagram.application.application_error import (
     InstagramAccountAlreadyLinkedError,
@@ -17,6 +18,8 @@ from core.instagram.domain.instagram_connection_repo import (
 )
 from core.instagram.domain.instagram_graph import InstagramGraph
 from core.instagram.domain.oauth_state import InstagramOAuthState
+
+logger = getLogger("ig.instagram.oauth")
 
 
 class CompleteInstagramOAuth:
@@ -99,7 +102,13 @@ class CompleteInstagramOAuth:
                 ),
             )
         )
-        self._capture.execute_for_owner(payload.owner_user_id.value)
+        try:
+            self._capture.execute_for_owner(payload.owner_user_id.value)
+        except Exception:
+            logger.exception(
+                "instagram_initial_snapshot_failed",
+                extra={"owner_user_id": payload.owner_user_id.value},
+            )
         return connection
 
     def _parse_state(self, state: str) -> InstagramOAuthState:

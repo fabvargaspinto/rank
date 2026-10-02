@@ -554,7 +554,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | ~~Backend caído manda al onboarding~~ — solo 200 sin name; si no, Reintentar | — | — |
 | [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | ~~Nombres que chocan con rutas~~ — RESERVED + CHECK + test CI | — | — |
 | [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | ~~Cursor crudo a Postgres~~ — `decode` re-serializa la fecha | — | — |
-| [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | El callback de Instagram ante errores de infraestructura | JSON 500 en lugar de volver al dashboard | XS |
+| [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | ~~Callback ante errores de infra~~ — Next redirige; captura inicial best-effort | — | — |
 | [5.10](#510-el-login-oculta-el-email-sin-confirmar) | El login oculta "email sin confirmar" y "demasiados intentos" | Usuarios bloqueados sin saber por qué | XS |
 | [5.11](#511-configuración-del-backend-verificado) | Configuración con rutas relativas y leída en cada request | Errores difíciles de diagnosticar | XS |
 
@@ -590,11 +590,9 @@ El job usa `fetch_profile` y guarda usuario y `profile_picture_url` en cada capt
 
 `PostCursor.decode` guarda `PostCreatedAt.from_isoformat(...).to_isoformat()`, así el filtro a PostgREST siempre lleva una fecha canónica (p. ej. `2026-W01-1...` → `2025-12-29T00:00:00+00:00`).
 
-### 5.9 El callback de Instagram ante errores de infraestructura
+### ✅ 5.9 El callback de Instagram ante errores de infraestructura
 
-`instagram_oauth_callback` (`backend/api/routers/instagram.py:87-97`) solo captura `ApplicationError` y `DomainError`. Si Turso falla durante la vinculación, el handler global responde un **JSON 500** al navegador, que se queda en el dominio del backend en lugar de volver al dashboard. Además, si la primera captura (`complete_instagram_oauth.py:94`) falla después de guardar la conexión, el usuario ve "No se pudo conectar Instagram" cuando en realidad quedó conectado.
-
-**Arreglo:** con el callback en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión)), cualquier fallo termina en una redirección. Y la primera captura conviene hacerla "si se puede": registrar el error sin fallar la conexión.
+El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión)) y siempre redirige al dashboard. La primera captura tras conectar es best-effort: si falla, se registra y la conexión queda igual.
 
 ### 5.10 El login oculta el email sin confirmar
 

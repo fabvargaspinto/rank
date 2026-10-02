@@ -163,6 +163,16 @@ class TestCompleteInstagramOAuth:
         )
         assert stored.connection.account.username.value == "luna.nueva"
 
+    def test_keeps_connection_when_initial_snapshot_fails(self):
+        self.graph.fail_followers = True
+
+        connection = self.use_case.execute(OWNER_ID, self._state(), "auth-code")
+
+        stored = self.connections.get_by_owner(OWNER_ID)
+        assert stored is not None
+        assert stored.connection.id == connection.id
+        assert self.snapshots.snapshots == []
+
 
 class TestDisconnectAndQueries:
     def setup_method(self):
