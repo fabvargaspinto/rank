@@ -362,7 +362,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | ~~Cambio de contraseña con cualquier sesión~~ — cookie de recovery + signOut others | — | — |
 | [4.9](#49-mensajes-de-error-tomados-de-la-url) | ~~Mensajes de error en la URL~~ — códigos `?error=` | — | — |
 | [4.10](#410-límite-de-body) | ~~Límite de body solo por Content-Length~~ — stream + nginx 4m | — | — |
-| [4.11](#411-base-de-datos) | Perfil huérfano al borrar un usuario desde el dashboard; `GRANT SELECT` sin uso | Baja | XS |
+| [4.11](#411-base-de-datos) | ~~Perfil huérfano / GRANT SELECT sin uso~~ — trigger + revoke | — | — |
 | [4.12](#412-claves-de-cifrado) | Claves de cifrado: custodia, versión y rotación | Media | S |
 
 ### ✅ 4.1 La vinculación de Instagram no está atada a la sesión
@@ -530,33 +530,9 @@ Login y register solo muestran textos propios vía `messageForAuthError` (`front
 
 `BodySizeLimitMiddleware` rechaza por `Content-Length` y, si no viene (p. ej. chunked), lee el stream hasta 3 MB (`backend/api/body_limit.py`). Nginx ya tiene `client_max_body_size 4m` (`deploy/nginx/nginx.conf`). Next limita Server Actions a 3 MB.
 
-### 4.11 Base de datos
+### ✅ 4.11 Base de datos
 
-**Perfil huérfano.** `public.auth.id` referencia `auth.users` con `ON DELETE CASCADE` (`supabase/schema.sql:49-51`), pero `public.users` no depende de `auth.users`: es `public.auth.user_id` el que apunta a `public.users` (`:52-54`). Si se borra un usuario desde el dashboard de Supabase, o con la API de administración por fuera de `DELETE /me`, desaparece `public.auth` pero **el perfil sigue público**, con sus links, publicaciones y avatar, y el nombre de usuario queda ocupado para siempre.
-
-**Arreglo:**
-
-```sql
-CREATE FUNCTION public.delete_profile_after_identity()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-BEGIN
-    DELETE FROM public.users WHERE id = OLD.user_id;
-    RETURN OLD;
-END;
-$$;
-
-CREATE TRIGGER auth_delete_profile
-AFTER DELETE ON public.auth
-FOR EACH ROW EXECUTE FUNCTION public.delete_profile_after_identity();
-```
-
-El avatar en Storage y los datos en Turso no se borran desde un trigger. Para eso, un job periódico de reconciliación, o la regla de borrar cuentas siempre con `DELETE /me`.
-
-**Permisos sin uso.** `GRANT SELECT` a `authenticated` (`schema.sql:258-261`), con policies de "solo lo propio" (`:263-304`). Ningún cliente consulta PostgREST, así que se pueden revocar. El riesgo es bajo porque cada usuario solo ve sus filas.
+Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users` asociado (links y posts en cascade). Migración `20261002120000_orphan_profile_cleanup.sql`. Avatar en Storage y datos en Turso siguen siendo cosa de `DELETE /me` o un job de reconciliación. Se revocó `GRANT SELECT` a `authenticated` y las policies de solo lectura propias (nadie usa PostgREST).
 
 ### 4.12 Claves de cifrado
 

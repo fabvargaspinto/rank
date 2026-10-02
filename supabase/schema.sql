@@ -255,52 +255,24 @@ GRANT ALL ON TABLE public.auth TO service_role;
 GRANT ALL ON TABLE public.user_links TO service_role;
 GRANT ALL ON TABLE public.posts TO service_role;
 
-GRANT SELECT ON TABLE public.users TO authenticated;
-GRANT SELECT ON TABLE public.auth TO authenticated;
-GRANT SELECT ON TABLE public.user_links TO authenticated;
-GRANT SELECT ON TABLE public.posts TO authenticated;
+CREATE OR REPLACE FUNCTION public.delete_profile_after_identity()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+    DELETE FROM public.users WHERE id = OLD.user_id;
+    RETURN OLD;
+END;
+$$;
 
-CREATE POLICY users_select_own
-ON public.users
-FOR SELECT
-TO authenticated
-USING (
-    id IN (
-        SELECT user_id
-        FROM public.auth
-        WHERE id = auth.uid()
-    )
-);
+DROP TRIGGER IF EXISTS auth_delete_profile ON public.auth;
 
-CREATE POLICY auth_select_own
-ON public.auth
-FOR SELECT
-TO authenticated
-USING (id = auth.uid());
-
-CREATE POLICY user_links_select_own
-ON public.user_links
-FOR SELECT
-TO authenticated
-USING (
-    user_id IN (
-        SELECT user_id
-        FROM public.auth
-        WHERE id = auth.uid()
-    )
-);
-
-CREATE POLICY posts_select_own
-ON public.posts
-FOR SELECT
-TO authenticated
-USING (
-    user_id IN (
-        SELECT user_id
-        FROM public.auth
-        WHERE id = auth.uid()
-    )
-);
+CREATE TRIGGER auth_delete_profile
+AFTER DELETE ON public.auth
+FOR EACH ROW
+EXECUTE FUNCTION public.delete_profile_after_identity();
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
