@@ -359,7 +359,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.5](#45-periodo-de-prueba) | ~~Periodo de prueba / lista de testers~~ — eliminado | — | — |
 | [4.6](#46-rate-limiting-del-backend) | ~~Rate limiting en memoria y con claves frágiles~~ — clave por `sub` + IP real | — | — |
 | [4.7](#47-cabeceras-de-seguridad-verificado) | ~~Sin cabeceras de seguridad~~ — headers + CSP Report-Only | — | — |
-| [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | Cambio de contraseña con cualquier sesión, sin cerrar las demás | Media | S |
+| [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | ~~Cambio de contraseña con cualquier sesión~~ — cookie de recovery + signOut others | — | — |
 | [4.9](#49-mensajes-de-error-tomados-de-la-url) | El parámetro `?error=` de la URL se muestra como mensaje oficial | Baja | XS |
 | [4.10](#410-límite-de-body) | Límite de body basado solo en `Content-Length` | Baja | XS |
 | [4.11](#411-base-de-datos) | Perfil huérfano al borrar un usuario desde el dashboard; `GRANT SELECT` sin uso | Baja | XS |
@@ -518,15 +518,9 @@ Se eliminó `TRIAL_TESTER_EMAILS` / `trial_testers` del backend y del frontend. 
 
 `frontend/next.config.ts` define `poweredByHeader: false`, HSTS (1 semana), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options` y `Content-Security-Policy-Report-Only` (imágenes de Storage + CDN de Instagram; `unsafe-inline` en scripts hasta migrar a nonces en `proxy.ts`).
 
-### 4.8 Cambio de contraseña con cualquier sesión
+### ✅ 4.8 Cambio de contraseña con cualquier sesión
 
-`resetPasswordAction` (`frontend/features/account/action/reset-password-action.ts:23-37`) acepta cualquier sesión válida, no solo la que viene de un enlace de recuperación. Y con `secure_password_change = false` (`supabase/config.toml:229`; hay que revisar el valor en el proyecto hosted), Supabase no pide reautenticarse. Quien tenga acceso a una sesión abierta (una computadora compartida o una cookie robada) puede cambiar la contraseña sin conocer la actual y quedarse con la cuenta. Además, después del cambio las demás sesiones siguen activas.
-
-**Arreglo**
-
-- En `/auth/confirm`, cuando `type === "recovery"`, guardar una cookie `httpOnly`, `Secure` y `SameSite=Lax` de 10 minutos, exigirla en `resetPasswordAction` y borrarla después de usarla.
-- Si más adelante hay "cambiar contraseña" desde la configuración, pedir la contraseña actual, o activar `secure_password_change` y manejar la reautenticación (`supabase.auth.reauthenticate()`).
-- Después de cambiarla, `supabase.auth.signOut({ scope: "others" })` para cerrar las demás sesiones.
+`/auth/confirm` con `type=recovery` (o `next=/reset-password`) setea la cookie httpOnly `sn_password_recovery` (10 min). `resetPasswordAction` la exige y la consume, y después hace `signOut({ scope: "others" })`. En local, `secure_password_change = true` en `config.toml` (revisar el mismo valor en el proyecto hosted).
 
 ### 4.9 Mensajes de error tomados de la URL
 
@@ -686,7 +680,7 @@ Con una ejecución semanal y una ventana de 7 días, alcanza con que falle una s
 - [ ] Plantillas de confirmación, recuperación e invitación cargadas en el dashboard. Los `content_path` de `config.toml:247-253` solo valen en local.
 - [ ] **SMTP con Resend** y límite de emails acorde ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)): `./scripts/configure-resend-smtp.sh` o SMTP Settings en el dashboard.
 - [ ] Política de contraseñas igual a la local (`config.toml:183-186`): mínimo 8, con minúsculas, mayúsculas y dígitos.
-- [ ] **Secure password change** activado ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
+- [x] **Secure password change** activado ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
 - [ ] **CAPTCHA** e **IP Address Forwarding** ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
 - [ ] **Claves JWT asimétricas** (ES256 o RS256). El backend solo acepta esos algoritmos (`backend/api/dependencies/auth.py:15`), y `getClaims()` valida el token localmente solo con claves asimétricas; con la clave HS256 heredada hace una llamada de red por request.
 - [ ] Google configurado con las credenciales del proyecto de Google de producción ([6.3](#63-google-oauth)).
@@ -1163,7 +1157,7 @@ Estimaciones orientativas para una persona.
 - [ ] Meta en modo Live con App Review aprobado y callbacks de desautorización y borrado ([6.2](#62-meta-instagram)).
 - [ ] Google publicado ([6.3](#63-google-oauth)).
 - [ ] Páginas legales y nombres reservados ([6.4](#64-páginas-legales), [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado)).
-- [ ] Cambio de contraseña solo desde recuperación y cierre de las demás sesiones ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
+- [x] Cambio de contraseña solo desde recuperación y cierre de las demás sesiones ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
 - [ ] Códigos de error en la URL, onboarding solo con un 200 y mensajes de login claros ([4.9](#49-mensajes-de-error-tomados-de-la-url), [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding), [5.10](#510-el-login-oculta-el-email-sin-confirmar)).
 - [ ] Clave de firma del `state` derivada, y procedimiento de custodia y rotación de las claves ([4.2](#42-la-misma-clave-cifra-los-tokens-y-firma-el-state), [4.12](#412-claves-de-cifrado)).
 

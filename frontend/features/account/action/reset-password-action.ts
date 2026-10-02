@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import type { FetchDataResponse } from "@/lib/api/types";
+import { consumePasswordRecovery } from "@/lib/auth/password-recovery";
 import { getPostAuthPath } from "@/lib/post-auth-path";
 import { createAuthClient } from "@/lib/supabase/auth-client";
 import { getAuthSession } from "@/lib/supabase/session";
@@ -21,8 +22,9 @@ export async function resetPasswordAction(
     }
 
     const session = await getAuthSession();
+    const fromRecovery = await consumePasswordRecovery();
 
-    if (!session) {
+    if (!session || !fromRecovery) {
         return {
             data: null,
             isError: true,
@@ -44,6 +46,8 @@ export async function resetPasswordAction(
             status: 400,
         };
     }
+
+    await supabase.auth.signOut({ scope: "others" });
 
     redirect(await getPostAuthPath());
 }

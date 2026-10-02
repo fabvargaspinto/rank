@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { allowPasswordRecovery } from "@/lib/auth/password-recovery";
 import { provisionSession } from "@/lib/api/session";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { createAuthClient } from "@/lib/supabase/auth-client";
@@ -56,6 +57,7 @@ export async function GET(request: Request) {
     }
 
     if (type === "recovery" || next === RESET_PATH) {
+        await allowPasswordRecovery();
         redirect(RESET_PATH);
     }
 
