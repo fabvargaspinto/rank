@@ -1,14 +1,12 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
+
+from config.env import settings_config
 
 
 class AppSettings(BaseSettings):
     environment: str = "development"
 
-    model_config = SettingsConfigDict(
-        env_file="../.env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    model_config = settings_config()
 
     @property
     def is_production(self) -> bool:

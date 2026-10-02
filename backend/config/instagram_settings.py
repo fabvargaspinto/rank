@@ -1,5 +1,7 @@
 from pydantic import AliasChoices, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
+
+from config.env import settings_config
 
 
 class InstagramSettings(BaseSettings):
@@ -26,12 +28,7 @@ class InstagramSettings(BaseSettings):
     instagram_token_encryption_key: str
     instagram_snapshot_job_token: str = ""
 
-    model_config = SettingsConfigDict(
-        env_file="../.env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-        populate_by_name=True,
-    )
+    model_config = settings_config(populate_by_name=True)
 
     @property
     def token_encryption_key_bytes(self) -> bytes:

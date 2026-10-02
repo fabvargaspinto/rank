@@ -1,5 +1,7 @@
 from pydantic import AliasChoices, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
+
+from config.env import settings_config
 
 
 def is_sqlite_url(url: str) -> bool:
@@ -22,12 +24,7 @@ class TursoSettings(BaseSettings):
         validation_alias=AliasChoices("TURSO_TOKEN", "TURSO_AUTH_TOKEN"),
     )
 
-    model_config = SettingsConfigDict(
-        env_file="../.env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-        populate_by_name=True,
-    )
+    model_config = settings_config(populate_by_name=True)
 
     def require_remote_for_production(self) -> None:
         url = self.turso_database_url.strip()

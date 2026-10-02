@@ -556,7 +556,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | ~~Cursor crudo a Postgres~~ — `decode` re-serializa la fecha | — | — |
 | [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | ~~Callback ante errores de infra~~ — Next redirige; captura inicial best-effort | — | — |
 | [5.10](#510-el-login-oculta-el-email-sin-confirmar) | ~~Login oculta email sin confirmar~~ — códigos + reenvío | — | — |
-| [5.11](#511-configuración-del-backend-verificado) | Configuración con rutas relativas y leída en cada request | Errores difíciles de diagnosticar | XS |
+| [5.11](#511-configuración-del-backend-verificado) | ~~Config relativa y releída~~ — `.env` absoluto (no en prod) + `lru_cache` | — | — |
 
 ### ✅ 5.1 Turso cae en silencio a un SQLite efímero
 
@@ -598,10 +598,9 @@ El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-
 
 `loginCredentialAction` mira `error.code`: `email_not_confirmed` muestra "Confirmá tu email" y un botón para reenviar; un 429 muestra "Demasiados intentos…"; el resto sigue con el mensaje genérico.
 
-### 5.11 Configuración del backend [verificado]
+### ✅ 5.11 Configuración del backend [verificado]
 
-- Todas las clases de `backend/config/` leen `env_file="../.env"`, una ruta relativa al directorio de trabajo: desde `backend/` toma el `.env` del repositorio, desde otro directorio no encuentra nada, y en el contenedor busca `/.env`. Lo comprobé ejecutando la app desde otro directorio: arrancó sin ninguna configuración (y con `/health` en 200, [3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado)). En producción, las variables tienen que venir solo del entorno.
-- `get_auth_jwt_settings` y `get_supabase_url` crean un `DBSettings()` en cada request (`backend/api/dependencies/auth.py:41-42` y `backend/api/dependencies/supabase.py:5`), lo que implica releer el entorno y el archivo cada vez. Cachearlos con `lru_cache`.
+`config/env.py` resuelve el `.env` del repo por ruta absoluta y no lo carga si `ENVIRONMENT=production` (solo variables del proceso). `get_auth_jwt_settings` y `get_supabase_url` van con `lru_cache`.
 
 ---
 

@@ -39,6 +39,7 @@ class AuthJwtSettings:
     audience: str = _JWT_AUDIENCE
 
 
+@lru_cache
 def get_auth_jwt_settings() -> AuthJwtSettings:
     base_url = DBSettings().supabase_url.rstrip("/")  # type: ignore[call-arg]
     return AuthJwtSettings(

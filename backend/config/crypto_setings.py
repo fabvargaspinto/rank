@@ -1,17 +1,13 @@
-# config/crypto_settings.py
+from pydantic_settings import BaseSettings
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from config.env import settings_config
 
 
 class CryptoSettings(BaseSettings):
     email_encryption_key: str
     email_hmac_key: str
 
-    model_config = SettingsConfigDict(
-        env_file="../.env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    model_config = settings_config()
 
     @property
     def email_encryption_key_bytes(self) -> bytes:
