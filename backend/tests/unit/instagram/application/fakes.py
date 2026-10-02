@@ -6,6 +6,7 @@ from core.instagram.domain.instagram_graph import (
     CompletedInstagramLogin,
     InstagramAccessToken,
     InstagramGraph,
+    InstagramProfile,
 )
 
 ACCOUNT_ID = "17841400000000000"
@@ -28,7 +29,7 @@ class FakeInstagramGraph(InstagramGraph):
         self.refreshed_token = "ig-refreshed-token"
         self.refreshed_expires_at = datetime(2027, 1, 1, tzinfo=UTC)
         self.complete_login_calls: list[str] = []
-        self.fetch_followers_tokens: list[str] = []
+        self.fetch_profile_tokens: list[str] = []
         self.refresh_tokens: list[str] = []
 
     def authorization_url(self, state: str) -> str:
@@ -48,11 +49,18 @@ class FakeInstagramGraph(InstagramGraph):
             followers_count=self.followers,
         )
 
-    def fetch_followers(self, access_token: str) -> int:
-        self.fetch_followers_tokens.append(access_token)
+    def fetch_profile(self, access_token: str) -> InstagramProfile:
+        self.fetch_profile_tokens.append(access_token)
         if self.fail_followers:
             raise InstagramGraphError("Instagram no está disponible")
-        return self.followers
+        return InstagramProfile(
+            account=InstagramAccount.create(
+                self.account_id,
+                self.username,
+                self.avatar_url,
+            ),
+            followers_count=self.followers,
+        )
 
     def refresh_access_token(self, access_token: str) -> InstagramAccessToken:
         self.refresh_tokens.append(access_token)

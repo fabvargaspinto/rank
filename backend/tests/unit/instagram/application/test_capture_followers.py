@@ -190,7 +190,7 @@ class TestCaptureInstagramFollowers:
         )
         graph.expires_at = NOW + timedelta(days=3)
         complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
-        graph.fetch_followers_tokens.clear()
+        graph.fetch_profile_tokens.clear()
 
         capture.execute_for_owner(OWNER_ID)
 
@@ -199,5 +199,21 @@ class TestCaptureInstagramFollowers:
         assert stored.access_token_encrypted == (
             f"enc:{stored.connection.id.value}:ig-refreshed-token"
         )
-        assert graph.fetch_followers_tokens == ["ig-refreshed-token"]
-        assert ACCESS_TOKEN not in graph.fetch_followers_tokens
+        assert graph.fetch_profile_tokens == ["ig-refreshed-token"]
+        assert ACCESS_TOKEN not in graph.fetch_profile_tokens
+
+    def test_updates_username_and_avatar_on_capture(self):
+        graph, connections, snapshots, _, capture, complete, start = _wired(NOW)
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        graph.username = "luna.nueva"
+        graph.avatar_url = (
+            "https://scontent.cdninstagram.com/v/t51.2885-19/fresh.jpg"
+        )
+
+        capture.execute_for_owner(OWNER_ID)
+
+        stored = connections.get_by_owner(OWNER_ID)
+        assert stored is not None
+        assert stored.connection.account.username.value == "luna.nueva"
+        assert stored.connection.account.avatar_url is not None
+        assert stored.connection.account.avatar_url.value.endswith("/fresh.jpg")

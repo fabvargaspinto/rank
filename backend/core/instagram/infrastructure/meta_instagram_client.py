@@ -13,6 +13,7 @@ from core.instagram.domain.instagram_graph import (
     CompletedInstagramLogin,
     InstagramAccessToken,
     InstagramGraph,
+    InstagramProfile,
 )
 
 logger = getLogger("ig.instagram.meta")
@@ -58,9 +59,9 @@ class MetaInstagramClient(InstagramGraph):
             followers_count=followers,
         )
 
-    def fetch_followers(self, access_token: str) -> int:
-        _, followers = self._fetch_profile(access_token)
-        return followers
+    def fetch_profile(self, access_token: str) -> InstagramProfile:
+        account, followers = self._fetch_profile(access_token)
+        return InstagramProfile(account=account, followers_count=followers)
 
     def refresh_access_token(self, access_token: str) -> InstagramAccessToken:
         payload = self._get_json(

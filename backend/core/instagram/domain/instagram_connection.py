@@ -73,5 +73,23 @@ class InstagramConnection:
             updated_at=ConnectionUpdatedAt.now(),
         )
 
+    def with_profile(
+        self,
+        username: str,
+        avatar_url: str | None,
+    ) -> "InstagramConnection":
+        return InstagramConnection(
+            id=self.id,
+            owner_user_id=self.owner_user_id,
+            account=InstagramAccount.create(
+                self.account.id.value,
+                username,
+                avatar_url,
+            ),
+            token_expires_at=self.token_expires_at,
+            created_at=self.created_at,
+            updated_at=ConnectionUpdatedAt.now(),
+        )
+
     def token_is_expired(self, at: datetime) -> bool:
         return at >= self.token_expires_at.value

@@ -84,10 +84,14 @@ def test_complete_login_maps_meta_payload_to_domain():
     assert TOKEN not in repr(login.token)
 
 
-def test_fetch_followers_and_refresh():
+def test_fetch_profile_and_refresh():
     client = _client()
 
-    assert client.fetch_followers(TOKEN) == 1390
+    profile = client.fetch_profile(TOKEN)
+    assert profile.followers_count == 1390
+    assert profile.account.username.value == "luna.reyes"
+    assert profile.account.avatar_url is not None
+    assert profile.account.avatar_url.value.endswith("/avatar.jpg")
     refreshed = client.refresh_access_token(TOKEN)
     assert refreshed.value == "IGQWB-refreshed"
 

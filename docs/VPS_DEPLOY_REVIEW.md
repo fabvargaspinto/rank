@@ -550,7 +550,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.2](#52-nadie-ejecuta-el-job-de-snapshots) | ~~Nadie ejecuta el job de snapshots~~ — cron diario + exit ≠ 0 | — | — |
 | [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | ~~Error de infra corta el job~~ — `except Exception` y sigue | — | — |
 | [5.4](#54-token-de-una-hora-aceptado-en-silencio) | ~~Token de una hora aceptado en silencio~~ — canje fallido aborta la conexión | — | — |
-| [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | La foto y el usuario de Instagram no se actualizan | Imagen rota a los pocos días | S |
+| [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | ~~Foto y usuario de Instagram no se actualizan~~ — el job refresca perfil | — | — |
 | [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | Si el backend falla, un usuario con perfil termina en el onboarding | Confusión y renombres accidentales | XS |
 | [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | Nombres de usuario que chocan con rutas | Perfiles inalcanzables | XS |
 | [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | El cursor de publicaciones llega crudo a Postgres | 500 en lugar de 400 | XS |
@@ -574,11 +574,9 @@ Cron diario en el host ([7.5](#75-job-de-snapshots)). `run_instagram_snapshots.p
 
 Si el canje a token de larga duración falla, `_exchange_long_lived` registra y propaga `InstagramGraphError`. Ya no se acepta el token de una hora.
 
-### 5.5 La foto y el usuario de Instagram no se actualizan
+### ✅ 5.5 La foto y el usuario de Instagram no se actualizan
 
-`profile_picture_url` es una URL firmada del CDN de Meta que vence (el parámetro `oe` de la URL es su fecha de vencimiento). Se guarda al conectar y solo se actualiza al volver a autorizar (`complete_instagram_oauth.py:66-86`). El job pide el perfil completo (`meta_instagram_client.py:58-60` llama a `_fetch_profile`), pero descarta todo menos los seguidores. A los pocos días la foto aparece rota, y si el usuario cambia su nombre en Instagram, la app no se entera.
-
-**Arreglo:** que el job actualice usuario y foto con los datos que ya recibe, o descargar la imagen y servirla desde Storage.
+El job usa `fetch_profile` y guarda usuario y `profile_picture_url` en cada captura, así la URL firmada del CDN no queda vencida entre autorizaciones.
 
 ### 5.6 Si el backend falla, el usuario va al onboarding
 

@@ -71,19 +71,15 @@ class CaptureInstagramFollowers:
             associated_data=stored.connection.id.value,
         )
         connection = stored.connection
+        encrypted = stored.access_token_encrypted
         if connection.token_expires_at.value - now <= _REFRESH_WINDOW:
             try:
                 refreshed = self._graph.refresh_access_token(access_token)
                 access_token = refreshed.value
                 connection = connection.with_token_expiry(refreshed.expires_at)
-                self._connections.save(
-                    StoredInstagramConnection(
-                        connection=connection,
-                        access_token_encrypted=self._cipher.encrypt(
-                            access_token,
-                            associated_data=connection.id.value,
-                        ),
-                    )
+                encrypted = self._cipher.encrypt(
+                    access_token,
+                    associated_data=connection.id.value,
                 )
             except InstagramGraphError:
                 logger.warning(
@@ -94,7 +90,24 @@ class CaptureInstagramFollowers:
         if connection.token_is_expired(now):
             raise InstagramTokenExpiredError("El acceso a Instagram expiró")
 
-        count = self._graph.fetch_followers(access_token)
+        profile = self._graph.fetch_profile(access_token)
+        avatar_url = (
+            profile.account.avatar_url.value
+            if profile.account.avatar_url is not None
+            else None
+        )
+        connection = connection.with_profile(
+            profile.account.username.value,
+            avatar_url,
+        )
+        self._connections.save(
+            StoredInstagramConnection(
+                connection=connection,
+                access_token_encrypted=encrypted,
+            )
+        )
+
+        count = profile.followers_count
         snapshot = FollowerSnapshot.capture(
             connection.account.id.value,
             count,

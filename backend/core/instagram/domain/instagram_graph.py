@@ -32,6 +32,12 @@ class CompletedInstagramLogin:
     followers_count: int
 
 
+@dataclass(frozen=True)
+class InstagramProfile:
+    account: InstagramAccount
+    followers_count: int
+
+
 class InstagramGraph(Protocol):
     def authorization_url(self, state: str) -> str:
         pass
@@ -39,7 +45,7 @@ class InstagramGraph(Protocol):
     def complete_login(self, code: str) -> CompletedInstagramLogin:
         pass
 
-    def fetch_followers(self, access_token: str) -> int:
+    def fetch_profile(self, access_token: str) -> InstagramProfile:
         pass
 
     def refresh_access_token(self, access_token: str) -> InstagramAccessToken:
