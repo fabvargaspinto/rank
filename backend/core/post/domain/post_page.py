@@ -20,11 +20,11 @@ class PostCursor:
         if not separator or not created_at or not post_id:
             raise InvalidPostCursorError("El cursor no es válido")
         try:
-            PostCreatedAt.from_isoformat(created_at)
+            normalized = PostCreatedAt.from_isoformat(created_at).to_isoformat()
             PostId(post_id)
         except Exception as exc:
             raise InvalidPostCursorError("El cursor no es válido") from exc
-        return cls(created_at=created_at, id=post_id)
+        return cls(created_at=normalized, id=post_id)
 
     @classmethod
     def from_post(cls, post: Post) -> "PostCursor":

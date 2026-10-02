@@ -553,7 +553,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | ~~Foto y usuario de Instagram no se actualizan~~ — el job refresca perfil | — | — |
 | [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding) | ~~Backend caído manda al onboarding~~ — solo 200 sin name; si no, Reintentar | — | — |
 | [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | ~~Nombres que chocan con rutas~~ — RESERVED + CHECK + test CI | — | — |
-| [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | El cursor de publicaciones llega crudo a Postgres | 500 en lugar de 400 | XS |
+| [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | ~~Cursor crudo a Postgres~~ — `decode` re-serializa la fecha | — | — |
 | [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | El callback de Instagram ante errores de infraestructura | JSON 500 en lugar de volver al dashboard | XS |
 | [5.10](#510-el-login-oculta-el-email-sin-confirmar) | El login oculta "email sin confirmar" y "demasiados intentos" | Usuarios bloqueados sin saber por qué | XS |
 | [5.11](#511-configuración-del-backend-verificado) | Configuración con rutas relativas y leída en cada request | Errores difíciles de diagnosticar | XS |
@@ -586,11 +586,9 @@ El job usa `fetch_profile` y guarda usuario y `profile_picture_url` en cada capt
 
 `UserName.RESERVED` y el `CHECK` de `users_name_format` (migración `20261002140000_reserved_usernames.sql`) incluyen las rutas de `frontend/app` y nombres legales previstos. Un test de unitarios falla si aparece un segmento de primer nivel que no esté reservado, o si el schema se desincroniza.
 
-### 5.8 El cursor de publicaciones llega crudo a Postgres [verificado en parte]
+### ✅ 5.8 El cursor de publicaciones llega crudo a Postgres [verificado en parte]
 
-`PostCursor.decode` (`backend/core/post/domain/post_page.py:18-27`) valida `created_at` con `fromisoformat` pero guarda el texto original, que llega tal cual a PostgREST en `_cursor_filter` (`backend/core/post/infrastructure/post_supabase_repo.py:91-96`). Comprobé que Python acepta, por ejemplo, `2026-W01-1T00:00:00+00:00` (fecha por semana ISO). Que Postgres lo rechace y la request termine en 500 (`PostLookupError` es `InfrastructureError`) es una deducción: no lo ejecuté contra una base. Las comillas del filtro sí impiden inyectar condiciones.
-
-**Arreglo:** volver a serializar la fecha parseada en lugar de usar el texto original, por ejemplo con `PostCreatedAt.from_isoformat(created_at).to_isoformat()`.
+`PostCursor.decode` guarda `PostCreatedAt.from_isoformat(...).to_isoformat()`, así el filtro a PostgREST siempre lleva una fecha canónica (p. ej. `2026-W01-1...` → `2025-12-29T00:00:00+00:00`).
 
 ### 5.9 El callback de Instagram ante errores de infraestructura
 
