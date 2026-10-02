@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { provisionSession } from "@/lib/api/session";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
-import { createClient } from "@/lib/supabase/server";
+import { createAuthClient } from "@/lib/supabase/auth-client";
 
 const RESET_PATH = "/reset-password";
 const EXPIRED_LINK =
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     const code = searchParams.get("code");
     const next =
         searchParams.get("next") === RESET_PATH ? RESET_PATH : null;
-    const supabase = await createClient();
+    const supabase = await createAuthClient();
     const verified = tokenHash && type
         ? await supabase.auth.verifyOtp({
               type,

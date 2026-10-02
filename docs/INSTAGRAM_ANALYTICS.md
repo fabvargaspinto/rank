@@ -47,6 +47,9 @@ El callback vive en Next (`/auth/instagram/callback`). En Meta registrá exactam
 - `GET /me/instagram` — estado de la conexión y último snapshot (sin token)
 - `GET /me/instagram/followers` — historial semanal
 - `DELETE /me/instagram`
+- `POST /instagram/deauthorize` — callback de Meta (signed_request)
+- `POST /instagram/data-deletion` — callback de Meta; responde `{url, confirmation_code}`
+- `GET /instagram/data-deletion/status` — estado de la solicitud de borrado
 - `POST /internal/instagram/snapshots` — job semanal (`X-Job-Token`); en producción preferí `docker compose exec`
 
 Permiso de Meta: `instagram_business_basic` (incluye `followers_count`).

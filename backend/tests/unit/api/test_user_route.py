@@ -13,6 +13,7 @@ from api.dependencies.auth import (
 )
 from api.dependencies.container import (
     get_delete_account_use_case,
+    get_disconnect_instagram_use_case,
     get_public_profile_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
@@ -23,6 +24,7 @@ from api.errors import register_error_handlers
 from api.routers.me import router as me_router
 from api.routers.profiles import router as profiles_router
 from core.post.application.get_posts_by_user import GetPostsByUser
+from core.instagram.application.disconnect_instagram import DisconnectInstagram
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user import GetUser
@@ -32,6 +34,10 @@ from core.user.application.upload_avatar import UploadAvatar
 from core.user.domain.user import User
 from core.user.infrastructure.avatar_url import public_avatar_url
 from tests.unit.auth.application.fake_auth_repo import FakeAuthRepo
+from tests.unit.instagram.application.fake_repos import (
+    FakeConnectionRepo,
+    FakeSnapshotRepo,
+)
 from tests.unit.post.application.fake_post_repo import FakePostRepo
 from tests.unit.user.application.fake_avatar_storage import FakeAvatarStorage
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
@@ -80,6 +86,9 @@ def _client(repo: FakeUserRepo | None = None) -> TestClient:
     )
     app.dependency_overrides[get_delete_account_use_case] = lambda: DeleteAccount(
         fake_repo, FakeAvatarStorage(), FakeAuthRepo()
+    )
+    app.dependency_overrides[get_disconnect_instagram_use_case] = lambda: (
+        DisconnectInstagram(FakeConnectionRepo(), FakeSnapshotRepo())
     )
     app.dependency_overrides[get_auth_jwt_settings] = lambda: AuthJwtSettings(
         jwks_url=f"{ISSUER}/.well-known/jwks.json",
@@ -453,3 +462,54 @@ class TestDeleteAccountRoute:
         assert auth.deleted_ids == [AUTH_ID]
         assert user.avatar is not None
         assert avatars.deleted == [user.avatar.value]
+
+    def test_deletes_instagram_data_before_the_profile(self):
+        from datetime import UTC, datetime, timedelta
+
+        from core.instagram.domain.follower_snapshot import FollowerSnapshot
+        from core.instagram.domain.instagram_connection import InstagramConnection
+        from core.instagram.domain.instagram_connection_repo import (
+            StoredInstagramConnection,
+        )
+
+        repo = FakeUserRepo()
+        user = _named_user()
+        repo.users_by_id[user.id.value] = user
+        repo.users_by_auth_id[AUTH_ID] = user
+        connections = FakeConnectionRepo()
+        snapshots = FakeSnapshotRepo()
+        account_id = "17841400000000000"
+        connection = InstagramConnection.connect(
+            user.id.value,
+            account_id,
+            "luna.reyes",
+            datetime(2026, 10, 7, tzinfo=UTC) + timedelta(days=40),
+        )
+        connections.save(StoredInstagramConnection(connection, "enc:token"))
+        snapshots.save(
+            FollowerSnapshot.capture(
+                account_id,
+                1000,
+                datetime(2026, 10, 7, tzinfo=UTC),
+            )
+        )
+
+        auth = FakeAuthRepo()
+        avatars = FakeAvatarStorage()
+        app_client = _client(repo)
+        app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+            auth_id=AUTH_ID,
+            email="user@example.com",
+        )
+        app_client.app.dependency_overrides[get_delete_account_use_case] = lambda: (
+            DeleteAccount(repo, avatars, auth)
+        )
+        app_client.app.dependency_overrides[get_disconnect_instagram_use_case] = (
+            lambda: DisconnectInstagram(connections, snapshots)
+        )
+
+        response = app_client.delete("/me")
+
+        assert response.status_code == 204
+        assert connections.get_by_owner(user.id.value) is None
+        assert snapshots.snapshots == []

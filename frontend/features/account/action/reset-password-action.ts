@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import type { FetchDataResponse } from "@/lib/api/types";
 import { getPostAuthPath } from "@/lib/post-auth-path";
-import { createClient } from "@/lib/supabase/server";
+import { createAuthClient } from "@/lib/supabase/auth-client";
 import { getAuthSession } from "@/lib/supabase/session";
 import { invalidFormResponse, resetPasswordSchema } from "@/lib/validation/auth";
 
@@ -31,7 +31,7 @@ export async function resetPasswordAction(
         };
     }
 
-    const supabase = await createClient();
+    const supabase = await createAuthClient();
     const { error } = await supabase.auth.updateUser({
         password: parsed.data.password,
     });

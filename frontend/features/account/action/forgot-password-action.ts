@@ -2,7 +2,7 @@
 
 import type { FetchDataResponse } from "@/lib/api/types";
 import { requestOrigin } from "@/lib/request-origin";
-import { createClient } from "@/lib/supabase/server";
+import { createAuthClient } from "@/lib/supabase/auth-client";
 import { emailSchema, invalidFormResponse } from "@/lib/validation/auth";
 
 const SENT_MESSAGE =
@@ -18,7 +18,7 @@ export async function forgotPasswordAction(
         return invalidFormResponse(parsed.error);
     }
 
-    const supabase = await createClient();
+    const supabase = await createAuthClient();
     const origin = await requestOrigin();
     const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
         redirectTo: `${origin}/auth/confirm?next=/reset-password`,

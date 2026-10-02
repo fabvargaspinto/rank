@@ -425,7 +425,7 @@ state_key = HKDF(
 ).derive(settings.token_encryption_key_bytes)
 ```
 
-### 4.3 Borrar la cuenta no borra los datos de Instagram
+### ✅  4.3 Borrar la cuenta no borra los datos de Instagram
 
 `DeleteAccount` (`backend/core/user/application/delete_account.py:17-23`) borra el avatar, el perfil y la identidad, pero no tiene acceso a Instagram. La conexión, con el token cifrado, el usuario y la foto de Instagram, y todo el historial de seguidores quedan en Turso. Además, `execute_all` (`backend/core/instagram/application/capture_instagram_followers.py:54-67`) sigue renovando ese token y capturando seguidores de alguien que ya no existe, sin fecha de fin.
 
@@ -439,7 +439,7 @@ Eso incumple la promesa de "borrar la cuenta", las leyes de datos personales (Le
 
 **Test que debe fallar antes del arreglo:** `DELETE /me` de un usuario con Instagram conectado deja `get_by_owner(...)` en `None` y sin snapshots de esa cuenta.
 
-### 4.4 Los límites de Supabase Auth se comparten entre todos los usuarios
+###  4.4 Los límites de Supabase Auth se comparten entre todos los usuarios
 
 Todas las llamadas a Supabase Auth salen del servidor de Next: `signInWithPassword` (login), `signUp` (registro), `resetPasswordForEmail` (recuperación), `verifyOtp` y `exchangeCodeForSession` (`/auth/confirm` y `/auth/callback`), `updateUser` (cambio de contraseña), y la renovación de la sesión que hace `getClaims()` en `frontend/proxy.ts:38` cuando el access token venció. [Según la documentación de Supabase](https://supabase.com/docs/guides/auth/rate-limits), los límites por IP se aplican a la IP que hace la llamada, que acá es siempre la del VPS:
 
@@ -898,9 +898,10 @@ TURSO_TOKEN=
 
 ```
 BACKEND_URL=http://backend:8000
+SUPABASE_SECRET_KEY=
 ```
 
-Si se adopta el IP forwarding de [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios), también `SUPABASE_SECRET_KEY`. Las `NEXT_PUBLIC_*` no van acá: son build args ([3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado)).
+`SUPABASE_SECRET_KEY` es la clave secreta (`sb_secret_…`) para el IP forwarding de [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios). Las `NEXT_PUBLIC_*` no van acá: son build args ([3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado)).
 
 Agregar `deploy/*.env` a `.gitignore`: el patrón actual `.env*` solo cubre archivos cuyo nombre empieza con `.env`.
 

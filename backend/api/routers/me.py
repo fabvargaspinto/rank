@@ -8,6 +8,7 @@ from api.dependencies.container import (
     get_create_post_use_case,
     get_delete_account_use_case,
     get_delete_post_use_case,
+    get_disconnect_instagram_use_case,
     get_update_user_use_case,
     get_upload_avatar_use_case,
 )
@@ -18,6 +19,8 @@ from api.rate_limit import limiter
 from api.schemas.auth import ErrorResponse
 from api.schemas.post import CreatePostRequest, PostResponse
 from api.schemas.user import AvatarUploadResponse, UpdateUserRequest, UserResponse
+from core.instagram.application.application_error import InstagramNotConnectedError
+from core.instagram.application.disconnect_instagram import DisconnectInstagram
 from core.post.application.create_post import CreatePost
 from core.post.application.delete_post import DeletePost
 from core.user.application.application_error import InvalidAvatarFileError
@@ -162,8 +165,14 @@ def upload_avatar(
 )
 def delete_account(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    profile: Annotated[User, Depends(get_current_profile)],
     use_case: DeleteAccount = Depends(get_delete_account_use_case),
+    disconnect: DisconnectInstagram = Depends(get_disconnect_instagram_use_case),
 ) -> Response:
+    try:
+        disconnect.execute(profile.id.value)
+    except InstagramNotConnectedError:
+        pass
     use_case.execute(current_user.auth_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

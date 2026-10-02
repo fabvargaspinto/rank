@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { provisionSession } from "@/lib/api/session";
 import type { FetchDataResponse } from "@/lib/api/types";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
-import { createClient } from "@/lib/supabase/server";
+import { createAuthClient } from "@/lib/supabase/auth-client";
 import { invalidFormResponse, loginSchema } from "@/lib/validation/auth";
 
 export async function loginCredentialAction(
@@ -20,7 +20,7 @@ export async function loginCredentialAction(
         return invalidFormResponse(parsed.error);
     }
 
-    const supabase = await createClient();
+    const supabase = await createAuthClient();
     const { data, error } = await supabase.auth.signInWithPassword({
         email: parsed.data.email,
         password: parsed.data.password,

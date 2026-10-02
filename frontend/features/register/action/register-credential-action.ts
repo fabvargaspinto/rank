@@ -5,7 +5,7 @@ import { provisionSession } from "@/lib/api/session";
 import type { FetchDataResponse } from "@/lib/api/types";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { requestOrigin } from "@/lib/request-origin";
-import { createClient } from "@/lib/supabase/server";
+import { createAuthClient } from "@/lib/supabase/auth-client";
 import {
     TRIAL_REGISTRATION_DENIED,
     isTrialTester,
@@ -40,7 +40,7 @@ export async function registerCredentialAction(
         };
     }
 
-    const supabase = await createClient();
+    const supabase = await createAuthClient();
     const origin = await requestOrigin();
     const { data, error } = await supabase.auth.signUp({
         email: parsed.data.email,

@@ -12,6 +12,7 @@ from core.instagram.application.capture_instagram_followers import (
     CaptureInstagramFollowers,
 )
 from core.instagram.application.complete_instagram_oauth import CompleteInstagramOAuth
+from core.instagram.application.delete_instagram_user_data import DeleteInstagramUserData
 from core.instagram.application.disconnect_instagram import DisconnectInstagram
 from core.instagram.application.get_follower_history import GetFollowerHistory
 from core.instagram.application.get_instagram_connection import GetInstagramConnection
@@ -96,6 +97,10 @@ class DependencyContainer:
     def disconnect_instagram(self) -> DisconnectInstagram:
         wiring = self._instagram_wiring()
         return DisconnectInstagram(wiring.connections, wiring.snapshots)
+
+    def delete_instagram_user_data(self) -> DeleteInstagramUserData:
+        wiring = self._instagram_wiring()
+        return DeleteInstagramUserData(wiring.connections, wiring.snapshots)
 
     def get_instagram_connection(self) -> GetInstagramConnection:
         wiring = self._instagram_wiring()
@@ -207,6 +212,10 @@ def get_complete_instagram_oauth_use_case() -> CompleteInstagramOAuth:
 
 def get_disconnect_instagram_use_case() -> DisconnectInstagram:
     return get_dependency_container().disconnect_instagram()
+
+
+def get_delete_instagram_user_data_use_case() -> DeleteInstagramUserData:
+    return get_dependency_container().delete_instagram_user_data()
 
 
 def get_instagram_connection_use_case() -> GetInstagramConnection:
