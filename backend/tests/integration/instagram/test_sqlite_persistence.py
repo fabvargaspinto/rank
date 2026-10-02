@@ -32,7 +32,12 @@ def test_weekly_capture_against_sqlite_is_idempotent():
         "luna.reyes",
         NOW + timedelta(days=40),
     )
-    connections.save(StoredInstagramConnection(connection, cipher.encrypt("ig-token")))
+    connections.save(
+        StoredInstagramConnection(
+            connection,
+            cipher.encrypt("ig-token", associated_data=connection.id.value),
+        )
+    )
     capture = CaptureInstagramFollowers(
         graph,
         connections,

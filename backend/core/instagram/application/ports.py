@@ -4,10 +4,10 @@ from core.instagram.domain.oauth_state import InstagramOAuthState
 
 
 class TokenCipher(Protocol):
-    def encrypt(self, token: str) -> str:
+    def encrypt(self, token: str, *, associated_data: str) -> str:
         pass
 
-    def decrypt(self, encrypted: str) -> str:
+    def decrypt(self, encrypted: str, *, associated_data: str) -> str:
         pass
 
 

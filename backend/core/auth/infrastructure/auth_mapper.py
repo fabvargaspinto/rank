@@ -22,7 +22,10 @@ class AuthMapper:
         return Auth(
             id=AuthId(row["id"]),
             user_id=UserId(row["user_id"]),
-            email=self.email_crypto.decrypt(row["email_encrypted"]),
+            email=self.email_crypto.decrypt(
+                row["email_encrypted"],
+                associated_data=str(row["id"]),
+            ),
             created_at=AuthCreatedAt.from_isoformat(row["created_at"]),
             provider_method=method,
         )
@@ -34,7 +37,10 @@ class AuthMapper:
         return {
             "id": auth.id.value,
             "user_id": auth.user_id.value,
-            "email_encrypted": self.email_crypto.encrypt(email),
+            "email_encrypted": self.email_crypto.encrypt(
+                email,
+                associated_data=auth.id.value,
+            ),
             "email_hmac": self.email_crypto.hmac(email),
             "provider": auth.provider_method.provider.value,
             "provider_id": (

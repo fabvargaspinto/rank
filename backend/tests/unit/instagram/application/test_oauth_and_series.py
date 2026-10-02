@@ -105,7 +105,9 @@ class TestCompleteInstagramOAuth:
         assert stored is not None
         assert stored.connection.id == connection.id
         assert stored.connection.account.id.value == ACCOUNT_ID
-        assert stored.access_token_encrypted == f"enc:{ACCESS_TOKEN}"
+        assert stored.access_token_encrypted == (
+            f"enc:{stored.connection.id.value}:{ACCESS_TOKEN}"
+        )
         assert self.graph.complete_login_calls == ["auth-code"]
         assert len(self.snapshots.snapshots) == 1
         assert self.snapshots.snapshots[0].followers_count.value == 1250
@@ -156,7 +158,9 @@ class TestCompleteInstagramOAuth:
         assert updated.id == first.id
         stored = self.connections.get_by_owner(OWNER_ID)
         assert stored is not None
-        assert stored.access_token_encrypted == "enc:ig-new-token"
+        assert stored.access_token_encrypted == (
+            f"enc:{stored.connection.id.value}:ig-new-token"
+        )
         assert stored.connection.account.username.value == "luna.nueva"
 
 

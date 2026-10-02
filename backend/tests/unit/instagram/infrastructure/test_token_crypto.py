@@ -23,15 +23,31 @@ def _settings(key: str = "00" * 32) -> InstagramSettings:
 
 def test_token_round_trip():
     crypto = TokenCrypto(_settings())
+    sealed = crypto.encrypt("ig-secret-token", associated_data=OWNER_ID)
 
-    assert crypto.decrypt(crypto.encrypt("ig-secret-token")) == "ig-secret-token"
+    assert sealed.startswith("v1:")
+    assert crypto.decrypt(sealed, associated_data=OWNER_ID) == "ig-secret-token"
+
+
+def test_token_decrypt_rejects_wrong_associated_data():
+    crypto = TokenCrypto(_settings())
+    sealed = crypto.encrypt("ig-secret-token", associated_data=OWNER_ID)
+
+    with pytest.raises(TokenDecryptError):
+        crypto.decrypt(sealed, associated_data="other-id")
 
 
 def test_token_decrypt_with_another_key_fails():
-    encrypted = TokenCrypto(_settings("00" * 32)).encrypt("ig-secret-token")
+    encrypted = TokenCrypto(_settings("00" * 32)).encrypt(
+        "ig-secret-token",
+        associated_data=OWNER_ID,
+    )
 
     with pytest.raises(TokenDecryptError):
-        TokenCrypto(_settings("22" * 32)).decrypt(encrypted)
+        TokenCrypto(_settings("22" * 32)).decrypt(
+            encrypted,
+            associated_data=OWNER_ID,
+        )
 
 
 def test_oauth_state_round_trip():

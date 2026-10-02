@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-import os
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -8,6 +7,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from config.crypto_setings import CryptoSettings
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.infrastructure.error_infrastructure import EmailDecryptError
+from core.shared.infrastructure.versioned_aead import open_sealed, seal
 
 
 class EmailCrypto:
@@ -18,30 +18,13 @@ class EmailCrypto:
         self._aes = AESGCM(crypto_settings.email_encryption_key_bytes)
         self._hmac_key = crypto_settings.email_hmac_key_bytes
 
-    def encrypt(self, email: AuthEmail) -> str:
-        nonce = os.urandom(12)
+    def encrypt(self, email: AuthEmail, *, associated_data: str) -> str:
+        return seal(self._aes, email.value.encode("utf-8"), associated_data)
 
-        encrypted = self._aes.encrypt(
-            nonce,
-            email.value.encode("utf-8"),
-            None,
-        )
-
-        return (nonce + encrypted).hex()
-
-    def decrypt(self, encrypted_email: str) -> AuthEmail:
-        data = bytes.fromhex(encrypted_email)
-
-        nonce = data[:12]
-        ciphertext = data[12:]
-
+    def decrypt(self, encrypted_email: str, *, associated_data: str) -> AuthEmail:
         try:
-            decrypted = self._aes.decrypt(
-                nonce,
-                ciphertext,
-                None,
-            )
-        except InvalidTag as exc:
+            decrypted = open_sealed(self._aes, encrypted_email, associated_data)
+        except (InvalidTag, ValueError) as exc:
             raise EmailDecryptError("No se pudo leer el email") from exc
 
         return AuthEmail(decrypted.decode("utf-8"))

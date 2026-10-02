@@ -134,10 +134,18 @@ def test_email_is_encrypted_with_aes_gcm(
     user, auth = _new_user_and_auth(auth_id, email)
     tracked_rows.add(auth_id, user.id.value)
 
-    first_ciphertext = email_crypto.encrypt(AuthEmail(email))
-    second_ciphertext = email_crypto.encrypt(AuthEmail(email))
+    first_ciphertext = email_crypto.encrypt(
+        AuthEmail(email),
+        associated_data=auth_id,
+    )
+    second_ciphertext = email_crypto.encrypt(
+        AuthEmail(email),
+        associated_data=auth_id,
+    )
     assert first_ciphertext != second_ciphertext
-    assert email_crypto.decrypt(first_ciphertext).value == email
+    assert (
+        email_crypto.decrypt(first_ciphertext, associated_data=auth_id).value == email
+    )
 
     auth_repo.save(user, auth)
 
@@ -152,7 +160,8 @@ def test_email_is_encrypted_with_aes_gcm(
 
     assert stored != email
     assert email not in stored
-    assert email_crypto.decrypt(stored).value == email
+    assert stored.startswith("v1:")
+    assert email_crypto.decrypt(stored, associated_data=auth_id).value == email
 
 
 def test_find_by_email_uses_hmac(

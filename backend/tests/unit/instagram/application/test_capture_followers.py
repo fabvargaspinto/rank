@@ -142,6 +142,8 @@ class TestCaptureInstagramFollowers:
 
         stored = connections.get_by_owner(OWNER_ID)
         assert stored is not None
-        assert stored.access_token_encrypted == "enc:ig-refreshed-token"
+        assert stored.access_token_encrypted == (
+            f"enc:{stored.connection.id.value}:ig-refreshed-token"
+        )
         assert graph.fetch_followers_tokens == ["ig-refreshed-token"]
         assert ACCESS_TOKEN not in graph.fetch_followers_tokens

@@ -68,7 +68,10 @@ class CaptureInstagramFollowers:
 
     def _capture(self, stored: StoredInstagramConnection) -> FollowerSnapshot:
         now = self._clock()
-        access_token = self._cipher.decrypt(stored.access_token_encrypted)
+        access_token = self._cipher.decrypt(
+            stored.access_token_encrypted,
+            associated_data=stored.connection.id.value,
+        )
         connection = stored.connection
         if connection.token_expires_at.value - now <= _REFRESH_WINDOW:
             try:
@@ -78,7 +81,10 @@ class CaptureInstagramFollowers:
                 self._connections.save(
                     StoredInstagramConnection(
                         connection=connection,
-                        access_token_encrypted=self._cipher.encrypt(access_token),
+                        access_token_encrypted=self._cipher.encrypt(
+                            access_token,
+                            associated_data=connection.id.value,
+                        ),
                     )
                 )
             except InstagramGraphError:

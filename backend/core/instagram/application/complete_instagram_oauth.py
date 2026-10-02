@@ -93,7 +93,10 @@ class CompleteInstagramOAuth:
         self._connections.save(
             StoredInstagramConnection(
                 connection=connection,
-                access_token_encrypted=self._cipher.encrypt(login.token.value),
+                access_token_encrypted=self._cipher.encrypt(
+                    login.token.value,
+                    associated_data=connection.id.value,
+                ),
             )
         )
         self._capture.execute_for_owner(payload.owner_user_id.value)

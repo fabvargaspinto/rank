@@ -62,13 +62,15 @@ class FakeInstagramGraph(InstagramGraph):
 
 
 class FakeTokenCipher:
-    def encrypt(self, token: str) -> str:
-        return f"enc:{token}"
+    def encrypt(self, token: str, *, associated_data: str) -> str:
+        return f"enc:{associated_data}:{token}"
 
-    def decrypt(self, encrypted: str) -> str:
-        prefix = "enc:"
+    def decrypt(self, encrypted: str, *, associated_data: str) -> str:
+        prefix = f"enc:{associated_data}:"
         if encrypted.startswith(prefix):
             return encrypted[len(prefix) :]
+        if encrypted.startswith("enc:"):
+            return encrypted[len("enc:") :]
         return encrypted
 
 

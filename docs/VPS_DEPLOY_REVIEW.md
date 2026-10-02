@@ -363,7 +363,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.9](#49-mensajes-de-error-tomados-de-la-url) | ~~Mensajes de error en la URL~~ — códigos `?error=` | — | — |
 | [4.10](#410-límite-de-body) | ~~Límite de body solo por Content-Length~~ — stream + nginx 4m | — | — |
 | [4.11](#411-base-de-datos) | ~~Perfil huérfano / GRANT SELECT sin uso~~ — trigger + revoke | — | — |
-| [4.12](#412-claves-de-cifrado) | Claves de cifrado: custodia, versión y rotación | Media | S |
+| [4.12](#412-claves-de-cifrado) | ~~Claves sin versión ni AAD~~ — `v1:` + id de fila | — | — |
 
 ### ✅ 4.1 La vinculación de Instagram no está atada a la sesión
 
@@ -534,11 +534,11 @@ Login y register solo muestran textos propios vía `messageForAuthError` (`front
 
 Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users` asociado (links y posts en cascade). Migración `20261002120000_orphan_profile_cleanup.sql`. Avatar en Storage y datos en Turso siguen siendo cosa de `DELETE /me` o un job de reconciliación. Se revocó `GRANT SELECT` a `authenticated` y las policies de solo lectura propias (nadie usa PostgREST).
 
-### 4.12 Claves de cifrado
+### ✅ 4.12 Claves de cifrado
 
-- `EMAIL_ENCRYPTION_KEY`, `EMAIL_HMAC_KEY` e `INSTAGRAM_TOKEN_ENCRYPTION_KEY` (32 bytes en hexadecimal). Si se pierden, los emails cifrados quedan ilegibles y todos los usuarios tienen que volver a conectar Instagram. El texto cifrado no guarda una versión de clave, así que rotarlas exige volver a cifrar todo de una vez. Agregar un prefijo (`v1:`) habilita la rotación gradual.
-- AES-GCM sin datos asociados (`token_crypto.py:16`): un texto cifrado copiado de una fila a otra se descifra igual. Usar el id de la fila como datos asociados ata cada valor a su fila. Con la base accesible solo por `service_role`, el riesgo es bajo.
-- Producción tiene que usar claves **nuevas**, no las del `.env` de desarrollo: `openssl rand -hex 32` para cada una, guardadas en un gestor de contraseñas y con una copia offline. Documentar el procedimiento de rotación.
+- Ciphertexts nuevos llevan prefijo `v1:` y AES-GCM usa el id de la fila como AAD (`core/shared/infrastructure/versioned_aead.py`): email ↔ `public.auth.id`, token IG ↔ `connection.id`. Los valores legacy (sin prefijo) siguen leyéndose.
+- Producción: claves **nuevas** (`openssl rand -hex 32` para `EMAIL_ENCRYPTION_KEY`, `EMAIL_HMAC_KEY`, `INSTAGRAM_TOKEN_ENCRYPTION_KEY`), en un gestor de contraseñas + copia offline. No reutilizar las de desarrollo.
+- **Rotación gradual (cuando haga falta):** agregar lectura con la clave nueva y la vieja; re-cifrar filas a `v2:`; apagar la clave vieja. Hasta entonces, perder la clave implica re-login de Instagram y emails ilegibles.
 
 ---
 
@@ -1133,7 +1133,7 @@ Estimaciones orientativas para una persona.
 - [ ] Páginas legales y nombres reservados ([6.4](#64-páginas-legales), [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado)).
 - [x] Cambio de contraseña solo desde recuperación y cierre de las demás sesiones ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
 - [ ] Códigos de error en la URL, onboarding solo con un 200 y mensajes de login claros ([4.9](#49-mensajes-de-error-tomados-de-la-url), [5.6](#56-si-el-backend-falla-el-usuario-va-al-onboarding), [5.10](#510-el-login-oculta-el-email-sin-confirmar)).
-- [ ] Clave de firma del `state` derivada, y procedimiento de custodia y rotación de las claves ([4.2](#42-la-misma-clave-cifra-los-tokens-y-firma-el-state), [4.12](#412-claves-de-cifrado)).
+- [x] Clave de firma del `state` derivada, y procedimiento de custodia y rotación de las claves ([4.2](#42-la-misma-clave-cifra-los-tokens-y-firma-el-state), [4.12](#412-claves-de-cifrado)).
 
 ### Fase 3: mejoras continuas
 
