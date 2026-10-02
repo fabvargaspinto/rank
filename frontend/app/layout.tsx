@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { siteUrl } from "@/lib/site-url";
 import "./reset.css";
 import "./primitives.css";
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
     },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="es">
             <body>{children}</body>

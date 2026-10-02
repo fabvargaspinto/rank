@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import TreeViewPage from "@/features/tree/tree-view";
 import getUserFromName from "@/features/tree/action/get-user-from-name";
 
+type PageProps = {
+    params: Promise<{ name: string }>;
+};
+
 export async function generateMetadata({
     params,
-}: PageProps<"/[name]">): Promise<Metadata> {
+}: PageProps): Promise<Metadata> {
     const { name } = await params;
     const result = await getUserFromName(name);
 
@@ -32,7 +36,7 @@ export async function generateMetadata({
     };
 }
 
-export default async function page({ params }: PageProps<"/[name]">) {
+export default async function page({ params }: PageProps) {
     const { name } = await params;
 
     return <TreeViewPage username={name} />;

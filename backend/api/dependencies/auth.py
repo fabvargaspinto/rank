@@ -70,13 +70,18 @@ def extract_bearer_token(authorization: str | None) -> str:
     return token.strip()
 
 
+def get_access_token(
+    authorization: Annotated[str | None, Header()] = None,
+) -> str:
+    return extract_bearer_token(authorization)
+
+
 def get_current_user(
     request: Request,
-    authorization: Annotated[str | None, Header()] = None,
+    token: Annotated[str, Depends(get_access_token)],
     jwt_settings: AuthJwtSettings = Depends(get_auth_jwt_settings),
     jwks_client: JwtKeySet = Depends(get_jwks_client),
 ) -> CurrentUser:
-    token = extract_bearer_token(authorization)
     payload = _decode_access_token(token, jwt_settings, jwks_client)
     auth_id = payload.get("sub")
     email = payload.get("email")

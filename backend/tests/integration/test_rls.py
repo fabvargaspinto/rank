@@ -227,7 +227,9 @@ def test_service_role_rpc_create_user_and_auth(db_client: DBClient) -> None:
         supabase.auth.admin.delete_user(auth_id)
 
 
-def test_authenticated_reads_only_own_auth(db_client: DBClient, anon_client) -> None:
+def test_authenticated_cannot_read_auth_or_users(
+    db_client: DBClient, anon_client
+) -> None:
     supabase = db_client.get_db()
     password = "Password123"
     email = f"rls-own-{uuid4().hex}@example.com"
@@ -263,11 +265,8 @@ def test_authenticated_reads_only_own_auth(db_client: DBClient, anon_client) -> 
         )
         assert signed_in.user is not None
 
-        own = anon_client.table("auth").select("id").execute()
-        assert [row["id"] for row in (own.data or [])] == [auth_id]
-
-        own_users = anon_client.table("users").select("id").execute()
-        assert [row["id"] for row in (own_users.data or [])] == [user_id]
+        _assert_no_rows(lambda: anon_client.table("auth").select("id").execute())
+        _assert_no_rows(lambda: anon_client.table("users").select("id").execute())
     finally:
         try:
             anon_client.auth.sign_out()
