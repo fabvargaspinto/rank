@@ -69,7 +69,7 @@ uv run python run_instagram_snapshots.py
 # exit 1 si failed > 0
 ```
 
-En el VPS: `docker compose … exec -T backend python run_instagram_snapshots.py` (ver `VPS_DEPLOY_REVIEW.md` §7.5). El endpoint HTTP con `INSTAGRAM_SNAPSHOT_JOB_TOKEN` es opcional.
+En el VPS: `./deploy/run-snapshots.sh` (cron diario; ver `VPS_DEPLOY_REVIEW.md` §7.5). El endpoint HTTP con `INSTAGRAM_SNAPSHOT_JOB_TOKEN` es opcional.
 
 ## Tests
 

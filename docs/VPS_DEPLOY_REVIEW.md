@@ -319,7 +319,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | — | Sin job de snapshots | Ver [5.2](#52-nadie-ejecuta-el-job-de-snapshots) |
 | — | Sin rotación de logs | El driver `json-file` de Docker crece sin límite hasta llenar el disco |
 
-**Arreglo:** un `docker-compose.prod.yml` separado, con Caddy como proxy reverso con TLS automático, una red sin puertos publicados para el backend, rotación de logs y un archivo de variables por servicio. Está completo en la sección [7](#7-el-vps).
+**Arreglo:** un `docker-compose.prod.yml` separado, con **nginx** como proxy reverso (TLS con certbot), backend sin puertos al host, rotación de logs y un archivo de variables por servicio. Está completo en la sección [7](#7-el-vps).
 
 ### ✅ 3.6 Imagen del backend, healthcheck y callback público [verificado]
 
@@ -344,7 +344,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
   ```
 
 - **Recomendado:** mover el callback de Instagram al frontend. Meta redirige a una ruta de Next, que tiene la sesión del usuario, y Next llama al backend por la red interna. El backend no se expone nunca, y además se resuelve [4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión).
-- **Si por tiempo se mantiene el callback en el backend:** exponer en el proxy **solo** esa ruta (ejemplo en [7.4](#74-caddy)).
+- **Si por tiempo se mantiene el callback en el backend:** exponer en el proxy **solo** esas rutas de Meta (ejemplo en [7.4](#74-nginx)).
 
 ---
 
@@ -494,8 +494,8 @@ Consecuencias:
    }
    ```
 
-   En `proxy.ts` va lo mismo, tomando la IP de `request.headers`. La IP tiene que venir del proxy reverso, que reemplaza el `X-Forwarded-For` que mande el cliente (Caddy lo hace por defecto, [7.4](#74-caddy)). El costo: el servidor de Next pasa a tener la clave secreta (como variable de runtime, nunca `NEXT_PUBLIC_`), así que comprometerlo da acceso total a la base. Hoy esa clave solo la tiene el backend.
-3. **Límites por IP en el proxy** para los POST a `/login`, `/register` y `/forgot-password`: las Server Actions se envían como POST a la ruta de la página. Caddy no trae rate limiting en su build estándar; hace falta el plugin `caddy-ratelimit`, o nginx con `limit_req` ([7.4](#74-caddy)).
+   En `proxy.ts` va lo mismo, tomando la IP de `request.headers`. La IP tiene que venir del proxy reverso, que reemplaza el `X-Forwarded-For` que mande el cliente (nginx con `$remote_addr`, [7.4](#74-nginx)). El costo: el servidor de Next pasa a tener la clave secreta (como variable de runtime, nunca `NEXT_PUBLIC_`), así que comprometerlo da acceso total a la base. Hoy esa clave solo la tiene el backend.
+3. **Límites por IP en el proxy** para los POST a `/login`, `/register` y `/forgot-password`: las Server Actions se envían como POST a la ruta de la página. En este repo ya está en `deploy/nginx/nginx.conf` con `limit_req` ([7.4](#74-nginx)).
 4. **SMTP propio con Resend** y subir el límite de emails acorde.
    - Local: `[auth.email.smtp]` en `config.toml` + `RESEND_API_KEY` en `.env`.
    - Hosted: `SUPABASE_ACCESS_TOKEN=sbp_… ./scripts/configure-resend-smtp.sh` (o SMTP Settings en el dashboard: `smtp.resend.com:465`, user `resend`, password = API key, sender `beth.t@example.com`).
@@ -653,13 +653,14 @@ La app solo llama `signInWithOAuth({ provider: "google" })` (`frontend/lib/googl
 
 ## 7. El VPS
 
-### 7.1 Arquitectura
+### ✅  7.1 Arquitectura
 
 ```mermaid
 flowchart LR
-    U["Navegador"] -->|"HTTPS 443"| C["Caddy: TLS automático"]
-    C -->|"red edge"| F["frontend: Next standalone :3000"]
-    F -->|"red app, HTTP"| B["backend: uvicorn :8000"]
+    U["Navegador"] -->|"HTTPS 443"| N["nginx: TLS Let's Encrypt"]
+    N -->|"red edge"| F["frontend: Next standalone :3000"]
+    N -->|"red app (solo Meta)"| B["backend: uvicorn :8000"]
+    F -->|"red app, HTTP"| B
     F -->|"HTTPS"| SA["Supabase Auth"]
     B -->|"HTTPS"| SB["Supabase: PostgREST y Storage"]
     B -->|"HTTPS"| T["Turso"]
@@ -668,11 +669,13 @@ flowchart LR
     CR["cron del host"] -->|"docker compose exec"| B
 ```
 
-Solo Caddy publica puertos (80 y 443). El backend está en una red a la que el proxy no tiene acceso y no publica ninguno. Las dos redes son bridges comunes: **no** usar `internal: true` en la del backend, porque corta su salida a internet y no podría hablar con Supabase, Turso ni Meta.
+Solo **nginx** publica puertos (80 y 443). Los certificados viven en el volumen `certbot_certs` (Let's Encrypt con `deploy/obtain-cert.sh` y `deploy/renew-certs.sh`). **frontend** y **nginx** están en `edge` y `app`; **backend** solo en `app` y no publica puertos al host. Casi todo el tráfico va al frontend; nginx reenvía al backend únicamente `/instagram/deauthorize`, `/instagram/data-deletion` y `/instagram/data-deletion/status` ([7.4](#74-nginx)). Las redes son bridges comunes: **no** usar `internal: true` en `app`, porque el backend necesita salida a internet hacia Supabase, Turso y Meta.
 
 Para empezar alcanza un VPS de 2 vCPU y 2 a 4 GB de RAM, siempre que las imágenes se construyan en CI ([7.9](#79-build-y-despliegue)). Construir Next en el servidor necesita bastante más memoria.
 
-### 7.2 Dockerfiles
+### ✅ 7.2 Dockerfiles [verificado]
+
+En el repo: `backend/Dockerfile` (etapas `development` / `production`) y `frontend/Dockerfile` (`deps` → `builder` → `production` standalone). Coinciden con lo siguiente.
 
 **Backend**, etapa de producción:
 
@@ -691,11 +694,11 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--no-server-header"]
 ```
 
-- El healthcheck solo es confiable si el `lifespan` valida la configuración ([3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado)).
-- uvicorn confía en `X-Forwarded-For` solo desde `127.0.0.1` por defecto. Está bien así: al backend solo le habla Next. Si algún día recibe tráfico del proxy y hace falta la IP real, usar `--forwarded-allow-ips` con la subred de la red de Docker, nunca `*`.
+- El healthcheck solo es confiable si el `lifespan` valida la configuración ([3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado)); hoy el contenedor se arma al arrancar y Turso se exige en producción.
+- uvicorn confía en `X-Forwarded-For` solo desde `127.0.0.1` por defecto. El tráfico de la app llega desde Next (misma red `app`). **nginx** también reenvía al backend las rutas de Meta ([7.1](#71-arquitectura)); el peer es el contenedor de nginx, no el navegador. Si en esas rutas hiciera falta la IP real del cliente, usar `--forwarded-allow-ips` con la subred de `app`, nunca `*`.
 - Con varios workers, los límites de `slowapi` se multiplican ([4.6](#46-rate-limiting-del-backend)).
 
-`backend/.dockerignore`, además de lo que ya tiene:
+`backend/.dockerignore` (ya aplicado en el repo):
 
 ```
 certs/
@@ -706,70 +709,58 @@ tests/
 htmlcov
 ```
 
-**Frontend:** el builder de [3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado), y en la etapa de producción, que ya corre sin root, un healthcheck:
+**Frontend:** etapa `builder` con build args obligatorios `NEXT_PUBLIC_*` ([3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado)); `production` copia el artefacto standalone, usuario `nextjs` (uid 1001) y `CMD ["node", "server.js"]`. Healthcheck:
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
     CMD ["node", "-e", "fetch('http://127.0.0.1:3000/robots.txt').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
 ```
 
-### 7.3 docker-compose.prod.yml
+### ✅ 7.3 docker-compose.prod.yml [verificado]
+
+En la raíz: `docker-compose.prod.yml`. Plantillas: `deploy/compose.env.example`, `deploy/backend.env.example`, `deploy/frontend.env.example` (copiar sin `.example`, permisos `600`).
+
+Resumen (detalle en el archivo; logging `json-file` 10m×5 en todos los servicios):
 
 ```yaml
-name: sellonomada
-
-x-logging: &logging
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "5"
-
 services:
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+  nginx:
+    image: nginx:1.27-alpine
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?definí DOMAIN}
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./deploy/nginx/nginx.conf
+      - ./deploy/nginx/templates
+      - ./deploy/nginx/docker-entrypoint.d/30-ensure-certs.sh
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
     depends_on:
-      frontend:
-        condition: service_healthy
-    networks: [edge]
-    logging: *logging
+      frontend: { condition: service_healthy }
+      backend: { condition: service_healthy }
+    networks: [edge, app]
 
   frontend:
     image: ghcr.io/fabvargaspinto/rank-frontend:${TAG:?definí TAG}
-    restart: unless-stopped
     env_file: ./deploy/frontend.env
     depends_on:
-      backend:
-        condition: service_healthy
+      backend: { condition: service_healthy }
     networks: [edge, app]
-    logging: *logging
 
   backend:
     image: ghcr.io/fabvargaspinto/rank-backend:${TAG:?definí TAG}
-    restart: unless-stopped
     env_file: ./deploy/backend.env
     networks: [app]
-    logging: *logging
 
-networks:
-  edge:
-  app:
-
-volumes:
-  caddy_data:
-  caddy_config:
+  certbot:
+    image: certbot/certbot:v3.1.0
+    profiles: ["certs"]
+    volumes: [certbot_www, certbot_certs]
 ```
 
-`TAG` sale del archivo `.env` que queda junto al compose en el servidor ([7.9](#79-build-y-despliegue)). `caddy_data` guarda los certificados: no hay que borrarlo, o Let's Encrypt puede limitar las emisiones por exceso de pedidos.
+`TAG` y `DOMAIN` en el `.env` del VPS (`deploy/compose.env.example`, [7.9](#79-build-y-despliegue)). No borrar `certbot_certs` a la ligera: Let's Encrypt puede limitar emisiones.
 
-**`deploy/backend.env`** (permisos `600`, fuera de git):
+**`deploy/backend.env`** (igual que `deploy/backend.env.example`):
 
 ```
 SUPABASE_URL=
@@ -784,9 +775,9 @@ TURSO_URL=
 TURSO_TOKEN=
 ```
 
-`ENVIRONMENT=production` ya viene en la imagen. `FRONTEND_URL` solo hace falta mientras el callback siga en el backend, e `INSTAGRAM_SNAPSHOT_JOB_TOKEN` solo si el job se dispara por HTTP en lugar de con `docker compose exec`.
+`ENVIRONMENT=production` ya viene en la imagen. `INSTAGRAM_REDIRECT_URI` debe coincidir con Meta y con el callback de Next ([5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura)). `INSTAGRAM_SNAPSHOT_JOB_TOKEN` solo si el job se dispara por HTTP ([7.5](#75-job-de-snapshots)).
 
-**`deploy/frontend.env`:**
+**`deploy/frontend.env`** (igual que `deploy/frontend.env.example`):
 
 ```
 BACKEND_URL=http://backend:8000
@@ -795,134 +786,206 @@ SUPABASE_SECRET_KEY=
 
 `SUPABASE_SECRET_KEY` es la clave secreta (`sb_secret_…`) para el IP forwarding de [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios). Las `NEXT_PUBLIC_*` no van acá: son build args ([3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado)).
 
-Agregar `deploy/*.env` a `.gitignore`: el patrón actual `.env*` solo cubre archivos cuyo nombre empieza con `.env`.
+Los `.env` reales en `deploy/` ya están en `.gitignore` (`deploy/*.env`, excepción `!deploy/*.env.example`); el patrón `.env*` del repo no los cubriría porque el nombre no empieza con `.env`.
 
-### 7.4 Caddy
+### ✅ 7.4 nginx [verificado]
 
-`deploy/Caddyfile`:
+Archivos en el repo:
 
-```
-<dominio> {
-    encode zstd gzip
+| Archivo | Rol |
+|---------|-----|
+| `deploy/nginx/nginx.conf` | Global: `client_max_body_size 4m`, `server_tokens off`, zona `auth_post` |
+| `deploy/nginx/templates/default.conf.template` | Virtual hosts; el entrypoint oficial sustituye `${DOMAIN}` |
+| `deploy/nginx/docker-entrypoint.d/30-ensure-certs.sh` | Si no hay LE aún, cert autofirmado 2 días para que 443 arranque |
+| `deploy/obtain-cert.sh` | Primera emisión LE (webroot); requiere `DOMAIN` y `EMAIL` |
+| `deploy/renew-certs.sh` | `certbot renew` + `nginx -s reload` |
 
-    request_body {
-        max_size 4MB
-    }
-
-    reverse_proxy frontend:3000
-}
-
-www.<dominio> {
-    redir https://<dominio>{uri} permanent
-}
-```
-
-- Caddy obtiene y renueva los certificados solo, siempre que los registros DNS A y AAAA apunten al VPS y los puertos 80 y 443 estén abiertos.
-- Reenvía el `Host` original y escribe `X-Forwarded-For`, `X-Forwarded-Proto` y `X-Forwarded-Host`, **reemplazando** lo que mande el cliente mientras no se configure `trusted_proxies`. Las Server Actions lo necesitan, porque comparan `Origin` con el host y fallan si el proxy no lo reenvía. Y [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios) depende de que la IP no se pueda falsificar.
-- El streaming de Next funciona sin configuración extra: Caddy envía de inmediato las respuestas sin `Content-Length`. Con nginx haría falta `proxy_buffering off` o el header `X-Accel-Buffering: no`, como indica `frontend/node_modules/next/dist/docs/01-app/02-guides/self-hosting.md`.
-
-**Callbacks públicos hacia el backend.** Meta (desautorización / borrado de datos) y solo esas rutas. El resto del backend, incluido `/internal/*`, no se expone. Con nginx ya está en `deploy/nginx/templates/default.conf.template`. Equivalente en Caddy (sumado a la red `app`):
-
-```
-<dominio> {
-    handle /instagram/deauthorize {
-        reverse_proxy backend:8000
-    }
-    handle /instagram/data-deletion* {
-        reverse_proxy backend:8000
-    }
-    handle {
-        reverse_proxy frontend:3000
-    }
-}
-```
-
-**Rate limiting en el proxy.** Con nginx, limitando solo los POST de las páginas de auth. Va dentro del bloque `http`; el TLS (por ejemplo con certbot) se configura aparte:
+- **HTTP (80):** `/.well-known/acme-challenge/` → webroot `certbot_www`; el resto redirige a HTTPS.
+- **TLS:** certificados en `/etc/letsencrypt` (volumen `certbot_certs`). Tras el primer `up`, ejecutar `DOMAIN=… EMAIL=… ./deploy/obtain-cert.sh` (borra el autofirmado temporal y emite para apex + `www`). Renovación: cron con `./deploy/renew-certs.sh` ([7.3](#73-docker-composeprodyml-verificado)).
+- **www:** `www.${DOMAIN}` en 443 redirige al apex (`${DOMAIN}`).
+- **Proxy al frontend:** `proxy_buffering off` y `proxy_request_buffering off` (Server Actions / streaming).
+- **Cabeceras:** `Host`, `X-Forwarded-Host`, `X-Forwarded-Proto` y `X-Forwarded-For` con `$remote_addr` (reemplaza lo que mande el cliente). [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios) depende de que la IP no se falsifique.
+- **Callbacks Meta** (único tráfico público al backend; upstream `backend:8000`):
 
 ```nginx
+location = /instagram/deauthorize {
+    proxy_pass http://backend_upstream;
+}
+location = /instagram/data-deletion {
+    proxy_pass http://backend_upstream;
+}
+location = /instagram/data-deletion/status {
+    proxy_pass http://backend_upstream;
+}
+```
+
+**Rate limiting:** la zona está en `nginx.conf`; el `limit_req` se aplica en la plantilla solo a `/login`, `/register`, `/forgot-password` y `/reset-password`:
+
+```nginx
+# nginx.conf
 map $request_method $auth_post_key {
     POST    $binary_remote_addr;
     default "";
 }
-
 limit_req_zone $auth_post_key zone=auth_post:10m rate=10r/m;
 
-server {
-    server_name <dominio>;
-    client_max_body_size 4m;
-
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-For $remote_addr;
-    proxy_buffering off;
-
-    location ~ ^/(login|register|forgot-password|reset-password)$ {
-        limit_req zone=auth_post burst=5 nodelay;
-        proxy_pass http://frontend:3000;
-    }
-
-    location / {
-        proxy_pass http://frontend:3000;
-    }
+# default.conf.template
+location ~ ^/(login|register|forgot-password|reset-password)$ {
+    limit_req zone=auth_post burst=5 nodelay;
+    proxy_pass http://frontend_upstream;
 }
 ```
 
-Las requests con la clave vacía (todo lo que no es POST) no cuentan para el límite. Con Caddy hace falta una imagen propia con el plugin `caddy-ratelimit` (`xcaddy build --with github.com/mholt/caddy-ratelimit`).
+Solo los POST cuentan hacia el límite (10/min por IP): los GET a esas rutas llevan clave vacía en la zona. El resto del sitio no usa `limit_req`.
 
-### 7.5 Job de snapshots
+### ✅ 7.5 Job de snapshots [verificado]
 
-Crontab del usuario de despliegue, **una vez por día** ([5.2](#52-nadie-ejecuta-el-job-de-snapshots)). Usá `bash -lc` con `pipefail` para que un `failed > 0` (exit 1 del script) no se pierda al pipe a `logger`:
+Script en el repo: `deploy/run-snapshots.sh` (equivale a `docker compose … exec -T backend python run_instagram_snapshots.py` desde la raíz del proyecto). Requiere el `.env` del VPS con `TAG` ([7.3](#73-docker-composeprodyml-verificado), [7.9](#79-build-y-despliegue)).
+
+Crontab del usuario de despliegue, **una vez al día** ([5.2](#52-nadie-ejecuta-el-job-de-snapshots)). Usá `bash -lc` con `pipefail` para que un exit `1` (p. ej. `failed > 0`) no se pierda al pipe a `logger`:
 
 ```
-15 4 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && docker compose -f docker-compose.prod.yml exec -T backend python run_instagram_snapshots.py 2>&1 | logger -t sellonomada-snapshots'
+15 4 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && ./deploy/run-snapshots.sh 2>&1 | logger -t sellonomada-snapshots'
 ```
 
-- La salida queda en journald (`journalctl -t sellonomada-snapshots`).
-- Para enterarse si el job deja de correr, agregar al final un ping a un servicio de heartbeat (Healthchecks.io, Better Stack o Uptime Kuma), que avisa cuando no llega.
-- Con `docker compose exec` el job usa la misma imagen y las mismas variables que el backend, y no hace falta exponer ni proteger `/internal/instagram/snapshots`.
-- `run_instagram_snapshots.py` sale con código `1` si `failed > 0`.
+Comportamiento (`backend/run_instagram_snapshots.py` + `CaptureInstagramFollowers.execute_all`):
+
+- Imprime `captured=N failed=M` y sale `0` si `failed == 0` (incluso con cero cuentas conectadas).
+- Sale `1` si alguna cuenta falló; los demás siguen procesándose ([5.3](#53-un-error-de-infraestructura-corta-el-job-completo)).
+- Renovación de tokens en ventana de 7 días antes del vencimiento ([INSTAGRAM_ANALYTICS.md](./INSTAGRAM_ANALYTICS.md)).
+
+Operación:
+
+- Logs en journald: `journalctl -t sellonomada-snapshots`.
+- Heartbeat opcional: al final del cron, un `curl` silencioso a Healthchecks.io / Better Stack / Uptime Kuma si el script terminó bien (alerta si el cron deja de correr).
+- Con `exec` no hace falta `INSTAGRAM_SNAPSHOT_JOB_TOKEN` ni exponer `POST /internal/instagram/snapshots` (sigue disponible para pruebas locales).
+- Tests: `backend/tests/unit/test_run_instagram_snapshots.py`.
 
 ### 7.6 Endurecimiento del servidor
 
-- Ubuntu 24.04 LTS o Debian 12, con `unattended-upgrades` activo.
-- Un usuario de despliegue sin root, que pertenezca al grupo `docker`. SSH solo con clave (`PasswordAuthentication no`, `PermitRootLogin no`) y `fail2ban`.
-- UFW: permitir solo SSH, 80 y 443. **Ojo:** los puertos que publica Docker se saltean UFW, porque Docker escribe sus propias reglas de iptables. Por eso solo Caddy publica puertos, y ningún otro servicio debe tener `ports:`. Si alguno tiene que publicarse para uso local, que sea `127.0.0.1:8000:8000`.
-- Rotación de logs de Docker: la de [7.3](#73-docker-composeprodyml), o global en `/etc/docker/daemon.json` (`"log-driver": "json-file"`, `"log-opts": {"max-size": "10m", "max-file": "5"}`).
-- Reloj sincronizado (`systemd-timesyncd`): el backend valida el vencimiento de los JWT con solo 30 segundos de tolerancia.
-- Swap de 1 a 2 GB si el VPS tiene poca RAM.
+Checklist **del host** (no va en el repo). Lo que ya cubre el compose de prod ([7.3](#73-docker-composeprodyml-verificado)): solo **nginx** tiene `ports:` (80/443); backend y frontend no publican nada al host; logging `json-file` 10m×5 por servicio.
+
+**Sistema**
+
+- Ubuntu 24.04 LTS o Debian 12.
+- `unattended-upgrades` activo (parches de seguridad sin intervención).
+- Reloj con `systemd-timesyncd` (o NTP del proveedor): el backend valida JWT con `leeway=30` (`backend/api/dependencies/auth.py`); un reloj desfasado rechaza tokens válidos o acepta vencidos.
+- Swap de 1–2 GB si el VPS tiene ≤2 GB de RAM (Next/uvicorn pueden spikear en arranque o bajo carga).
+
+**Acceso**
+
+- Usuario de despliegue sin root, en el grupo `docker` (p. ej. home `/opt/sellonomada` o el repo clonado ahí).
+- SSH: solo clave; `PasswordAuthentication no`, `PermitRootLogin no`; opcionalmente restringir `AllowUsers`.
+- `fail2ban` con jail `sshd` (y, si conviene, contra 80/443 si aparecen abusos repetidos).
+
+**Firewall**
+
+- UFW: permitir SSH (22 o el puerto que uses), 80 y 443; denegar el resto de entrada.
+- **Docker vs UFW:** los `ports:` de Compose escriben reglas de iptables **antes** que UFW. Un `ports: ["8000:8000"]` deja el backend en internet aunque UFW diga lo contrario ([3.5](#35-no-existe-configuración-de-producción-para-el-vps)). Por eso el prod no publica backend/frontend. Si algún día hace falta un puerto local de debug: `127.0.0.1:8000:8000`, nunca `0.0.0.0`.
+
+**Logs**
+
+- Por servicio: ya en `docker-compose.prod.yml` (`x-logging`).
+- Opcional global en `/etc/docker/daemon.json` si otros contenedores fuera de este compose:
+
+  ```json
+  {
+    "log-driver": "json-file",
+    "log-opts": { "max-size": "10m", "max-file": "5" }
+  }
+  ```
+
+Tras cambios de SSH/UFW, verificar que seguís entrando por SSH **antes** de cerrar la sesión actual.
 
 ### 7.7 Backups y monitoreo
 
-**Backups**
+Checklist **operativa** (no hay scripts de backup en el repo). Lo que ya aporta el código: logs JSON del backend con `request_id` (`backend/api/logging.py`, `backend/api/request_id.py`); el access log de `/health` se filtra para no llenar disco; `/health` **no** está expuesto por nginx (solo Meta + frontend).
 
-- **Supabase:** con el plan Free no hay backups automáticos. Un `supabase db dump` (o `pg_dump`) diario a un almacenamiento externo (Backblaze B2, S3, etc.), con retención y una **prueba de restauración** periódica. Con Pro, backups diarios de 7 días, y PITR como opción paga.
-- **Storage (avatares):** no entra en los backups de la base. Sincronizar el bucket periódicamente (Supabase Storage tiene API compatible con S3; sirve `rclone`).
-- **Turso:** revisar qué incluye el plan y sumar un volcado periódico (`turso db shell <base> .dump`).
-- **Claves de cifrado:** sin ellas, los backups de emails y tokens no sirven ([4.12](#412-claves-de-cifrado)).
+**Backups** — tres almacenes distintos + las claves:
+
+| Dato | Dónde vive | Qué hacer |
+|------|------------|-----------|
+| Perfiles, posts, auth | Supabase Postgres | Plan **Free:** sin backups automáticos y el proyecto puede pausarse; dump diario (`supabase db dump` / `pg_dump`) a B2/S3/etc. con retención y **prueba de restore**. **Pro:** backups diarios 7 días; PITR opcional. Ver [6.1](#61-supabase-de-producción). |
+| Avatares | Supabase Storage | No entran en el dump de la base. Sync periódico del bucket (API S3-compatible; `rclone` sirve). |
+| Conexiones IG + snapshots | Turso | Revisar retención del plan; dump periódico (`turso db shell <base> .dump`) a almacenamiento externo. |
+| Claves de cifrado | `deploy/backend.env` + gestor | Sin `EMAIL_*` / `INSTAGRAM_TOKEN_ENCRYPTION_KEY`, emails y tokens del backup son ilegibles ([4.12](#412-claves-de-cifrado)). Guardarlas offline; rotar si alguna estuvo en la laptop. |
 
 **Monitoreo**
 
-- Uptime (UptimeRobot, Better Stack o Uptime Kuma) contra `https://<dominio>/robots.txt` y contra un perfil público, que pasa por el backend.
-- Errores con Sentry en el backend (`sentry-sdk[fastapi]`) y en el frontend (`@sentry/nextjs`), sin datos personales (`send_default_pii=False`).
-- Logs: `docker compose logs`; los del backend ya salen en JSON con `request_id`.
-- Alertas de disco y memoria del VPS, y el heartbeat del job ([7.5](#75-job-de-snapshots)).
+- **Uptime:** sondear `https://<dominio>/robots.txt` (solo frontend) y una URL de perfil público (frontend → backend → Supabase/Turso según la página). No uses `/health` desde fuera: nginx no lo publica.
+- **Heartbeat del job:** si el cron de [7.5](#75-job-de-snapshots-verificado) deja de correr, aviso vía Healthchecks.io / Better Stack / Uptime Kuma.
+- **Errores (pendiente de código):** hoy no hay Sentry. Cuando se agregue: `sentry-sdk[fastapi]` en el backend y `@sentry/nextjs` en el frontend, con `send_default_pii=False` y sin tokens/emails en el contexto.
+- **Logs:** `docker compose -f docker-compose.prod.yml logs -f backend` (JSON + `request_id`); frontend/nginx igual. Rotación ya en [7.3](#73-docker-composeprodyml-verificado) / [7.6](#76-endurecimiento-del-servidor).
+- **Host:** alerta de disco y memoria del VPS (panel del proveedor o agente ligero).
 
-### 7.8 Secretos
+### ✅ 7.8 Secretos [layout verificado]
 
-- Un archivo de variables por servicio en `deploy/`, con permisos `600`, propiedad del usuario de despliegue y nunca en git.
-- Claves de producción **nuevas**: la clave secreta del proyecto de Supabase de producción, `openssl rand -hex 32` para cada clave de cifrado, y un token de Turso limitado a la base de producción.
-- Las claves de cifrado, también en un gestor de contraseñas y en una copia offline ([4.12](#412-claves-de-cifrado)).
-- Si algún recurso de desarrollo pasa a ser de producción, rotar sus claves: estuvieron en la laptop y en `.env`.
-- Sacar de `.env` las variables que sobran ([9](#9-calidad-de-código-y-limpieza)).
+En el repo ya están las plantillas y el `.gitignore` (`deploy/*.env`, excepción `*.env.example`). En el VPS: copiar, rellenar con valores **de producción** (no los de la laptop), `chmod 600`, dueño = usuario de despliegue.
+
+| Archivo en el VPS | Origen | Contenido |
+|-------------------|--------|-----------|
+| `/opt/sellonomada/.env` | `deploy/compose.env.example` | `TAG`, `DOMAIN` — no son secretos de app; Compose los exige para interpolar |
+| `deploy/backend.env` | `deploy/backend.env.example` | Ver tabla abajo |
+| `deploy/frontend.env` | `deploy/frontend.env.example` | `BACKEND_URL=http://backend:8000`, `SUPABASE_SECRET_KEY` (IP forwarding, [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)) |
+
+**`deploy/backend.env` — qué va y qué no**
+
+| Variable | Notas |
+|----------|--------|
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Proyecto **de producción**; clave `sb_secret_…` (nunca la publishable) |
+| `EMAIL_ENCRYPTION_KEY`, `EMAIL_HMAC_KEY`, `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | `openssl rand -hex 32` cada una; **nuevas** respecto a desarrollo ([4.12](#412-claves-de-cifrado)). También en gestor de contraseñas + copia offline |
+| `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET` | App de Meta de producción |
+| `INSTAGRAM_REDIRECT_URI` | `https://<dominio>/auth/instagram/callback` (exacto en Meta) |
+| `TURSO_URL`, `TURSO_TOKEN` | Base remota de producción; token con el menor privilegio posible |
+| `INSTAGRAM_SNAPSHOT_JOB_TOKEN` | **Opcional** si solo usás `deploy/run-snapshots.sh` ([7.5](#75-job-de-snapshots-verificado)) |
+| `ENVIRONMENT` | No hace falta: va en la imagen (`production`) |
+
+**No van en los `.env` del VPS**
+
+- `NEXT_PUBLIC_*`: build args de la imagen en CI ([3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado), [7.9](#79-build-y-despliegue)). Son públicas; no las trates como secretos de Actions.
+- Google OAuth: solo en el dashboard de Supabase / `configure-supabase-google-oauth.sh` ([6.3](#63-google-oauth)).
+- Resend / SMTP de Auth: en Supabase ([6.1](#61-supabase-de-producción)), no en el contenedor de la app.
+- Variables de desarrollo (`SUPABASE_DEVELOPMENT_*`, `TURSO_DEVELOPMENT_*`, `SPOTIFY_*`, etc.): no copiarlas ([9](#9-calidad-de-código-y-limpieza)).
+
+Si un recurso que estuvo en la laptop (proyecto Supabase, app Meta, base Turso) pasa a producción, **rotar** todas sus claves antes del go-live.
 
 ### 7.9 Build y despliegue
 
-- Construir las imágenes en CI y publicarlas en GitHub Container Registry, con el SHA del commit como tag ([8](#8-ci)). En el VPS, guardar el tag desplegado en `/opt/sellonomada/.env` (`TAG=<sha>`), que Compose lee para interpolar el archivo. Así `docker compose -f docker-compose.prod.yml pull`, `up -d` y el cron de [7.5](#75-job-de-snapshots) usan siempre la misma versión; sin ese archivo, cualquier comando de Compose, incluido `exec`, falla por la variable obligatoria. Si el repositorio es privado, el VPS necesita `docker login ghcr.io` con un token de solo lectura (`read:packages`).
-- Las `NEXT_PUBLIC_*` como variables de GitHub Actions (no secretos: son públicas).
-- **Rollback:** poner el tag anterior en ese `.env` y volver a ejecutar `up -d`.
-- **Migraciones antes del código que las necesita** (`supabase db push`), y siempre compatibles con la versión que está corriendo: primero se agrega, después se despliega el código y al final se quita lo viejo.
-- `up -d` recrea los contenedores y corta unos segundos, algo aceptable a esta escala. Después de un deploy, las pestañas abiertas pueden fallar al invocar Server Actions de la versión anterior hasta que recarguen. Si en algún momento hay más de una instancia del frontend, hace falta el mismo `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` en el build de todas, y `deploymentId` para manejar las diferencias de versión, según la guía de self-hosting.
+El compose ya fija las imágenes ([7.3](#73-docker-composeprodyml-verificado)); **falta el pipeline** que las publique ([8](#8-ci)). Nombres esperados:
+
+| Servicio | Imagen |
+|----------|--------|
+| backend | `ghcr.io/fabvargaspinto/rank-backend:${TAG}` |
+| frontend | `ghcr.io/fabvargaspinto/rank-frontend:${TAG}` |
+
+`TAG` = SHA del commit (o un tag semántico que apunte a la misma digest). Vive en `/opt/sellonomada/.env` junto con `DOMAIN` (`deploy/compose.env.example`). Sin ese archivo, cualquier `compose` (incluido `exec` del cron) falla por `TAG`/`DOMAIN` obligatorios.
+
+**CI → GHCR (cuando exista [8](#8-ci))**
+
+1. En verde: tests + lint.
+2. Build `target: production` de backend y frontend; frontend con build args `NEXT_PUBLIC_*` desde **variables** de Actions (no secrets: son públicas).
+3. Push a GHCR con tag `${{ github.sha }}` y los nombres de la tabla (no `github.repository-backend`, que no coincide con el compose).
+4. En el VPS: `docker login ghcr.io` con un PAT o token de solo lectura (`read:packages`) si los paquetes son privados.
+
+**Despliegue en el VPS**
+
+```bash
+cd /opt/sellonomada
+# 1) Migraciones compatibles con la versión que aún corre (expandir primero)
+#    supabase db push   # desde la máquina/CI con el proyecto de prod
+# 2) Apuntar al nuevo tag
+#    editar .env → TAG=<sha>
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+# Primera vez con DNS listo:
+#   DOMAIN=… EMAIL=… ./deploy/obtain-cert.sh
+# Después: cron de renew-certs + run-snapshots ([7.4](#74-nginx-verificado), [7.5](#75-job-de-snapshots-verificado))
+```
+
+- **Rollback:** poner el `TAG` anterior en `.env` y `pull` + `up -d`.
+- **Migraciones:** siempre forward-compatible con el código viejo (agregar → desplegar → quitar). Nunca un `DROP` que rompa la versión en curso ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)).
+- **Corte breve:** `up -d` recrea contenedores unos segundos. Las pestañas abiertas pueden fallar Server Actions de la build anterior hasta recargar. Varias réplicas de Next exigirían el mismo `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` en el build y `deploymentId` (guía de self-hosting de Next); a esta escala basta una instancia.
+- **No construir Next en el VPS** de 2 GB: el build va en CI ([7.1](#71-arquitectura)).
 
 ---
 
@@ -1004,13 +1067,13 @@ jobs:
           context: backend
           target: production
           push: true
-          tags: ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+          tags: ghcr.io/fabvargaspinto/rank-backend:${{ github.sha }}
       - uses: docker/build-push-action@v6
         with:
           context: frontend
           target: production
           push: true
-          tags: ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
+          tags: ghcr.io/fabvargaspinto/rank-frontend:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -1019,6 +1082,7 @@ jobs:
 
 Notas:
 
+- Los tags de imagen deben coincidir con `docker-compose.prod.yml` (`rank-backend` / `rank-frontend`), no con `github.repository-backend`.
 - `uv run mypy` sin argumentos usa los `files` de `pyproject.toml`. `mypy .` también revisa `tests/` y da 591 errores.
 - `pnpm/action-setup` toma la versión de pnpm del campo `packageManager` de `frontend/package.json`.
 - `pnpm build` sin `BACKEND_URL` es a propósito: verifica [3.1](#31-la-imagen-de-producción-del-frontend-no-compila-verificado).
@@ -1086,7 +1150,7 @@ Estimaciones orientativas para una persona.
 - [ ] Migración base sin `DROP`, proyecto de Supabase y base de Turso de producción ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)).
 - [ ] Propiedad del avatar en la API, el dominio y la base; primero los tests ([3.4](#34-un-usuario-puede-usar-el-avatar-de-otro-y-borrarlo-verificado)).
 - [x] Dockerfile del backend, `.dockerignore`, configuración validada en el `lifespan` y Turso obligatorio en producción ([3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado), [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero)).
-- [ ] `docker-compose.prod.yml`, Caddyfile, archivos de variables, rotación de logs y cron diario ([7](#7-el-vps)).
+- [ ] `docker-compose.prod.yml`, nginx + certbot, archivos de variables, rotación de logs y cron diario ([7](#7-el-vps)).
 - [x] Cabeceras de seguridad y `poweredByHeader: false` ([4.7](#47-cabeceras-de-seguridad-verificado)).
 - [ ] Supabase de producción: Site URL, redirects, confirmación, SMTP, plantillas y política de contraseñas ([6.1](#61-supabase-de-producción)).
 - [ ] CI mínimo y corrección de los errores de ruff, mypy y ESLint ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)).
