@@ -313,7 +313,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 |---|---|---|
 | `:14` y `:47` | `target: development` | `uvicorn --reload` y `pnpm dev`: lentos, con errores detallados y recarga de código |
 | `:15-16` y `:48-49` | Publica los puertos 8000 y 3000 | **Docker publica puertos salteándose UFW**: el backend queda accesible desde internet aunque el firewall diga lo contrario |
-| `:17-18` | `env_file: .env` | El backend recibe todas las variables del archivo, incluidas las de otros servicios y las que sobran (`GOOGLE_CLIENT_SECRET`, `SPOTIFY_*`) |
+| `:17-18` | `env_file: .env` | El backend recibe todas las variables del archivo; no pasar secretos ajenos (p. ej. Google OAuth va en Supabase, [6.3](#63-google-oauth)) |
 | `:53` | `NODE_TLS_REJECT_UNAUTHORIZED: "0"` | **Desactiva la verificación TLS de todas las conexiones salientes de Node**, incluidas las de Supabase Auth: alguien en el camino de red podría interceptar contraseñas y tokens |
 | — | Sin proxy reverso | Nadie termina HTTPS ni renueva certificados |
 | — | Sin job de snapshots | Ver [5.2](#52-nadie-ejecuta-el-job-de-snapshots) |
@@ -624,7 +624,7 @@ El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-
 - [ ] Google configurado con las credenciales del proyecto de Google de producción ([6.3](#63-google-oauth)).
 - [ ] Security Advisor y Performance Advisor sin alertas.
 
-### 6.2 Meta (Instagram)
+###  ✅6.2 Meta (Instagram)
 
 - [ ] App en modo **Live**, con *Advanced Access* aprobado en App Review para `instagram_business_basic`. Sin eso solo pueden conectarse las cuentas que tienen un rol en la app. App Review pide un video del flujo y puede tardar días, así que conviene empezarlo en paralelo con el resto.
 - [ ] Verificación del negocio, si Meta la pide para el acceso avanzado.
@@ -635,11 +635,15 @@ El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-
   - Data deletion: `https://<dominio>/instagram/data-deletion`
 - [ ] App de desarrollo separada de la de producción, o por lo menos tokens y testers que no se mezclen.
 
-### 6.3 Google OAuth
+### ✅ 6.3 Google OAuth
 
-- [ ] Pantalla de consentimiento **publicada** (*In production*), con dominio verificado, logo y enlaces a privacidad y términos. Sin publicar, solo pueden entrar los usuarios de prueba.
-- [ ] *Authorized redirect URI*: `https://<proyecto>.supabase.co/auth/v1/callback`. El callback es de Supabase, no de la app.
-- [ ] El Client ID y el Secret van al dashboard de Supabase. Hoy `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` están en `.env` sin uso, y el compose de desarrollo se los pasa al backend.
+La app solo llama `signInWithOAuth({ provider: "google" })` (`frontend/lib/google-oauth-action.ts`); el Client ID/Secret viven en Supabase Auth, no en el backend.
+
+**Script:** `./scripts/configure-supabase-google-oauth.sh` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUPABASE_ACCESS_TOKEN`).
+
+- [ ] Pantalla de consentimiento **publicada** (*In production*), con dominio verificado, logo y enlaces a privacidad y términos ([6.4](#64-páginas-legales)). Sin publicar, solo pueden entrar los usuarios de prueba.
+- [ ] *Authorized redirect URI* en Google Cloud: `https://<proyecto>.supabase.co/auth/v1/callback` (callback de Supabase, no de la app).
+- [ ] Client ID y Secret en Supabase (`./scripts/configure-supabase-google-oauth.sh` o *Authentication → Providers → Google*). No van en el `.env` de la app ni en el compose.
 
 ### 6.4 Páginas legales
 
@@ -1043,7 +1047,7 @@ Notas:
 - `backend/README.md` está vacío. Mínimo: setup, variables, tests y despliegue, con un enlace a este documento.
 - `backend/config/crypto_setings.py` tiene un error en el nombre; su propio comentario dice `crypto_settings.py`.
 - `backend/tests/integration/spotify/` es un directorio vacío.
-- En `.env` sobran `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (van en el dashboard de Supabase), `SPOTIFY_*` y `TURSO_DATABASE`. `SUPABASE_ANON_KEY` está vacía y solo la usan los tests de integración.
+- En `.env` no deben figurar `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (van en el dashboard de Supabase o en `./scripts/configure-supabase-google-oauth.sh`). También sobran `SPOTIFY_*` y `TURSO_DATABASE` si aparecen. `SUPABASE_ANON_KEY` está vacía y solo la usan los tests de integración.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` contiene una clave publicable (`sb_publishable_…`), no una anon key. Renombrarla a `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` evita confusiones al configurar el CI y el servidor.
 - `docker-compose.yml` de desarrollo usa por defecto los servicios hosted, por el `.env`. Conviene que el desarrollo use Supabase local por defecto, como ya hace `integration-tests`.
 - `get_user_by_name` busca con `ilike` (`backend/core/user/infrastructure/user_supabase_repo.py:57`), que no puede usar un índice btree: cada visita a un perfil público recorre la tabla. Como el `CHECK` garantiza nombres en minúsculas, un `UNIQUE (name)` es equivalente al índice actual sobre `lower(name)` y permite buscar con `eq`.
