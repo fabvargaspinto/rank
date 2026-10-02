@@ -361,7 +361,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.7](#47-cabeceras-de-seguridad-verificado) | ~~Sin cabeceras de seguridad~~ — headers + CSP Report-Only | — | — |
 | [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | ~~Cambio de contraseña con cualquier sesión~~ — cookie de recovery + signOut others | — | — |
 | [4.9](#49-mensajes-de-error-tomados-de-la-url) | ~~Mensajes de error en la URL~~ — códigos `?error=` | — | — |
-| [4.10](#410-límite-de-body) | Límite de body basado solo en `Content-Length` | Baja | XS |
+| [4.10](#410-límite-de-body) | ~~Límite de body solo por Content-Length~~ — stream + nginx 4m | — | — |
 | [4.11](#411-base-de-datos) | Perfil huérfano al borrar un usuario desde el dashboard; `GRANT SELECT` sin uso | Baja | XS |
 | [4.12](#412-claves-de-cifrado) | Claves de cifrado: custodia, versión y rotación | Media | S |
 
@@ -526,9 +526,9 @@ Se eliminó `TRIAL_TESTER_EMAILS` / `trial_testers` del backend y del frontend. 
 
 Login y register solo muestran textos propios vía `messageForAuthError` (`frontend/lib/auth/auth-error.ts`). Los redirects usan códigos (`oauth_failed`, `link_expired`, `not_allowed`, `session_expired`, `provision_failed`); lo desconocido se ignora.
 
-### 4.10 Límite de body
+### ✅ 4.10 Límite de body
 
-`backend/api/body_limit.py:21-23` solo mira `Content-Length`: una request con `Transfer-Encoding: chunked` no lo trae y pasa. Para el avatar el límite real lo pone `_read_upload` (`backend/api/routers/me.py:33-37`), pero los bodies JSON se leen enteros. Con el backend fuera de internet el riesgo es bajo. El límite que importa va en el proxy (`request_body { max_size 4MB }` en Caddy o `client_max_body_size 4m` en nginx); Next ya limita las Server Actions a 3 MB (`frontend/next.config.ts:6-10`).
+`BodySizeLimitMiddleware` rechaza por `Content-Length` y, si no viene (p. ej. chunked), lee el stream hasta 3 MB (`backend/api/body_limit.py`). Nginx ya tiene `client_max_body_size 4m` (`deploy/nginx/nginx.conf`). Next limita Server Actions a 3 MB.
 
 ### 4.11 Base de datos
 
