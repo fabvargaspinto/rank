@@ -6,6 +6,7 @@ from core.user.domain.user_created_at import UserCreatedAt
 from core.user.domain.user_description import UserDescription
 from core.user.domain.user_display_name import UserDisplayName
 from core.user.domain.user_error import (
+    InvalidUserAvatarError,
     InvalidUserLinksReorderError,
     TooManyUserLinksError,
     UserLinkNotFoundError,
@@ -68,7 +69,12 @@ class User:
         self._touch()
 
     def change_avatar(self, avatar: str) -> None:
-        self.avatar = UserAvatar(avatar)
+        candidate = UserAvatar(avatar)
+        if not candidate.belongs_to(self.id):
+            raise InvalidUserAvatarError(
+                "El avatar debe ser una imagen del propio usuario"
+            )
+        self.avatar = candidate
         self._touch()
 
     def remove_avatar(self) -> None:

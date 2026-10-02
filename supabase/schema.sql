@@ -33,8 +33,11 @@ CREATE TABLE public.users (
     ),
     CONSTRAINT users_avatar_path CHECK (
         avatar_url IS NULL
-        OR avatar_url ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\.webp$'
-        OR avatar_url ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/avatar\.(jpg|png|webp)$'
+        OR avatar_url ~ (
+            '^'
+            || id::text
+            || '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$'
+        )
     )
 );
 

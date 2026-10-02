@@ -2,17 +2,8 @@ from api.schemas.post import PostListResponse, PostResponse
 from api.schemas.user import UserLinkResponse, UserResponse
 from core.post.domain.post import Post
 from core.post.domain.post_page import PostPage
-from core.user.application.update_user import UNSET
 from core.user.domain.user import User
-from core.user.infrastructure.avatar_url import object_path, public_avatar_url
-
-
-def stored_avatar(avatar: str | None | object) -> str | None | object:
-    if avatar is UNSET or avatar is None:
-        return avatar
-    if not isinstance(avatar, str) or not avatar.strip():
-        return avatar
-    return object_path(avatar)
+from core.user.infrastructure.avatar_url import public_avatar_url
 
 
 def to_user_response(user: User, supabase_url: str) -> UserResponse:

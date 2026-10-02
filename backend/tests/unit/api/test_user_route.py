@@ -38,8 +38,7 @@ from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
 SUPABASE_URL = "https://example.supabase.co"
-AVATAR_PATH = f"{AUTH_ID}/avatar.jpg"
-AVATAR_URL = public_avatar_url(SUPABASE_URL, AVATAR_PATH)
+FILE_ID = "550e8400-e29b-41d4-a716-446655440000"
 ISSUER = "https://example.supabase.co/auth/v1"
 USERNAME = "luna"
 
@@ -53,9 +52,14 @@ def _named_user() -> User:
     user = User.create_empty()
     user.rename("lunareyes")
     user.change_display_name("Luna Reyes")
-    user.change_avatar(AVATAR_PATH)
+    user.change_avatar(f"{user.id.value}/{FILE_ID}.webp")
     user.describe("Cantautora")
     return user
+
+
+def _avatar_url(user: User) -> str:
+    assert user.avatar is not None
+    return public_avatar_url(SUPABASE_URL, user.avatar.value)
 
 
 def _client(repo: FakeUserRepo | None = None) -> TestClient:
@@ -111,7 +115,7 @@ class TestGetUserByAuthId:
             "id": user.id.value,
             "name": "lunareyes",
             "display_name": "Luna Reyes",
-            "avatar": AVATAR_URL,
+            "avatar": _avatar_url(user),
             "description": "Cantautora",
             "links": [],
         }
@@ -144,7 +148,7 @@ class TestGetUserByName:
             "id": user.id.value,
             "name": "lunareyes",
             "display_name": "Luna Reyes",
-            "avatar": AVATAR_URL,
+            "avatar": _avatar_url(user),
             "description": "Cantautora",
             "links": [],
             "posts": [],
@@ -184,7 +188,6 @@ class TestUpdateUser:
             "/me",
             json={
                 "name": "luna",
-                "avatar": AVATAR_URL,
                 "description": "Cantautora",
             },
         )
@@ -194,14 +197,20 @@ class TestUpdateUser:
             "id": user.id.value,
             "name": "luna",
             "display_name": None,
-            "avatar": AVATAR_URL,
+            "avatar": None,
             "description": "Cantautora",
             "links": [],
         }
 
-    def test_rejects_avatar_from_another_domain(self):
+    def test_rejects_avatar_field_on_patch(self):
         repo = FakeUserRepo()
-        repo.users_by_auth_id[AUTH_ID] = User.create_empty()
+        user = User.create_empty()
+        other = User.create_empty()
+        foreign = public_avatar_url(
+            SUPABASE_URL,
+            f"{other.id.value}/{FILE_ID}.webp",
+        )
+        repo.users_by_auth_id[AUTH_ID] = user
         app_client = _client(repo)
         app_client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
             auth_id=AUTH_ID,
@@ -212,11 +221,12 @@ class TestUpdateUser:
             "/me",
             json={
                 "name": "luna",
-                "avatar": "https://otro-dominio.example/pixel.gif",
+                "avatar": foreign,
             },
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 422
+        assert user.avatar is None
 
     def test_omitted_avatar_keeps_existing(self):
         repo = FakeUserRepo()
@@ -235,7 +245,7 @@ class TestUpdateUser:
         )
 
         assert response.status_code == 200
-        assert response.json()["avatar"] == AVATAR_URL
+        assert response.json()["avatar"] == _avatar_url(user)
         assert response.json()["name"] == "luna"
         assert response.json()["description"] == "Nueva bio"
 
@@ -441,4 +451,5 @@ class TestDeleteAccountRoute:
         assert response.content == b""
         assert AUTH_ID not in repo.users_by_auth_id
         assert auth.deleted_ids == [AUTH_ID]
-        assert avatars.deleted == [AVATAR_PATH]
+        assert user.avatar is not None
+        assert avatars.deleted == [user.avatar.value]

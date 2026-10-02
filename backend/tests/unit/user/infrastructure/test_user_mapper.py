@@ -11,7 +11,7 @@ from core.user.domain.user_updated_at import UserUpdatedAt
 from core.user.infrastructure.user_mapper import UserMapper
 
 USER_ID = "550e8400-e29b-41d4-a716-446655440000"
-AVATAR_PATH = f"{USER_ID}/avatar.jpg"
+AVATAR_PATH = f"{USER_ID}/660e8400-e29b-41d4-a716-446655440000.webp"
 AVATAR_URL = (
     "https://example.supabase.co/storage/v1/object/public/avatars/" + AVATAR_PATH
 )

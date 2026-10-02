@@ -41,7 +41,6 @@ class UpdateUserRequest(BaseModel):
 
     name: str
     display_name: str | None = None
-    avatar: str | None = None
     description: str | None = None
     links: list[UpdateUserLinkRequest] | None = None
 

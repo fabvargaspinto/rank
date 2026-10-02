@@ -20,7 +20,7 @@ class UploadAvatar:
 
     def execute(self, user: User, content: bytes) -> str:
         encoded = recode_avatar(content, MAX_AVATAR_BYTES)
-        previous = user.avatar.value if user.avatar else None
+        previous = user.avatar
         path = f"{user.id.value}/{UUID.generate().value}.webp"
         self.avatar_storage.upload(path, encoded, "image/webp")
         user.change_avatar(path)
@@ -28,6 +28,10 @@ class UploadAvatar:
             self.user_repo.save(user)
         except UserProfileNotFoundError as exc:
             raise UserNotFoundError("El usuario no existe") from exc
-        if previous and previous != path:
-            self.avatar_storage.delete(previous)
+        if (
+            previous is not None
+            and previous.belongs_to(user.id)
+            and previous.value != path
+        ):
+            self.avatar_storage.delete(previous.value)
         return path

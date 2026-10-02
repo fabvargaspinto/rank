@@ -2,14 +2,15 @@ import pytest
 
 from core.user.domain.user import User
 from core.user.domain.user_error import (
+    InvalidUserAvatarError,
     InvalidUserLinksReorderError,
     TooManyUserLinksError,
     UserLinkNotFoundError,
 )
 from core.user.domain.user_link_type import UserLinkType
 
-USER_ID = "550e8400-e29b-41d4-a716-446655440000"
-AVATAR_PATH = f"{USER_ID}/avatar.jpg"
+FILE_ID = "660e8400-e29b-41d4-a716-446655440000"
+OTHER_USER_ID = "770e8400-e29b-41d4-a716-446655440000"
 YOUTUBE_URL = "https://www.youtube.com/@luna"
 INSTAGRAM_URL = "https://www.instagram.com/luna"
 DEFAULT_URL = "https://example.com/luna"
@@ -19,7 +20,7 @@ def create_user_with_values():
     user = User.create_empty()
     user.rename("johndoe")
     user.change_display_name("John Doe")
-    user.change_avatar(AVATAR_PATH)
+    user.change_avatar(f"{user.id.value}/{FILE_ID}.webp")
     user.describe("My description")
     return user
 
@@ -44,9 +45,16 @@ class TestUser:
         assert user.name.value == "johndoe"
         assert user.display_name is not None
         assert user.display_name.value == "John Doe"
-        assert user.avatar.value == AVATAR_PATH
+        assert user.avatar is not None
+        assert user.avatar.value.endswith(f"/{FILE_ID}.webp")
         assert user.description.value == "My description"
         assert user.links == []
+
+    def test_change_avatar_rejects_another_users_path(self):
+        user = User.create_empty()
+
+        with pytest.raises(InvalidUserAvatarError, match="propio usuario"):
+            user.change_avatar(f"{OTHER_USER_ID}/{FILE_ID}.webp")
 
     def test_has_name_is_false_for_empty_user(self):
         user = User.create_empty()

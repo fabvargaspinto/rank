@@ -51,3 +51,32 @@ def test_luna_and_Luna_cannot_coexist(users_table: DBClient) -> None:
         assert stored.data == [{"id": first_id, "name": "luna"}]
     finally:
         supabase.table("users").delete().in_("id", [first_id, second_id]).execute()
+
+
+def test_avatar_url_must_belong_to_user_id(users_table: DBClient) -> None:
+    user_id = str(uuid7())
+    other_id = str(uuid7())
+    file_id = str(uuid7())
+    supabase = users_table.get_db()
+
+    try:
+        supabase.table("users").insert({"id": user_id, "name": "avatar-owner"}).execute()
+
+        with pytest.raises(APIError):
+            (
+                supabase.table("users")
+                .update({"avatar_url": f"{other_id}/{file_id}.webp"})
+                .eq("id", user_id)
+                .execute()
+            )
+
+        owned = f"{user_id}/{file_id}.webp"
+        updated = (
+            supabase.table("users")
+            .update({"avatar_url": owned})
+            .eq("id", user_id)
+            .execute()
+        )
+        assert updated.data[0]["avatar_url"] == owned
+    finally:
+        supabase.table("users").delete().eq("id", user_id).execute()

@@ -13,7 +13,7 @@ from api.dependencies.container import (
 )
 from api.dependencies.current_profile import get_current_profile
 from api.dependencies.supabase import get_supabase_url
-from api.mapping import stored_avatar, to_post_response, to_user_response
+from api.mapping import to_post_response, to_user_response
 from api.rate_limit import limiter
 from api.schemas.auth import ErrorResponse
 from api.schemas.post import CreatePostRequest, PostResponse
@@ -90,7 +90,6 @@ def update_me(
     use_case: UpdateUser = Depends(get_update_user_use_case),
     supabase_url: str = Depends(get_supabase_url),
 ) -> UserResponse:
-    avatar = body.avatar if "avatar" in body.model_fields_set else UNSET
     display_name = (
         body.display_name if "display_name" in body.model_fields_set else UNSET
     )
@@ -100,7 +99,6 @@ def update_me(
             UpdateProfileCommand(
                 name=body.name,
                 display_name=display_name,
-                avatar=stored_avatar(avatar),
                 description=body.description,
                 links=(
                     [link.url for link in body.links]

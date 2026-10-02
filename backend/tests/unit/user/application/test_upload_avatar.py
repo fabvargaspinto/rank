@@ -47,7 +47,7 @@ class TestUploadAvatar:
         assert path.endswith(".webp")
 
     def test_deletes_the_previous_object_after_saving(self):
-        previous = f"{self.user.id.value}/avatar.webp"
+        previous = f"{self.user.id.value}/550e8400-e29b-41d4-a716-446655440000.webp"
         self.user.change_avatar(previous)
 
         path = self.use_case.execute(self.user, _image_bytes("PNG"))
@@ -56,6 +56,22 @@ class TestUploadAvatar:
         assert self.storage.deleted == [previous]
         assert self.user.avatar is not None
         assert self.user.avatar.value == path
+
+    def test_does_not_delete_another_users_avatar_object(self):
+        from core.user.domain.user_avatar import UserAvatar
+
+        foreign = (
+            "550e8400-e29b-41d4-a716-446655440099/"
+            "660e8400-e29b-41d4-a716-446655440000.webp"
+        )
+        self.user.avatar = UserAvatar(foreign)
+        self.storage.uploads.clear()
+
+        path = self.use_case.execute(self.user, _image_bytes("PNG"))
+
+        assert path.startswith(f"{self.user.id.value}/")
+        assert self.storage.deleted == []
+        assert foreign not in {item[0] for item in self.storage.uploads}
 
     def test_rejects_bytes_that_are_not_an_image(self):
         with pytest.raises(InvalidAvatarFileError, match="inválida"):

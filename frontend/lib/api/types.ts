@@ -50,7 +50,6 @@ export type UserResponse = {
 export type UpdateProfileRequest = {
     name: string;
     display_name?: string | null;
-    avatar?: string | null;
     description?: string | null;
     links?: { url: string }[] | null;
 };

@@ -14,7 +14,6 @@ UNSET: Any = object()
 class UpdateProfileCommand:
     name: str
     display_name: str | None | object = UNSET
-    avatar: str | None | object = UNSET
     description: str | None = None
     links: list[str] | None = None
 
@@ -27,7 +26,6 @@ class UpdateUser:
     def execute(self, user: User, command: UpdateProfileCommand) -> User:
         self.change_username.execute(user, command.name)
         self._apply_display_name(user, command.display_name)
-        self._apply_avatar(user, command.avatar)
         user.describe(command.description)
 
         if command.links is not None:
@@ -53,11 +51,3 @@ class UpdateUser:
             user.clear_display_name()
             return
         user.change_display_name(display_name)
-
-    def _apply_avatar(self, user: User, avatar: str | None | object) -> None:
-        if avatar is UNSET:
-            return
-        if not isinstance(avatar, str) or not avatar.strip():
-            user.remove_avatar()
-            return
-        user.change_avatar(avatar)

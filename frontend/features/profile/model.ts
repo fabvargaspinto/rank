@@ -104,11 +104,6 @@ export function firstLinkValidationError(
     return error ?? null;
 }
 
-export function httpsAvatarUrl(value: string | null | undefined): string | null {
-    const avatar = sanitizeName(value ?? "");
-    return avatar.startsWith("https://") ? avatar : null;
-}
-
 export function hasProfilePhoto(photo: string): boolean {
     return sanitizeName(photo).length > 0;
 }
@@ -120,7 +115,6 @@ export function isExternalProfilePhoto(photo: string): boolean {
 export type UpdateProfileDraft = {
     name: string;
     displayName?: string | null;
-    avatar?: string | null;
     description?: string | null;
     links?: ProfileLinkPayload[];
 };
@@ -190,9 +184,6 @@ export function parseUpdateProfileInput(
                   }
                 : {}),
             description: sanitizeName(input.description ?? "") || null,
-            ...(input.avatar !== undefined
-                ? { avatar: httpsAvatarUrl(input.avatar) }
-                : {}),
             ...(links !== undefined ? { links } : {}),
         },
     };

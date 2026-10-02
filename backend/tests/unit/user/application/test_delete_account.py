@@ -28,13 +28,30 @@ class TestDeleteAccount:
 
     def test_deletes_the_stored_avatar(self):
         user = User.create_empty()
-        user.change_avatar(f"{user.id.value}/avatar.webp")
+        path = f"{user.id.value}/550e8400-e29b-41d4-a716-446655440000.webp"
+        user.change_avatar(path)
         self.users.users_by_id[user.id.value] = user
         self.users.users_by_auth_id[AUTH_ID] = user
 
         self.use_case.execute(AUTH_ID)
 
-        assert self.avatars.deleted == [f"{user.id.value}/avatar.webp"]
+        assert self.avatars.deleted == [path]
+
+    def test_does_not_delete_another_users_avatar_object(self):
+        from core.user.domain.user_avatar import UserAvatar
+
+        user = User.create_empty()
+        foreign = (
+            "550e8400-e29b-41d4-a716-446655440099/"
+            "660e8400-e29b-41d4-a716-446655440000.webp"
+        )
+        user.avatar = UserAvatar(foreign)
+        self.users.users_by_id[user.id.value] = user
+        self.users.users_by_auth_id[AUTH_ID] = user
+
+        self.use_case.execute(AUTH_ID)
+
+        assert self.avatars.deleted == []
 
     def test_deletes_identity_when_profile_is_missing(self):
         self.use_case.execute(AUTH_ID)

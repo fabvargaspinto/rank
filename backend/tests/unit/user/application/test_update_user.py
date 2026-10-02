@@ -6,7 +6,7 @@ from core.user.domain.user_error import InvalidUserNameError, UsernameAlreadyTak
 from tests.unit.user.application.fake_user_repo import FakeUserRepo
 
 AUTH_ID = "660e8400-e29b-41d4-a716-446655440000"
-AVATAR_PATH = f"{AUTH_ID}/avatar.jpg"
+FILE_ID = "550e8400-e29b-41d4-a716-446655440000"
 OTHER_AUTH_ID = "770e8400-e29b-41d4-a716-446655440000"
 
 
@@ -24,7 +24,6 @@ class TestUpdateUser:
             UpdateProfileCommand(
                 name="luna",
                 display_name="Luna Reyes",
-                avatar=AVATAR_PATH,
                 description="Cantautora",
             ),
         )
@@ -33,8 +32,7 @@ class TestUpdateUser:
         assert result.name.value == "luna"
         assert result.display_name is not None
         assert result.display_name.value == "Luna Reyes"
-        assert result.avatar is not None
-        assert result.avatar.value == AVATAR_PATH
+        assert result.avatar is None
         assert result.description is not None
         assert result.description.value == "Cantautora"
         assert self.repo.users_by_name["luna"] is result
@@ -59,10 +57,11 @@ class TestUpdateUser:
         assert result.links[0].type.value == "youtube"
         assert result.links[1].type.value == "default"
 
-    def test_keeps_existing_avatar_when_omitted(self):
+    def test_keeps_existing_avatar_when_profile_is_updated(self):
         user = User.create_empty()
+        avatar_path = f"{user.id.value}/{FILE_ID}.webp"
         user.rename("luna")
-        user.change_avatar(AVATAR_PATH)
+        user.change_avatar(avatar_path)
         self.repo.users_by_auth_id[AUTH_ID] = user
         self.repo.users_by_name["luna"] = user
 
@@ -72,7 +71,7 @@ class TestUpdateUser:
         )
 
         assert result.avatar is not None
-        assert result.avatar.value == AVATAR_PATH
+        assert result.avatar.value == avatar_path
 
     def test_keeps_existing_links_when_omitted(self):
         user = User.create_empty()

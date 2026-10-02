@@ -254,7 +254,7 @@ En la misma línea, `PROFILE_HOST = "sellonomada.com/"` está fijo en `frontend/
 
 **Test que debe fallar antes del arreglo:** en CI, `supabase start` seguido de `pytest tests/integration`, con la fixture `users_table` usando `pytest.fail` en lugar de `pytest.skip` cuando corre en CI. Hoy falla porque la tabla no existe.
 
-### 3.4 Un usuario puede usar el avatar de otro y borrarlo [verificado]
+### ✅ 3.4 Un usuario puede usar el avatar de otro y borrarlo [verificado]
 
 `PATCH /me` acepta un campo `avatar` (`backend/api/schemas/user.py:44`) que puede ser una ruta o una URL pública. `object_path` (`backend/core/user/infrastructure/avatar_url.py:9-23`) extrae la ruta de cualquier URL que contenga `/object/public/avatars/`, sin mirar el host, y `UserAvatar` (`backend/core/user/domain/user_avatar.py:10-21`) solo valida el **formato** `<uuid>/<uuid>.webp`. Nadie comprueba que la carpeta sea la del propio usuario: `User.change_avatar` (`backend/core/user/domain/user.py:70-72`) acepta cualquier ruta válida.
 

@@ -3,7 +3,10 @@ import pytest
 from core.user.domain.user_error import InvalidUserAvatarError
 from core.user.infrastructure.avatar_url import object_path, public_avatar_url
 
-PATH = "550e8400-e29b-41d4-a716-446655440000/avatar.webp"
+PATH = (
+    "550e8400-e29b-41d4-a716-446655440000/"
+    "660e8400-e29b-41d4-a716-446655440000.webp"
+)
 BASE = "https://example.supabase.co"
 
 
