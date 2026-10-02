@@ -71,6 +71,8 @@ export default function Avatar({
                 {initials || <UserIcon />}
             </span>
             {showImage ? (
+                // next/image no encaja con el fallback por naturalWidth/onError del avatar.
+                // eslint-disable-next-line @next/next/no-img-element -- ver comentario
                 <img
                     className={styles.image}
                     src={src ?? undefined}

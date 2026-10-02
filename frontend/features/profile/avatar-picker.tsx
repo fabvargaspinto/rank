@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { ChangeEvent } from "react";
 import Avatar from "@/components/ui/avatar/avatar";
 import { AVATAR_ACCEPT } from "@/lib/domain-limits";
@@ -30,10 +31,13 @@ export default function AvatarPicker({
         return (
             <label className={styles.bannerPicker}>
                 {previewUrl ? (
-                    <img
+                    <Image
                         src={previewUrl}
                         alt=""
+                        fill
+                        unoptimized
                         className={styles.bannerPreview}
+                        sizes="100vw"
                     />
                 ) : null}
                 <input

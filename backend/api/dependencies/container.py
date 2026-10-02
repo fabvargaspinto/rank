@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import lru_cache
 
-from config.crypto_setings import CryptoSettings
+from config.crypto_settings import CryptoSettings
 from config.db_settings import DBSettings
 from config.instagram_settings import InstagramSettings
 from config.turso_settings import TursoSettings

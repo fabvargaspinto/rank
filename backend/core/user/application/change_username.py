@@ -9,6 +9,7 @@ class ChangeUsername:
 
     def execute(self, user: User, name: str) -> None:
         user.rename(name)
+        assert user.name is not None
         taken = self.user_repo.get_user_by_name(user.name.value)
         if taken is not None and taken.id != user.id:
             raise UsernameAlreadyTakenError("Ese nombre ya está en uso")

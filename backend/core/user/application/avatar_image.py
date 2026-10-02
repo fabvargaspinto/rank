@@ -16,12 +16,12 @@ def recode_avatar(content: bytes, max_bytes: int) -> bytes:
         raise InvalidAvatarFileError("La imagen no puede superar 2 MB")
 
     try:
-        with Image.open(BytesIO(content)) as image:
-            if image.format not in _ALLOWED_FORMATS:
+        with Image.open(BytesIO(content)) as opened:
+            if opened.format not in _ALLOWED_FORMATS:
                 raise InvalidAvatarFileError(
                     "La imagen debe ser JPEG, PNG o WebP"
                 )
-            image = ImageOps.exif_transpose(image)
+            image: Image.Image = ImageOps.exif_transpose(opened) or opened
             if image.mode not in ("RGB", "RGBA"):
                 image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
             image.thumbnail(

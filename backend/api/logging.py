@@ -40,12 +40,12 @@ def configure_logging() -> None:
     formatter = JsonFormatter()
     root = logging.getLogger()
     if not root.handlers:
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        root.addHandler(handler)
+        stream = logging.StreamHandler()
+        stream.setFormatter(formatter)
+        root.addHandler(stream)
     else:
-        for handler in root.handlers:
-            handler.setFormatter(formatter)
+        for existing in root.handlers:
+            existing.setFormatter(formatter)
     root.setLevel(logging.INFO)
 
     # httpx loguea URLs completas; Meta manda tokens en query string.
@@ -54,8 +54,8 @@ def configure_logging() -> None:
 
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         logger = logging.getLogger(name)
-        for handler in logger.handlers:
-            handler.setFormatter(formatter)
+        for existing in logger.handlers:
+            existing.setFormatter(formatter)
         if name != "uvicorn.access":
             continue
         if not any(isinstance(item, HealthAccessFilter) for item in logger.filters):

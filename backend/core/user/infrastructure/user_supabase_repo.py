@@ -50,11 +50,10 @@ class UserSupabaseRepo(UserRepository):
 
     def get_user_by_name(self, name: str) -> User | None:
         folded = name.strip().lower()
-        pattern = folded.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         query = (
             self._db.table("users")
             .select(USER_WITH_LINKS_SELECT)
-            .ilike("name", pattern)
+            .eq("name", folded)
             .limit(1)
         )
 

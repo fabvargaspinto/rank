@@ -21,9 +21,9 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
 
     return (
         <FormHero
-            description="Comunidad para musicos, astistas y creadores de contenido"
-            submitLabel="Login"
-            footerPrompt="no tienes una cuenta?"
+            description="Comunidad para músicos, artistas y creadores de contenido"
+            submitLabel="Iniciar sesión"
+            footerPrompt="¿No tenés una cuenta?"
             footerHref="/register"
             footerLabel="Registrate"
             action={formAction}
@@ -32,8 +32,20 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
             isError={state.isError || Boolean(initialError && !state.message)}
             message={state.message || initialError}
         >
-            <Input type="email" name="email" placeholder="Email" autoComplete="email" />
-            <Input type="password" name="password" placeholder="Password" autoComplete="current-password" />
+            <Input
+                type="email"
+                name="email"
+                placeholder="Email"
+                aria-label="Email"
+                autoComplete="email"
+            />
+            <Input
+                type="password"
+                name="password"
+                placeholder="Contraseña"
+                aria-label="Contraseña"
+                autoComplete="current-password"
+            />
             <p className={styles.forgot}>
                 <Link href="/forgot-password">Olvidé mi contraseña</Link>
             </p>

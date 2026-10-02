@@ -4,10 +4,12 @@ import {
     cloneElement,
     isValidElement,
     useEffect,
+    useEffectEvent,
     useId,
     useLayoutEffect,
     useRef,
     useState,
+    useSyncExternalStore,
     type MouseEvent,
     type ReactElement,
     type ReactNode,
@@ -20,6 +22,7 @@ type DrawerSide = "bottom" | "left" | "right";
 type DrawerMotion = "open" | "closed";
 
 const DRAWER_MOTION_MS = 240;
+const subscribeNever = () => () => {};
 
 type DrawerHelpers = {
     close: () => void;
@@ -29,7 +32,15 @@ type PromptElement = ReactElement<{
     onClick?: (event: MouseEvent<HTMLElement>) => void;
     type?: string;
     "aria-expanded"?: boolean | "true" | "false";
-    "aria-haspopup"?: "dialog" | boolean | "false" | "true" | "menu" | "listbox" | "tree" | "grid";
+    "aria-haspopup"?:
+        | "dialog"
+        | boolean
+        | "false"
+        | "true"
+        | "menu"
+        | "listbox"
+        | "tree"
+        | "grid";
     "aria-controls"?: string;
 }>;
 
@@ -60,45 +71,40 @@ export default function Drawer({
     const panelId = useId();
     const panelRef = useRef<HTMLDivElement>(null);
     const previouslyFocused = useRef<HTMLElement | null>(null);
-    const onOpenRef = useRef(onOpen);
-    const onCloseRef = useRef(onClose);
-    const closeRef = useRef<() => void>(() => {});
-    const [mounted, setMounted] = useState(false);
     const [rendered, setRendered] = useState(false);
     const [motion, setMotion] = useState<DrawerMotion>("closed");
     const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+    const mounted = useSyncExternalStore(
+        subscribeNever,
+        () => true,
+        () => false,
+    );
     const controlled = openProp !== undefined;
     const open = controlled ? openProp : uncontrolledOpen;
-    const content = typeof children === "function" ? children({ close }) : children;
-
-    onOpenRef.current = onOpen;
-    onCloseRef.current = onClose;
 
     function openDrawer() {
         if (!controlled) {
             setUncontrolledOpen(true);
         }
-
-        onOpenRef.current?.();
+        onOpen?.();
     }
 
     function close() {
         if (!controlled) {
             setUncontrolledOpen(false);
         }
-
-        onCloseRef.current?.();
+        onClose?.();
     }
 
-    closeRef.current = close;
+    const onEscape = useEffectEvent(() => {
+        close();
+    });
+
+    const content = typeof children === "function" ? children({ close }) : children;
 
     if (open && !rendered) {
         setRendered(true);
     }
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     useEffect(() => {
         if (!rendered) {
@@ -110,14 +116,19 @@ export default function Drawer({
             return () => cancelAnimationFrame(frame);
         }
 
-        setMotion("closed");
-        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const closeFrame = requestAnimationFrame(() => setMotion("closed"));
+        const reducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
         const timeout = window.setTimeout(
             () => setRendered(false),
             reducedMotion ? 0 : DRAWER_MOTION_MS,
         );
 
-        return () => clearTimeout(timeout);
+        return () => {
+            cancelAnimationFrame(closeFrame);
+            clearTimeout(timeout);
+        };
     }, [open, rendered]);
 
     useLayoutEffect(() => {
@@ -142,7 +153,7 @@ export default function Drawer({
 
         function onKeyDown(event: KeyboardEvent) {
             if (event.key === "Escape") {
-                closeRef.current();
+                onEscape();
             }
         }
 
@@ -194,7 +205,7 @@ export default function Drawer({
                           role="dialog"
                           aria-modal="true"
                           aria-labelledby={title ? titleId : undefined}
-                          aria-label={!title ? label ?? "Panel" : undefined}
+                          aria-label={!title ? (label ?? "Panel") : undefined}
                           tabIndex={-1}
                       >
                           {side === "bottom" ? (
@@ -228,7 +239,9 @@ export default function Drawer({
                                   </svg>
                               </button>
                           </header>
-                          {content ? <div className={styles.content}>{content}</div> : null}
+                          {content ? (
+                              <div className={styles.content}>{content}</div>
+                          ) : null}
                       </div>
                   </div>,
                   document.body,

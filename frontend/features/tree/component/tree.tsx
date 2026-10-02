@@ -245,22 +245,15 @@ function TreeHeader({
     return (
         <header className={styles.header}>
             {hasProfilePhoto(profile.photo) ? (
-                isExternalProfilePhoto(profile.photo) ? (
-                    <img
-                        src={profile.photo}
-                        alt=""
-                        className={styles.headerImage}
-                    />
-                ) : (
-                    <Image
-                        src={profile.photo}
-                        alt=""
-                        fill
-                        priority
-                        sizes="(max-width: 480px) 100vw, 450px"
-                        className={styles.headerImage}
-                    />
-                )
+                <Image
+                    src={profile.photo}
+                    alt=""
+                    fill
+                    priority
+                    unoptimized={isExternalProfilePhoto(profile.photo)}
+                    sizes="(max-width: 480px) 100vw, 450px"
+                    className={styles.headerImage}
+                />
             ) : null}
             {editable ? (
                 <DrawerPerfil profile={profile} onSave={onSaveProfile} />

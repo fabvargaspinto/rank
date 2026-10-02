@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Unpack
 
 from pydantic_settings import SettingsConfigDict
 
@@ -20,10 +21,14 @@ def repo_env_file() -> Path | None:
     return path if path.is_file() else None
 
 
-def settings_config(**extra: object) -> SettingsConfigDict:
+def settings_config(
+    **extra: Unpack[SettingsConfigDict],
+) -> SettingsConfigDict:
     return SettingsConfigDict(
-        env_file=repo_env_file(),
-        env_file_encoding="utf-8",
-        extra="ignore",
-        **extra,
+        {
+            "env_file": repo_env_file(),
+            "env_file_encoding": "utf-8",
+            "extra": "ignore",
+            **extra,
+        }
     )

@@ -1,6 +1,6 @@
 import pytest
 
-from config.crypto_setings import CryptoSettings
+from config.crypto_settings import CryptoSettings
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.auth.infrastructure.error_infrastructure import AuthLookupError

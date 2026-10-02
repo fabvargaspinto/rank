@@ -27,6 +27,8 @@ _APPLICATION_STATUS = {
     "InstagramAccountAlreadyLinkedError": 409,
     "InstagramTokenExpiredError": 401,
     "InstagramGraphError": 502,
+    "InstagramSnapshotJobNotConfiguredError": 404,
+    "InstagramSnapshotJobUnauthorizedError": 401,
 }
 
 _DOMAIN_STATUS = {

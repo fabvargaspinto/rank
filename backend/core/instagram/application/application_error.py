@@ -23,3 +23,11 @@ class InstagramTokenExpiredError(ApplicationError):
 
 class InstagramGraphError(ApplicationError):
     code = "INSTAGRAM_UNAVAILABLE"
+
+
+class InstagramSnapshotJobNotConfiguredError(ApplicationError):
+    code = "NOT_FOUND"
+
+
+class InstagramSnapshotJobUnauthorizedError(ApplicationError):
+    code = "UNAUTHORIZED"

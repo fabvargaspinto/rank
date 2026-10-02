@@ -3,7 +3,7 @@ import os
 import pytest
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from config.crypto_setings import CryptoSettings
+from config.crypto_settings import CryptoSettings
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.infrastructure.email_crypto import EmailCrypto
 from core.auth.infrastructure.error_infrastructure import EmailDecryptError

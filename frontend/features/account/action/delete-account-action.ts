@@ -7,9 +7,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthSession } from "@/lib/supabase/session";
 
 export async function deleteAccountAction(
-    _prev: FetchDataResponse,
-    _formData: FormData,
+    prev: FetchDataResponse,
+    formData: FormData,
 ): Promise<FetchDataResponse> {
+    void prev;
+    void formData;
     const session = await getAuthSession();
 
     if (!session) {

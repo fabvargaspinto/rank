@@ -1,4 +1,4 @@
-from config.crypto_setings import CryptoSettings
+from config.crypto_settings import CryptoSettings
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_provider import AuthProvider
 from core.auth.infrastructure.auth_mapper import AuthMapper

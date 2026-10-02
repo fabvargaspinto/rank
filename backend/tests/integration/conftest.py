@@ -5,7 +5,7 @@ import pytest
 from postgrest.exceptions import APIError
 from supabase import ClientOptions, create_client
 
-from config.crypto_setings import CryptoSettings
+from config.crypto_settings import CryptoSettings
 from config.db_settings import DBSettings
 from config.turso_settings import TursoSettings
 from core.auth.infrastructure.auth_supabase_repo import AuthSupabaseRepo

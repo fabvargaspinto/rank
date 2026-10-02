@@ -37,7 +37,8 @@ export async function createAuthClient() {
             getAll() {
                 return cookieStore.getAll();
             },
-            setAll(cookiesToSet, _responseHeaders) {
+            setAll(cookiesToSet, responseHeaders) {
+                void responseHeaders;
                 try {
                     cookiesToSet.forEach(({ name, value, options }) =>
                         cookieStore.set(name, value, options),

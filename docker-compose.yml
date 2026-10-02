@@ -17,6 +17,7 @@ services:
     env_file:
       - .env
     environment:
+      <<: *local-supabase-env
       WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - ./backend:/app
@@ -48,13 +49,11 @@ services:
     ports:
       - "3000:3000"
     environment:
+      <<: *local-supabase-env
       CI: "true"
       BACKEND_URL: ${BACKEND_URL:-https://backend:8000}
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-${SUPABASE_URL}}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-${SUPABASE_ANON_KEY}}
-      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY}
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
     volumes:

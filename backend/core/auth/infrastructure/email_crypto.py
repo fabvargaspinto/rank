@@ -4,7 +4,7 @@ import hmac
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from config.crypto_setings import CryptoSettings
+from config.crypto_settings import CryptoSettings
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.infrastructure.error_infrastructure import EmailDecryptError
 from core.shared.infrastructure.versioned_aead import open_sealed, seal

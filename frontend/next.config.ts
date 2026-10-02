@@ -51,6 +51,29 @@ const nextConfig: NextConfig = {
     output: "standalone",
     reactCompiler: true,
     poweredByHeader: false,
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "**.supabase.co",
+                pathname: "/storage/v1/object/public/**",
+            },
+            {
+                protocol: "http",
+                hostname: "127.0.0.1",
+                port: "54321",
+                pathname: "/storage/v1/object/public/**",
+            },
+            {
+                protocol: "https",
+                hostname: "**.cdninstagram.com",
+            },
+            {
+                protocol: "https",
+                hostname: "**.fbcdn.net",
+            },
+        ],
+    },
     experimental: {
         serverActions: {
             bodySizeLimit: "3mb",

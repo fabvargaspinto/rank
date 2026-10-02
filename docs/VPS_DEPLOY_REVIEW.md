@@ -86,7 +86,7 @@ Esfuerzo: XS = menos de 1 hora; S = hasta medio día; M = 1 o 2 días; L = más 
 | Historial de git | Sin secretos reales. Los prefijos `sb_secret_` y `sb_publishable_` solo aparecen en archivos de librerías del `.pnpm-store` que se versionó y luego se borró; por eso el pack pesa 157 MiB |
 | Documentación de Supabase | Los límites por IP se aplican a la IP que hace la llamada; los backups automáticos no están incluidos en el plan Free |
 | Documentación de Next 16 (`frontend/node_modules/next/dist/docs/`) | `NEXT_PUBLIC_*` se reemplaza al construir, también en código de servidor; guía de self-hosting |
-| CI | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) — rojo hasta arreglar mypy/ESLint ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)) |
+| CI | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) — ruff/mypy/ESLint en verde en local ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)) |
 
 ---
 
@@ -991,56 +991,50 @@ docker compose -f docker-compose.prod.yml up -d
 
 ## 8. CI
 
-### ✅ Workflow en el repo [parcial]
+### ✅ Workflow en el repo [verificado]
 
 Archivo: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
 | Job | Qué hace | Hoy |
 |-----|----------|-----|
-| `backend` | `ruff`, `mypy`, `lint-imports`, `pytest tests/unit` | **Rojo:** mypy (~11 errores). Ruff e import-linter OK tras el arreglo de imports. |
-| `backend-integration` | `supabase start` en la raíz del repo + `pytest tests/integration` con `CI=true` (skip → fail) | Depende de migraciones locales ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)) |
-| `frontend` | `pnpm lint`, `tsc`, `build` con `NEXT_PUBLIC_*` de CI, chequeo de que robots no tenga `localhost` | **Rojo:** ESLint 6 errores en `drawer.tsx` (+ warnings). `tsc` OK. |
-| `images` | Solo `push` a `main` si los tres anteriores pasan; publica `ghcr.io/fabvargaspinto/rank-{backend,frontend}:${{ github.sha }}` | No publica hasta que el resto esté verde ([7.9](#79-build-y-despliegue)) |
+| `backend` | `ruff`, `mypy`, `lint-imports`, `pytest tests/unit` | Verde en local (ruff/mypy/imports + unit) |
+| `backend-integration` | `supabase start` en la raíz + `pytest tests/integration` con `CI=true` | Requiere migraciones aplicadas ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)) |
+| `frontend` | `pnpm lint`, `tsc`, `build` con `NEXT_PUBLIC_*` de CI, chequeo robots sin `localhost` | Verde en local (lint/tsc); build se valida en Actions |
+| `images` | Solo `push` a `main` si los tres anteriores pasan; `ghcr.io/fabvargaspinto/rank-{backend,frontend}:${{ github.sha }}` | Configurar `vars.NEXT_PUBLIC_*` en el repo ([7.9](#79-build-y-despliegue)) |
 
-**Variables de repo (Actions → Variables), no secrets:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL` — las usa el job `images` al construir el frontend.
+**Variables de repo (Actions → Variables), no secrets:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`.
 
-**Notas del workflow**
+**Notas**
 
-- `uv run mypy` sin args usa los `files` de `pyproject.toml` (no `mypy .`, que también tipa `tests/`).
+- `uv run mypy` usa los `files` de `pyproject.toml` (no `mypy .`).
 - `pnpm/action-setup` lee `packageManager` de `frontend/package.json`.
 - `pnpm build` **sin** `BACKEND_URL` a propósito ([3.1](#31-la-imagen-de-producción-del-frontend-no-compila-verificado)).
-- Tags de imagen alineados con `docker-compose.prod.yml`.
-- Corregir mypy y ESLint antes de exigir verde para merge ([9](#9-calidad-de-código-y-limpieza)).
-- Más adelante: Playwright contra compose de prod; deploy solo con todo en verde.
+- Más adelante: Playwright contra compose de prod.
 
 ---
 
 ## 9. Calidad de código y limpieza
 
-**Errores que hoy romperían el CI**
+### ✅ Errores que rompían el CI [verificado]
 
-- mypy, 11 errores en 5 archivos:
-  - `api/logging.py:47` y `:57`;
-  - `core/user/application/avatar_image.py:24` y `:26`;
-  - `core/user/application/change_username.py:12` (acceso a un atributo de algo que puede ser `None`);
-  - `api/mapping.py:12`, `:19`, `:31` y `:32` (`UUID` contra `str`);
-  - `config/env.py:24` y `:28` (`SettingsConfigDict` / `**extra`).
-  - ~~`main.py` lifespan~~ y ~~`DBSettings` sin args~~ ya no fallan.
-- ESLint, 6 errores en `components/ui/drawer/drawer.tsx`: `react-hooks/refs` en `74:5`, `75:5`, `93:5` y `166:36`, y `react-hooks/set-state-in-effect` en `100:9` y `113:9`. Con `reactCompiler: true`, el compilador no optimiza un componente con esos patrones, y además son fuente de bugs con el renderizado concurrente.
-- ESLint, 8 warnings: variables sin usar en `delete-account-action.ts`, `login-google-action.ts`, `register-google-action.ts` y `lib/supabase/server.ts`, y `<img>` en lugar de `next/image` en `features/profile/avatar-picker.tsx:33` y `features/tree/component/tree.tsx:249`. Para las imágenes remotas hace falta `images.remotePatterns` con el host de Supabase Storage.
+- **mypy:** corregidos (`logging` handlers, `avatar_image`, `change_username`, `mapping`→`UUID`, `settings_config`).
+- **ESLint drawer:** `useSyncExternalStore` para `mounted`, animación con `requestAnimationFrame`, `useEffectEvent` para Escape; sin updates de refs en render.
+- **Warnings:** args de Server Actions / `setAll` con `void`; `next/image` en banner y header; `images.remotePatterns` en `next.config.ts`. El `<img>` de `Avatar` queda a propósito (fallback por `naturalWidth`/`onError`).
 
-**Limpieza**
+### ✅ Limpieza hecha
 
-- `backend/README.md` está vacío. Mínimo: setup, variables, tests y despliegue, con un enlace a este documento.
-- `backend/config/crypto_setings.py` tiene un error en el nombre; su propio comentario dice `crypto_settings.py`.
-- `backend/tests/integration/spotify/` es un directorio vacío.
-- En `.env` no deben figurar `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (van en el dashboard de Supabase o en `./scripts/configure-supabase-google-oauth.sh`). También sobran `SPOTIFY_*` y `TURSO_DATABASE` si aparecen. `SUPABASE_ANON_KEY` está vacía y solo la usan los tests de integración.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` contiene una clave publicable (`sb_publishable_…`), no una anon key. Renombrarla a `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` evita confusiones al configurar el CI y el servidor.
-- `docker-compose.yml` de desarrollo usa por defecto los servicios hosted, por el `.env`. Conviene que el desarrollo use Supabase local por defecto, como ya hace `integration-tests`.
-- `get_user_by_name` busca con `ilike` (`backend/core/user/infrastructure/user_supabase_repo.py:57`), que no puede usar un índice btree: cada visita a un perfil público recorre la tabla. Como el `CHECK` garantiza nombres en minúsculas, un `UNIQUE (name)` es equivalente al índice actual sobre `lower(name)` y permite buscar con `eq`.
-- `POST /internal/instagram/snapshots` usa `HTTPException` (`backend/api/routers/instagram.py:165-168`), así que sus errores no siguen el formato `{code, detail, request_id}` del resto de la API.
-- Textos del login: "musicos, astistas", "Login" y "no tienes una cuenta?" (`frontend/features/login/component/login-form.tsx:24-26`), el placeholder "Password" (`:36`) y campos sin label. Ver la sección 9.3 de [`DEPLOY_READINESS_REVIEW.md`](./DEPLOY_READINESS_REVIEW.md).
-- El historial de git pesa 157 MiB por el `.pnpm-store` que se versionó. Opcional: limpiarlo con `git filter-repo`. Reescribe el historial, así que hay que coordinarlo con cualquier otro clon.
+- `backend/README.md` con setup, variables, tests y enlace a este doc.
+- `crypto_setings.py` → `crypto_settings.py`.
+- `get_user_by_name` usa `.eq("name", …)`; migración `20261002150000_users_name_unique_eq.sql` (`UNIQUE (name)`).
+- `POST /internal/instagram/snapshots` usa `InstagramSnapshotJob*Error` → formato `{code, detail, request_id}`.
+- Textos del login corregidos (tildes, “Iniciar sesión”, aria-labels).
+- `docker-compose.yml` de desarrollo fuerza Supabase **local** vía `x-local-supabase-env` (como `integration-tests`).
+
+### Pendiente / opcional
+
+- Renombrar `NEXT_PUBLIC_SUPABASE_ANON_KEY` → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en todo el stack (rompe builds/CI hasta actualizar vars).
+- Limpiar historial git del `.pnpm-store` versionado (`git filter-repo`); coordinar con otros clones.
+- `.env.example` ya aclara que Google OAuth no va en la app; no hay `SPOTIFY_*` en el example.
 
 ---
 
@@ -1076,7 +1070,7 @@ Estimaciones orientativas para una persona.
 - [ ] `docker-compose.prod.yml`, nginx + certbot, archivos de variables, rotación de logs y cron diario ([7](#7-el-vps)).
 - [x] Cabeceras de seguridad y `poweredByHeader: false` ([4.7](#47-cabeceras-de-seguridad-verificado)).
 - [ ] Supabase de producción: Site URL, redirects, confirmación, SMTP, plantillas y política de contraseñas ([6.1](#61-supabase-de-producción)).
-- [x] Workflow de CI en el repo; pendiente poner mypy/ESLint en verde y configurar `vars.NEXT_PUBLIC_*` para publicar imágenes ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)).
+- [x] Workflow de CI + mypy/ESLint en verde; configurar `vars.NEXT_PUBLIC_*` para publicar imágenes ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)).
 - [ ] Iniciar el App Review de Meta, que corre en paralelo ([6.2](#62-meta-instagram)).
 
 ### Fase 1: antes de abrir a los testers (2 o 3 días)

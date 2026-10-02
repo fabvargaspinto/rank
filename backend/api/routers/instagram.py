@@ -37,6 +37,10 @@ from api.schemas.instagram import (
     SnapshotJobResponse,
 )
 from config.instagram_settings import InstagramSettings
+from core.instagram.application.application_error import (
+    InstagramSnapshotJobNotConfiguredError,
+    InstagramSnapshotJobUnauthorizedError,
+)
 from core.instagram.application.capture_instagram_followers import (
     CaptureInstagramFollowers,
 )
@@ -188,9 +192,9 @@ def run_instagram_snapshots(
     x_job_token: Annotated[str | None, Header()] = None,
 ) -> SnapshotJobResponse:
     if not settings.instagram_snapshot_job_token:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise InstagramSnapshotJobNotConfiguredError("Job de snapshots no configurado")
     if not _job_token_matches(x_job_token, settings.instagram_snapshot_job_token):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise InstagramSnapshotJobUnauthorizedError("Token de job inválido")
     result = use_case.execute_all()
     return SnapshotJobResponse(captured=result.captured, failed=result.failed)
 
