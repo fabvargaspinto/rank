@@ -496,7 +496,11 @@ Consecuencias:
 
    En `proxy.ts` va lo mismo, tomando la IP de `request.headers`. La IP tiene que venir del proxy reverso, que reemplaza el `X-Forwarded-For` que mande el cliente (Caddy lo hace por defecto, [7.4](#74-caddy)). El costo: el servidor de Next pasa a tener la clave secreta (como variable de runtime, nunca `NEXT_PUBLIC_`), así que comprometerlo da acceso total a la base. Hoy esa clave solo la tiene el backend.
 3. **Límites por IP en el proxy** para los POST a `/login`, `/register` y `/forgot-password`: las Server Actions se envían como POST a la ruta de la página. Caddy no trae rate limiting en su build estándar; hace falta el plugin `caddy-ratelimit`, o nginx con `limit_req` ([7.4](#74-caddy)).
-4. **SMTP propio** (Resend, Postmark, Amazon SES, etc.) y subir el límite de emails acorde.
+4. **SMTP propio con Resend** y subir el límite de emails acorde.
+   - Local: `[auth.email.smtp]` en `config.toml` + `RESEND_API_KEY` en `.env`.
+   - Hosted: `SUPABASE_ACCESS_TOKEN=sbp_… ./scripts/configure-resend-smtp.sh` (o SMTP Settings en el dashboard: `smtp.resend.com:465`, user `resend`, password = API key, sender `beth.t@example.com`).
+   - Sin dominio verificado, Resend solo entrega a `EMAIL_RECIPIENT`.
+   - Si Auth responde `over_email_send_rate_limit`, la app muestra mensaje de beta (`frontend/lib/supabase/auth-email.ts`).
 5. Subir los límites de Supabase solo después de los puntos 1 y 2: mientras todo salga de una IP, subirlos amplía también lo que puede hacer un atacante.
 
 ### 4.5 Periodo de prueba
@@ -729,7 +733,7 @@ Con una ejecución semanal y una ventana de 7 días, alcanza con que falle una s
 - [ ] **Redirect URLs** exactas del dominio real: `/auth/callback`, `/auth/confirm` y `/auth/confirm?next=/reset-password`. Las de `config.toml:155-164` son de localhost. Sin comodines.
 - [ ] **Confirm email** activado. Además de lo obvio, impide que alguien se registre con el email de un tester y ocupe su lugar: sin confirmación, Supabase entrega una sesión al instante y el backend aprovisiona porque el email está en la lista.
 - [ ] Plantillas de confirmación, recuperación e invitación cargadas en el dashboard. Los `content_path` de `config.toml:247-253` solo valen en local.
-- [ ] **SMTP propio** y límite de emails acorde ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
+- [ ] **SMTP con Resend** y límite de emails acorde ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)): `./scripts/configure-resend-smtp.sh` o SMTP Settings en el dashboard.
 - [ ] Política de contraseñas igual a la local (`config.toml:183-186`): mínimo 8, con minúsculas, mayúsculas y dígitos.
 - [ ] **Secure password change** activado ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
 - [ ] **CAPTCHA** e **IP Address Forwarding** ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
