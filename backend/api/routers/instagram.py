@@ -2,7 +2,16 @@ import hmac
 from hashlib import sha256
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 
 from api.dependencies.container import (
     get_capture_instagram_followers_use_case,

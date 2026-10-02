@@ -23,8 +23,8 @@ from api.dependencies.supabase import get_supabase_url
 from api.errors import register_error_handlers
 from api.routers.me import router as me_router
 from api.routers.profiles import router as profiles_router
-from core.post.application.get_posts_by_user import GetPostsByUser
 from core.instagram.application.disconnect_instagram import DisconnectInstagram
+from core.post.application.get_posts_by_user import GetPostsByUser
 from core.user.application.delete_account import DeleteAccount
 from core.user.application.get_public_profile import GetPublicProfile
 from core.user.application.get_user import GetUser

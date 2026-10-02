@@ -86,7 +86,7 @@ Esfuerzo: XS = menos de 1 hora; S = hasta medio día; M = 1 o 2 días; L = más 
 | Historial de git | Sin secretos reales. Los prefijos `sb_secret_` y `sb_publishable_` solo aparecen en archivos de librerías del `.pnpm-store` que se versionó y luego se borró; por eso el pack pesa 157 MiB |
 | Documentación de Supabase | Los límites por IP se aplican a la IP que hace la llamada; los backups automáticos no están incluidos en el plan Free |
 | Documentación de Next 16 (`frontend/node_modules/next/dist/docs/`) | `NEXT_PUBLIC_*` se reemplaza al construir, también en código de servidor; guía de self-hosting |
-| CI | No existe (no hay `.github/`) |
+| CI | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) — rojo hasta arreglar mypy/ESLint ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)) |
 
 ---
 
@@ -991,104 +991,27 @@ docker compose -f docker-compose.prod.yml up -d
 
 ## 8. CI
 
-No existe ningún pipeline. Mínimo propuesto con GitHub Actions (el repositorio está en GitHub):
+### ✅ Workflow en el repo [parcial]
 
-```yaml
-name: ci
-on:
-  push:
-    branches: [main]
-  pull_request:
+Archivo: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
-jobs:
-  backend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - run: uv sync --frozen
-      - run: uv run ruff check .
-      - run: uv run mypy
-      - run: uv run lint-imports
-      - run: uv run pytest tests/unit -q
+| Job | Qué hace | Hoy |
+|-----|----------|-----|
+| `backend` | `ruff`, `mypy`, `lint-imports`, `pytest tests/unit` | **Rojo:** mypy (~11 errores). Ruff e import-linter OK tras el arreglo de imports. |
+| `backend-integration` | `supabase start` en la raíz del repo + `pytest tests/integration` con `CI=true` (skip → fail) | Depende de migraciones locales ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)) |
+| `frontend` | `pnpm lint`, `tsc`, `build` con `NEXT_PUBLIC_*` de CI, chequeo de que robots no tenga `localhost` | **Rojo:** ESLint 6 errores en `drawer.tsx` (+ warnings). `tsc` OK. |
+| `images` | Solo `push` a `main` si los tres anteriores pasan; publica `ghcr.io/fabvargaspinto/rank-{backend,frontend}:${{ github.sha }}` | No publica hasta que el resto esté verde ([7.9](#79-build-y-despliegue)) |
 
-  backend-integration:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
-      - run: supabase start
-      - uses: astral-sh/setup-uv@v6
-      - working-directory: backend
-        run: uv sync --frozen && uv run pytest tests/integration -q
+**Variables de repo (Actions → Variables), no secrets:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL` — las usa el job `images` al construir el frontend.
 
-  frontend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm exec tsc --noEmit
-      - run: pnpm build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ci
-          NEXT_PUBLIC_SITE_URL: https://ci.example
-      - run: "! grep -q localhost .next/server/app/robots.txt.body"
+**Notas del workflow**
 
-  images:
-    if: github.ref == 'refs/heads/main'
-    needs: [backend, backend-integration, frontend]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: backend
-          target: production
-          push: true
-          tags: ghcr.io/fabvargaspinto/rank-backend:${{ github.sha }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: frontend
-          target: production
-          push: true
-          tags: ghcr.io/fabvargaspinto/rank-frontend:${{ github.sha }}
-          build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
-```
-
-Notas:
-
-- Los tags de imagen deben coincidir con `docker-compose.prod.yml` (`rank-backend` / `rank-frontend`), no con `github.repository-backend`.
-- `uv run mypy` sin argumentos usa los `files` de `pyproject.toml`. `mypy .` también revisa `tests/` y da 591 errores.
-- `pnpm/action-setup` toma la versión de pnpm del campo `packageManager` de `frontend/package.json`.
-- `pnpm build` sin `BACKEND_URL` es a propósito: verifica [3.1](#31-la-imagen-de-producción-del-frontend-no-compila-verificado).
-- La integración solo protege algo si la base local se crea desde las migraciones ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)) y si los skips por tabla faltante pasan a ser fallos.
-- Hoy el pipeline fallaría en ruff (1 error), mypy (12) y ESLint (6). Hay que corregirlos antes de exigirlo para mergear ([9](#9-calidad-de-código-y-limpieza)).
-- Más adelante: Playwright contra el compose de producción en cada merge a `main`, y desplegar solo con todo en verde.
+- `uv run mypy` sin args usa los `files` de `pyproject.toml` (no `mypy .`, que también tipa `tests/`).
+- `pnpm/action-setup` lee `packageManager` de `frontend/package.json`.
+- `pnpm build` **sin** `BACKEND_URL` a propósito ([3.1](#31-la-imagen-de-producción-del-frontend-no-compila-verificado)).
+- Tags de imagen alineados con `docker-compose.prod.yml`.
+- Corregir mypy y ESLint antes de exigir verde para merge ([9](#9-calidad-de-código-y-limpieza)).
+- Más adelante: Playwright contra compose de prod; deploy solo con todo en verde.
 
 ---
 
@@ -1096,13 +1019,13 @@ Notas:
 
 **Errores que hoy romperían el CI**
 
-- mypy, 12 errores en 6 archivos:
+- mypy, 11 errores en 5 archivos:
   - `api/logging.py:47` y `:57`;
   - `core/user/application/avatar_image.py:24` y `:26`;
   - `core/user/application/change_username.py:12` (acceso a un atributo de algo que puede ser `None`);
-  - `api/mapping.py:21`, `:28`, `:40` y `:41` (`UUID` contra `str`);
-  - `api/dependencies/supabase.py:5` (dos errores: faltan los argumentos con nombre de `DBSettings`);
-  - `main.py:19` (`_lifespan` sin tipo de retorno; se corrige con [3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado)).
+  - `api/mapping.py:12`, `:19`, `:31` y `:32` (`UUID` contra `str`);
+  - `config/env.py:24` y `:28` (`SettingsConfigDict` / `**extra`).
+  - ~~`main.py` lifespan~~ y ~~`DBSettings` sin args~~ ya no fallan.
 - ESLint, 6 errores en `components/ui/drawer/drawer.tsx`: `react-hooks/refs` en `74:5`, `75:5`, `93:5` y `166:36`, y `react-hooks/set-state-in-effect` en `100:9` y `113:9`. Con `reactCompiler: true`, el compilador no optimiza un componente con esos patrones, y además son fuente de bugs con el renderizado concurrente.
 - ESLint, 8 warnings: variables sin usar en `delete-account-action.ts`, `login-google-action.ts`, `register-google-action.ts` y `lib/supabase/server.ts`, y `<img>` en lugar de `next/image` en `features/profile/avatar-picker.tsx:33` y `features/tree/component/tree.tsx:249`. Para las imágenes remotas hace falta `images.remotePatterns` con el host de Supabase Storage.
 
@@ -1153,7 +1076,7 @@ Estimaciones orientativas para una persona.
 - [ ] `docker-compose.prod.yml`, nginx + certbot, archivos de variables, rotación de logs y cron diario ([7](#7-el-vps)).
 - [x] Cabeceras de seguridad y `poweredByHeader: false` ([4.7](#47-cabeceras-de-seguridad-verificado)).
 - [ ] Supabase de producción: Site URL, redirects, confirmación, SMTP, plantillas y política de contraseñas ([6.1](#61-supabase-de-producción)).
-- [ ] CI mínimo y corrección de los errores de ruff, mypy y ESLint ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)).
+- [x] Workflow de CI en el repo; pendiente poner mypy/ESLint en verde y configurar `vars.NEXT_PUBLIC_*` para publicar imágenes ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)).
 - [ ] Iniciar el App Review de Meta, que corre en paralelo ([6.2](#62-meta-instagram)).
 
 ### Fase 1: antes de abrir a los testers (2 o 3 días)
