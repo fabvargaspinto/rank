@@ -75,6 +75,11 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       <<: *local-supabase-env
+      SUPABASE_DEVELOPMENT_URL: ${SUPABASE_DEVELOPMENT_URL:-}
+      SUPABASE_DEVELOPMENT_SECRET_KEY: ${SUPABASE_DEVELOPMENT_SECRET_KEY:-}
+      SUPABASE_DEVELOPMENT_ANON_KEY: ${SUPABASE_DEVELOPMENT_ANON_KEY:-}
+      TURSO_DEVELOPMENT_URL: ${TURSO_DEVELOPMENT_URL:-${TURSO_DEVELOPMENT_DATABASE:-}}
+      TURSO_DEVELOPMENT_TOKEN: ${TURSO_DEVELOPMENT_TOKEN:-}
     volumes:
       - ./backend:/app
       - backend_venv:/app/.venv

@@ -1,8 +1,5 @@
--- Referencia del esquema público de Sello Nómada.
--- La fuente de verdad son las migraciones en supabase/migrations/.
--- No ejecutar este archivo contra una base existente: no incluye DROP,
--- pero tampoco es un proceso de migración. Usá `supabase db reset` o
--- `supabase db push`.
+-- Baseline schema for Sello Nómada.
+-- Derived from schema.sql without DROP statements.
 
 CREATE TABLE public.users (
     id UUID PRIMARY KEY,

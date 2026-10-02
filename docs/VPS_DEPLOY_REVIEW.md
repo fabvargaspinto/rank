@@ -174,7 +174,7 @@ El archivo aparte evita el warning de Turbopack por usar `process.exit`, que no 
 
 **Test:** en CI, `pnpm build` sin `BACKEND_URL` (sección [8](#8-ci)).
 
-### 3.2 Las variables públicas se congelan en el build con valores locales [verificado]
+### ✅ 3.2 Las variables públicas se congelan en el build con valores locales [verificado]
 
 Next reemplaza `process.env.NEXT_PUBLIC_*` por su valor **al construir**, también en el código del servidor (`frontend/node_modules/next/dist/docs/01-app/02-guides/environment-variables.md`). Lo comprobé: la URL y la clave de Supabase pasadas al build quedan escritas en 6 chunks de `.next/server`, y definirlas después en el contenedor no cambia nada.
 
@@ -229,7 +229,7 @@ En la misma línea, `PROFILE_HOST = "sellonomada.com/"` está fijo en `frontend/
 
 **Test:** en CI, un build sin los build args debe fallar, y en el build normal `robots.txt` no debe contener `localhost` (sección [8](#8-ci)).
 
-### 3.3 No hay migraciones y `schema.sql` borra la base [verificado]
+### ✅ 3.3 No hay migraciones y `schema.sql` borra la base [verificado]
 
 - `supabase/migrations/` está vacío: los archivos se borraron en el commit `9c82232e` ("version 1.0.0").
 - `supabase/config.toml:63` tiene `schema_paths = []`, así que `supabase db push` y `supabase db reset` no crean nada.

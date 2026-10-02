@@ -18,14 +18,19 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
-COPY . .
-RUN mkdir -p public
-ARG NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_SITE_URL
+RUN test -n "$NEXT_PUBLIC_SUPABASE_URL" \
+ && test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+ && test -n "$NEXT_PUBLIC_SITE_URL" \
+ || { echo "Faltan build args NEXT_PUBLIC_*" >&2; exit 1; }
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+COPY . .
+RUN mkdir -p public && pnpm build
 
 FROM base AS production
 ENV NODE_ENV=production \

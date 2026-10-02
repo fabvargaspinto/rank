@@ -26,9 +26,10 @@ import {
     USERNAME_MAX_LENGTH,
     usernameShapeError,
 } from "@/lib/domain-limits";
+import { profileHost } from "@/lib/site-url";
 import styles from "./perfil-form.module.css";
 
-const PROFILE_HOST = "sellonomada.com/";
+const PROFILE_HOST = profileHost();
 
 export type { Profile, ProfileLink } from "@/features/profile/model";
 export { isObjectUrl } from "@/features/profile/model";

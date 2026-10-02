@@ -24,12 +24,13 @@ import {
     USERNAME_MAX_LENGTH,
     usernameShapeError,
 } from "@/lib/domain-limits";
+import { profileHost } from "@/lib/site-url";
 import { checkNameAvailability } from "../action/check-name-action";
 import { updateUserAction } from "../action/update-user-action";
 import { uploadAvatarAction } from "../action/upload-avatar-action";
 import styles from "./start-form.module.css";
 
-const PROFILE_HOST = "sellonomada.com/";
+const PROFILE_HOST = profileHost();
 const STEP_COUNT = 3;
 
 export default function StartForm() {

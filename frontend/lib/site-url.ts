@@ -7,5 +7,13 @@ export function siteUrl() {
         return configured;
     }
 
+    if (process.env.NODE_ENV === "production") {
+        throw new Error("Falta NEXT_PUBLIC_SITE_URL");
+    }
+
     return LOCAL_SITE_URL;
+}
+
+export function profileHost() {
+    return `${new URL(siteUrl()).host}/`;
 }
