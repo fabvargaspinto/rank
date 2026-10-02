@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { allowPasswordRecovery } from "@/lib/auth/password-recovery";
+import { authErrorQuery } from "@/lib/auth/auth-error";
 import { provisionSession } from "@/lib/api/session";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { createAuthClient } from "@/lib/supabase/auth-client";
 
 const RESET_PATH = "/reset-password";
-const EXPIRED_LINK =
-    "/login?error=" + encodeURIComponent("El enlace venció o no es válido");
+const EXPIRED_LINK = `/login?${authErrorQuery("link_expired")}`;
 
 function otpType(value: string | null): EmailOtpType | null {
     if (
@@ -51,9 +51,9 @@ export async function GET(request: Request) {
 
     if (provisioned.isError) {
         await supabase.auth.signOut();
-        redirect(
-            `/login?error=${encodeURIComponent(provisioned.message)}`,
-        );
+        const errorCode =
+            provisioned.status === 403 ? "not_allowed" : "provision_failed";
+        redirect(`/login?${authErrorQuery(errorCode)}`);
     }
 
     if (type === "recovery" || next === RESET_PATH) {

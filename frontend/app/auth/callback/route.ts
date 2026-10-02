@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createAuthClient } from "@/lib/supabase/auth-client";
 import { provisionSession } from "@/lib/api/session";
+import { authErrorQuery } from "@/lib/auth/auth-error";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 
 function fromPath(value: string | null) {
@@ -16,24 +17,22 @@ export async function GET(request: Request) {
     const supabase = await createAuthClient();
 
     if (searchParams.get("error") || !code) {
-        redirect(
-            `${from}?error=${encodeURIComponent("No se pudo completar el acceso con Google")}`,
-        );
+        redirect(`${from}?${authErrorQuery("oauth_failed")}`);
     }
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error || !data.session) {
-        redirect(
-            `${from}?error=${encodeURIComponent("No se pudo completar el acceso con Google")}`,
-        );
+        redirect(`${from}?${authErrorQuery("oauth_failed")}`);
     }
 
     const response = await provisionSession(data.session.access_token);
 
     if (response.isError) {
         await supabase.auth.signOut();
-        redirect(`${from}?error=${encodeURIComponent(response.message)}`);
+        const errorCode =
+            response.status === 403 ? "not_allowed" : "provision_failed";
+        redirect(`${from}?${authErrorQuery(errorCode)}`);
     }
 
     redirect(

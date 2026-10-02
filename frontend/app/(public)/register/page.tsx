@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import RegisterPage from "@/features/register/register-page";
+import { messageForAuthError } from "@/lib/auth/auth-error";
 import { LOGIN_PATH, getPostAuthPath } from "@/lib/post-auth-path";
 
 type RegisterRouteProps = {
@@ -15,5 +16,5 @@ export default async function page({ searchParams }: RegisterRouteProps) {
 
     const params = await searchParams;
 
-    return <RegisterPage initialError={params.error} />;
+    return <RegisterPage initialError={messageForAuthError(params.error)} />;
 }

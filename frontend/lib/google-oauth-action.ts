@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { authErrorQuery } from "@/lib/auth/auth-error";
 import { requestOrigin } from "@/lib/request-origin";
 import { createAuthClient } from "@/lib/supabase/auth-client";
 
@@ -26,7 +27,7 @@ export async function startGoogleOAuthAction(from: string) {
     });
 
     if (error || !data.url) {
-        redirect(`${path}?error=${encodeURIComponent("No se pudo iniciar Google")}`);
+        redirect(`${path}?${authErrorQuery("oauth_failed")}`);
     }
 
     redirect(data.url);

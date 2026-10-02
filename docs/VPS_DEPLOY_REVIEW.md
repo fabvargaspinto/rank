@@ -360,7 +360,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.6](#46-rate-limiting-del-backend) | ~~Rate limiting en memoria y con claves frágiles~~ — clave por `sub` + IP real | — | — |
 | [4.7](#47-cabeceras-de-seguridad-verificado) | ~~Sin cabeceras de seguridad~~ — headers + CSP Report-Only | — | — |
 | [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | ~~Cambio de contraseña con cualquier sesión~~ — cookie de recovery + signOut others | — | — |
-| [4.9](#49-mensajes-de-error-tomados-de-la-url) | El parámetro `?error=` de la URL se muestra como mensaje oficial | Baja | XS |
+| [4.9](#49-mensajes-de-error-tomados-de-la-url) | ~~Mensajes de error en la URL~~ — códigos `?error=` | — | — |
 | [4.10](#410-límite-de-body) | Límite de body basado solo en `Content-Length` | Baja | XS |
 | [4.11](#411-base-de-datos) | Perfil huérfano al borrar un usuario desde el dashboard; `GRANT SELECT` sin uso | Baja | XS |
 | [4.12](#412-claves-de-cifrado) | Claves de cifrado: custodia, versión y rotación | Media | S |
@@ -522,11 +522,9 @@ Se eliminó `TRIAL_TESTER_EMAILS` / `trial_testers` del backend y del frontend. 
 
 `/auth/confirm` con `type=recovery` (o `next=/reset-password`) setea la cookie httpOnly `sn_password_recovery` (10 min). `resetPasswordAction` la exige y la consume, y después hace `signOut({ scope: "others" })`. En local, `secure_password_change = true` en `config.toml` (revisar el mismo valor en el proyecto hosted).
 
-### 4.9 Mensajes de error tomados de la URL
+### ✅ 4.9 Mensajes de error tomados de la URL
 
-`app/(public)/login/page.tsx:18` y `app/(public)/register/page.tsx:18` pasan `params.error` al formulario, que lo muestra con el estilo de un error oficial (`frontend/features/login/component/login-form.tsx:32-33`). React escapa el HTML, así que no hay XSS, pero cualquiera puede armar `https://<dominio>/login?error=Tu cuenta fue suspendida. Escribí a ...` y difundirlo. Además, `app/auth/callback/route.ts:35-36` y `app/auth/confirm/route.ts:51-56` ponen mensajes del backend en la URL.
-
-**Arreglo:** pasar códigos (`?error=oauth_failed`, `link_expired`, `not_allowed`, `session_expired`), traducirlos a textos propios e ignorar los desconocidos.
+Login y register solo muestran textos propios vía `messageForAuthError` (`frontend/lib/auth/auth-error.ts`). Los redirects usan códigos (`oauth_failed`, `link_expired`, `not_allowed`, `session_expired`, `provision_failed`); lo desconocido se ignora.
 
 ### 4.10 Límite de body
 
