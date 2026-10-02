@@ -546,7 +546,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 
 | # | Hallazgo | Impacto | Esfuerzo |
 |---|---|---|---|
-| [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero) | Turso cae en silencio a un SQLite efímero | Se pierden los datos de Instagram en cada deploy | XS |
+| [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero) | ~~Turso cae a SQLite efímero~~ — fail-fast en producción | — | — |
 | [5.2](#52-nadie-ejecuta-el-job-de-snapshots) | Nadie ejecuta el job de snapshots | Sin historial; a los 60 días vencen todas las conexiones | S |
 | [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | Un error de infraestructura corta el job completo | Un token roto frena a todos los usuarios siguientes | XS |
 | [5.4](#54-token-de-una-hora-aceptado-en-silencio) | Token de una hora aceptado en silencio | Conexiones que mueren a la hora | XS |
@@ -558,11 +558,9 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.10](#510-el-login-oculta-el-email-sin-confirmar) | El login oculta "email sin confirmar" y "demasiados intentos" | Usuarios bloqueados sin saber por qué | XS |
 | [5.11](#511-configuración-del-backend-verificado) | Configuración con rutas relativas y leída en cada request | Errores difíciles de diagnosticar | XS |
 
-### 5.1 Turso cae en silencio a un SQLite efímero
+### ✅ 5.1 Turso cae en silencio a un SQLite efímero
 
-`TursoSettings` tiene como valor por defecto `file:./instagram.db` (`backend/config/turso_settings.py:6-9`), y `create_instagram_db` usa SQLite para cualquier URL `file:` o `.db` (`backend/core/instagram/infrastructure/db.py:7-21`). Si en producción falta `TURSO_URL`, el backend crea `/app/instagram.db` dentro del contenedor sin avisar: funciona hasta el próximo deploy, y ahí desaparecen todas las conexiones y el historial. Con el usuario no root de [7.2](#72-dockerfiles), ni siquiera podría crear el archivo, y el primer uso de Instagram daría 500.
-
-**Arreglo:** en el `lifespan`, si `AppSettings().is_production`, exigir que `TURSO_URL` no sea SQLite y que `TURSO_TOKEN` no esté vacío, y no arrancar si falta alguno.
+En producción el `lifespan` llama `TursoSettings.require_remote_for_production()`: exige `TURSO_URL` remoto (no SQLite) y `TURSO_TOKEN` no vacío; si no, no arranca.
 
 ### 5.2 Nadie ejecuta el job de snapshots
 
@@ -1111,7 +1109,7 @@ Estimaciones orientativas para una persona.
 - [ ] Build args obligatorios y `siteUrl()` que falle en producción ([3.2](#32-las-variables-públicas-se-congelan-en-el-build-con-valores-locales-verificado)).
 - [ ] Migración base sin `DROP`, proyecto de Supabase y base de Turso de producción ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)).
 - [ ] Propiedad del avatar en la API, el dominio y la base; primero los tests ([3.4](#34-un-usuario-puede-usar-el-avatar-de-otro-y-borrarlo-verificado)).
-- [ ] Dockerfile del backend, `.dockerignore`, configuración validada en el `lifespan` y Turso obligatorio en producción ([3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado), [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero)).
+- [x] Dockerfile del backend, `.dockerignore`, configuración validada en el `lifespan` y Turso obligatorio en producción ([3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado), [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero)).
 - [ ] `docker-compose.prod.yml`, Caddyfile, archivos de variables, rotación de logs y cron diario ([7](#7-el-vps)).
 - [x] Cabeceras de seguridad y `poweredByHeader: false` ([4.7](#47-cabeceras-de-seguridad-verificado)).
 - [ ] Supabase de producción: Site URL, redirects, confirmación, SMTP, plantillas y política de contraseñas ([6.1](#61-supabase-de-producción)).

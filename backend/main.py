@@ -16,11 +16,15 @@ from api.routers.profiles import router as profiles_router
 from api.routers.session import router as session_router
 from config.app_settings import AppSettings
 from config.instagram_settings import InstagramSettings
+from config.turso_settings import TursoSettings
 
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
+    app_settings = AppSettings()
+    if app_settings.is_production:
+        TursoSettings().require_remote_for_production()
     get_dependency_container()
     InstagramSettings()  # type: ignore[call-arg]
     yield
