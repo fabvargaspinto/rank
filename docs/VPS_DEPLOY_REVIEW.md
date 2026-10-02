@@ -5,7 +5,7 @@
 - **Alcance:** backend (FastAPI 0.141, Python 3.13), frontend (Next.js 16.3.4, React 19.2.8), Supabase (`supabase/schema.sql` y `supabase/config.toml`), integración con Instagram (Meta y Turso), Docker y todo lo que hace falta armar en el servidor.
 - **Documentos relacionados:** [`DEPLOY_READINESS_REVIEW.md`](./DEPLOY_READINESS_REVIEW.md) (23/09/2026), [`ARCHITECTURE_AUDIT.md`](./ARCHITECTURE_AUDIT.md) (12/09/2026) e [`INSTAGRAM_ANALYTICS.md`](./INSTAGRAM_ANALYTICS.md).
 
-La revisión del 23/09 miraba DDD, TDD y UX. Este documento responde otra pregunta: **¿se puede subir hoy a un VPS y abrirlo a usuarios reales?** Parte del código actual, incluidos la integración con Instagram y el periodo de prueba que se agregaron después, y se concentra en tres cosas: lo que impide desplegar, los fallos de seguridad y lo que falta armar en el servidor.
+La revisión del 23/09 miraba DDD, TDD y UX. Este documento responde otra pregunta: **¿se puede subir hoy a un VPS y abrirlo a usuarios reales?** Parte del código actual, incluida la integración con Instagram, y se concentra en tres cosas: lo que impide desplegar, los fallos de seguridad y lo que falta armar en el servidor.
 
 **Convenciones.** Las rutas son relativas a la raíz del repositorio y los números de línea corresponden al commit revisado. Lo marcado **[verificado]** se comprobó ejecutando código, builds, tests o requests; el resto sale de leer el código o la documentación oficial, y cuando algo es una deducción se aclara. El documento no contiene valores de secretos, solo nombres de variables. No se ejecutó nada contra el proyecto de Supabase hosted, Turso ni Meta, así que la configuración de esos servicios (sus dashboards) queda como pendiente de verificar.
 
@@ -67,7 +67,7 @@ Esfuerzo: XS = menos de 1 hora; S = hasta medio día; M = 1 o 2 días; L = más 
 |---|---|
 | `uv run pytest tests/unit` | 433 tests pasan en 1,35 s; también sin `.env` ni variables de entorno, como correrían en CI |
 | `uv run pytest tests/integration/instagram` | 1 test pasa (los demás de integración necesitan Supabase local) |
-| `uv run ruff check .` | 1 error: espacios en una línea vacía (W293) en `backend/core/auth/application/trial_testers.py:12` |
+| `uv run ruff check .` | Sin el W293 de `trial_testers.py` (archivo eliminado) |
 | `uv run mypy` (con los `files` de `pyproject.toml`) | 12 errores en 6 archivos (sección [9](#9-calidad-de-código-y-limpieza)); `uv run mypy .` reporta 591 porque también revisa `tests/` |
 | `uv run lint-imports` | Los 3 contratos se cumplen (con 11 imports ignorados) |
 | `tsc --noEmit` | Sin errores |
@@ -356,7 +356,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.2](#42-la-misma-clave-cifra-los-tokens-y-firma-el-state) | La misma clave cifra los tokens de Instagram y firma el `state` | Baja | XS |
 | [4.3](#43-borrar-la-cuenta-no-borra-los-datos-de-instagram) | Borrar la cuenta deja los datos de Instagram, y el job los sigue usando | Alta (datos personales) | S |
 | [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios) | Límites de Supabase Auth compartidos por todo el sitio | Alta (disponibilidad) | S |
-| [4.5](#45-periodo-de-prueba) | Periodo de prueba: lista fija en el código, bypass para tests y usuarios de Auth para cualquiera | Media | S |
+| [4.5](#45-periodo-de-prueba) | ~~Periodo de prueba / lista de testers~~ — eliminado | — | — |
 | [4.6](#46-rate-limiting-del-backend) | Rate limiting en memoria y con claves que no identifican al usuario | Baja | S |
 | [4.7](#47-cabeceras-de-seguridad-verificado) | Sin cabeceras de seguridad | Media | XS |
 | [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | Cambio de contraseña con cualquier sesión, sin cerrar las demás | Media | S |
@@ -439,7 +439,7 @@ Eso incumple la promesa de "borrar la cuenta", las leyes de datos personales (Le
 
 **Test que debe fallar antes del arreglo:** `DELETE /me` de un usuario con Instagram conectado deja `get_by_owner(...)` en `None` y sin snapshots de esa cuenta.
 
-###  4.4 Los límites de Supabase Auth se comparten entre todos los usuarios
+### ✅ 4.4 Los límites de Supabase Auth se comparten entre todos los usuarios
 
 Todas las llamadas a Supabase Auth salen del servidor de Next: `signInWithPassword` (login), `signUp` (registro), `resetPasswordForEmail` (recuperación), `verifyOtp` y `exchangeCodeForSession` (`/auth/confirm` y `/auth/callback`), `updateUser` (cambio de contraseña), y la renovación de la sesión que hace `getClaims()` en `frontend/proxy.ts:38` cuando el access token venció. [Según la documentación de Supabase](https://supabase.com/docs/guides/auth/rate-limits), los límites por IP se aplican a la IP que hace la llamada, que acá es siempre la del VPS:
 
@@ -503,17 +503,9 @@ Consecuencias:
    - Si Auth responde `over_email_send_rate_limit`, la app muestra mensaje de beta (`frontend/lib/supabase/auth-email.ts`).
 5. Subir los límites de Supabase solo después de los puntos 1 y 2: mientras todo salga de una IP, subirlos amplía también lo que puede hacer un atacante.
 
-### 4.5 Periodo de prueba
+### ✅ 4.5 Periodo de prueba
 
-- La lista `TRIAL_TESTER_EMAILS` está fija en el código y duplicada (`backend/core/auth/application/trial_testers.py:10-13` y `frontend/lib/trial-testers.ts:5-7`), con un email personal real versionado en git. Sumar un tester exige desplegar los dos servicios.
-- `is_trial_tester` devuelve `True` si existe la variable `PYTEST_CURRENT_TEST` (`trial_testers.py:20-23`): lógica de tests en código de producción. Cualquier entorno con esa variable, por error o a propósito, desactiva el filtro.
-- El filtro corre recién al aprovisionar (`backend/core/auth/application/provision_identity.py:72-74`). Supabase Auth acepta registros de cualquiera: la clave publicable está en el bundle, así que un `POST /auth/v1/signup` directo, o "Continuar con Google", crea el usuario en `auth.users` y **envía el email de confirmación**. Con el SMTP incluido (2 emails por hora para todo el proyecto, [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)), dos registros falsos por hora alcanzan para que ningún tester reciba su confirmación o su recuperación.
-
-**Arreglo**, a elegir:
-
-- **Lo más simple mientras dure la prueba:** desactivar el registro público en Supabase (*Allow new users to sign up*) e invitar a cada tester desde el dashboard (*Invite user*). Sin registro público no hay usuarios basura ni emails gastados. La plantilla de invitación debe llevar a `/auth/confirm?token_hash=...&type=invite`, y `app/auth/confirm/route.ts:58-60` tiene que mandar también `type === "invite"` a `/reset-password`, para que el tester elija su contraseña.
-- **Alternativa:** un Auth Hook `before_user_created` que rechace los emails que no estén en una tabla `public.trial_testers`. Supabase lo ejecuta antes de crear el usuario, así que no se crea nada ni se manda ningún email, y la lista se edita sin desplegar.
-- En los dos casos: borrar el bypass de `PYTEST_CURRENT_TEST` (los tests pueden parchear la lista con un fixture), sacar el email del repositorio y quitar el espacio sobrante de `trial_testers.py:12`, que es el único error de ruff.
+Se eliminó `TRIAL_TESTER_EMAILS` / `trial_testers` del backend y del frontend. El registro y el aprovisionamiento ya no filtran por lista fija.
 
 ### 4.6 Rate limiting del backend
 
@@ -737,7 +729,6 @@ Con una ejecución semanal y una ventana de 7 días, alcanza con que falle una s
 - [ ] Política de contraseñas igual a la local (`config.toml:183-186`): mínimo 8, con minúsculas, mayúsculas y dígitos.
 - [ ] **Secure password change** activado ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
 - [ ] **CAPTCHA** e **IP Address Forwarding** ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
-- [ ] Registro público desactivado durante la prueba, o el hook `before_user_created` ([4.5](#45-periodo-de-prueba)).
 - [ ] **Claves JWT asimétricas** (ES256 o RS256). El backend solo acepta esos algoritmos (`backend/api/dependencies/auth.py:15`), y `getClaims()` valida el token localmente solo con claves asimétricas; con la clave HS256 heredada hace una llamada de red por request.
 - [ ] Google configurado con las credenciales del proyecto de Google de producción ([6.3](#63-google-oauth)).
 - [ ] Security Advisor y Performance Advisor sin alertas.
@@ -1140,7 +1131,6 @@ Notas:
 
 **Errores que hoy romperían el CI**
 
-- ruff: `backend/core/auth/application/trial_testers.py:12`, espacios en una línea vacía.
 - mypy, 12 errores en 6 archivos:
   - `api/logging.py:47` y `:57`;
   - `core/user/application/avatar_image.py:24` y `:26`;
@@ -1206,7 +1196,6 @@ Estimaciones orientativas para una persona.
 - [ ] Callback de Instagram en Next, con verificación del dueño; el backend deja de exponerse ([4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión)).
 - [ ] Borrado de los datos de Instagram al borrar la cuenta, y limpieza de los huérfanos ([4.3](#43-borrar-la-cuenta-no-borra-los-datos-de-instagram)).
 - [ ] CAPTCHA, IP forwarding o límites en el proxy, y SMTP propio ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
-- [ ] Registro desactivado más invitaciones, o el hook; sin el bypass de tests ([4.5](#45-periodo-de-prueba)).
 - [ ] Job robusto: captura de todos los errores, sin token de una hora, código de salida y heartbeat ([5.2](#52-nadie-ejecuta-el-job-de-snapshots) a [5.4](#54-token-de-una-hora-aceptado-en-silencio)).
 - [ ] Endurecimiento del VPS, backups probados y monitoreo ([7.6](#76-endurecimiento-del-servidor), [7.7](#77-backups-y-monitoreo)).
 

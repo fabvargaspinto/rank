@@ -3,6 +3,7 @@
 import type { FetchDataResponse } from "@/lib/api/types";
 import { requestOrigin } from "@/lib/request-origin";
 import { createAuthClient } from "@/lib/supabase/auth-client";
+import { emailRateLimitResponse } from "@/lib/supabase/auth-email";
 import { emailSchema, invalidFormResponse } from "@/lib/validation/auth";
 
 const SENT_MESSAGE =
@@ -25,6 +26,11 @@ export async function forgotPasswordAction(
     });
 
     if (error) {
+        const rateLimited = emailRateLimitResponse(error);
+        if (rateLimited) {
+            return rateLimited;
+        }
+
         return {
             data: null,
             isError: true,

@@ -3,11 +3,6 @@ from core.auth.application.application_error import (
     InvalidAuthCredentialsError,
     UnsupportedAuthProviderError,
 )
-from core.auth.application.trial_testers import (
-    TRIAL_REGISTRATION_DENIED,
-    RegistrationNotAllowedError,
-    is_trial_tester,
-)
 from core.auth.domain.auth import Auth
 from core.auth.domain.auth_email import AuthEmail
 from core.auth.domain.auth_provider import AuthProvider
@@ -69,9 +64,6 @@ class ProvisionIdentity:
         provider_id: str | None,
     ) -> Auth:
         email_vo = AuthEmail(email)
-        # trial testers
-        if not is_trial_tester(email_vo.value):
-            raise RegistrationNotAllowedError(TRIAL_REGISTRATION_DENIED)
         if self.auth_repo.find_by_email(email_vo.value):
             raise EmailAlreadyExistsError("El email ya está registrado")
 

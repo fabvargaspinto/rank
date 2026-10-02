@@ -16,7 +16,6 @@ logger = logging.getLogger("ig.errors")
 _APPLICATION_STATUS = {
     "EmailAlreadyExistsError": 409,
     "AuthAlreadyExistsError": 409,
-    "RegistrationNotAllowedError": 403,  # trial testers
     "InvalidAuthCredentialsError": 401,
     "UserNotFoundError": 404,
     "PostNotFoundError": 404,

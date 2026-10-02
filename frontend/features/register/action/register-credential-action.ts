@@ -6,10 +6,7 @@ import type { FetchDataResponse } from "@/lib/api/types";
 import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { requestOrigin } from "@/lib/request-origin";
 import { createAuthClient } from "@/lib/supabase/auth-client";
-import {
-    TRIAL_REGISTRATION_DENIED,
-    isTrialTester,
-} from "@/lib/trial-testers";
+import { emailRateLimitResponse } from "@/lib/supabase/auth-email";
 import { invalidFormResponse, registerSchema } from "@/lib/validation/auth";
 
 const CHECK_EMAIL_MESSAGE = "Revisá tu email para confirmar la cuenta.";
@@ -28,16 +25,6 @@ export async function registerCredentialAction(
 
     if (!parsed.success) {
         return invalidFormResponse(parsed.error);
-    }
-
-    // trial testers
-    if (!isTrialTester(parsed.data.email)) {
-        return {
-            data: null,
-            isError: true,
-            message: TRIAL_REGISTRATION_DENIED,
-            status: 403,
-        };
     }
 
     const supabase = await createAuthClient();
@@ -61,6 +48,11 @@ export async function registerCredentialAction(
                 message: CHECK_EMAIL_MESSAGE,
                 status: 200,
             };
+        }
+
+        const rateLimited = emailRateLimitResponse(error);
+        if (rateLimited) {
+            return rateLimited;
         }
 
         return {
