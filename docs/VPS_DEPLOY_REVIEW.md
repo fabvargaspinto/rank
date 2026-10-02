@@ -547,7 +547,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | # | Hallazgo | Impacto | Esfuerzo |
 |---|---|---|---|
 | [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero) | ~~Turso cae a SQLite efímero~~ — fail-fast en producción | — | — |
-| [5.2](#52-nadie-ejecuta-el-job-de-snapshots) | Nadie ejecuta el job de snapshots | Sin historial; a los 60 días vencen todas las conexiones | S |
+| [5.2](#52-nadie-ejecuta-el-job-de-snapshots) | ~~Nadie ejecuta el job de snapshots~~ — cron diario + exit ≠ 0 | — | — |
 | [5.3](#53-un-error-de-infraestructura-corta-el-job-completo) | Un error de infraestructura corta el job completo | Un token roto frena a todos los usuarios siguientes | XS |
 | [5.4](#54-token-de-una-hora-aceptado-en-silencio) | Token de una hora aceptado en silencio | Conexiones que mueren a la hora | XS |
 | [5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan) | La foto y el usuario de Instagram no se actualizan | Imagen rota a los pocos días | S |
@@ -562,15 +562,9 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 
 En producción el `lifespan` llama `TursoSettings.require_remote_for_production()`: exige `TURSO_URL` remoto (no SQLite) y `TURSO_TOKEN` no vacío; si no, no arranca.
 
-### 5.2 Nadie ejecuta el job de snapshots
+### ✅ 5.2 Nadie ejecuta el job de snapshots
 
-`docs/INSTAGRAM_ANALYTICS.md` describe dos formas de correrlo (`run_instagram_snapshots.py` o un cron contra `POST /internal/instagram/snapshots`), pero ninguna está configurada. `INSTAGRAM_SNAPSHOT_JOB_TOKEN` no está en `.env`, así que el endpoint responde 404.
-
-Los tokens de larga duración valen 60 días, y solo ese job los renueva, cuando les quedan 7 días o menos (`capture_instagram_followers.py:24` y `:73-88`). Sin el job no hay historial semanal, y a los 60 días vencen todas las conexiones.
-
-Con una ejecución semanal y una ventana de 7 días, alcanza con que falle una sola corrida (un reinicio del VPS, un deploy roto) para que los tokens venzan. Como el snapshot de la semana se reemplaza si ya existe (`:99-105`), **correrlo todos los días** es seguro: da siete oportunidades de renovar antes del vencimiento, y el valor de la semana pasa a ser el último capturado.
-
-**Arreglo:** cron diario en el host ([7.5](#75-job-de-snapshots)), y que `run_instagram_snapshots.py` termine con código distinto de 0 si `failed > 0`, para poder alertar.
+Cron diario en el host ([7.5](#75-job-de-snapshots)). `run_instagram_snapshots.py` imprime `captured=` / `failed=` y termina con exit `1` si `failed > 0`. Preferí `docker compose exec` frente al endpoint HTTP (el token del job queda opcional).
 
 ### 5.3 Un error de infraestructura corta el job completo
 
@@ -897,15 +891,16 @@ Las requests con la clave vacía (todo lo que no es POST) no cuentan para el lí
 
 ### 7.5 Job de snapshots
 
-Crontab del usuario de despliegue, una vez por día ([5.2](#52-nadie-ejecuta-el-job-de-snapshots)):
+Crontab del usuario de despliegue, **una vez por día** ([5.2](#52-nadie-ejecuta-el-job-de-snapshots)). Usá `bash -lc` con `pipefail` para que un `failed > 0` (exit 1 del script) no se pierda al pipe a `logger`:
 
 ```
-15 4 * * * cd /opt/sellonomada && docker compose -f docker-compose.prod.yml exec -T backend python run_instagram_snapshots.py 2>&1 | logger -t sellonomada-snapshots
+15 4 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && docker compose -f docker-compose.prod.yml exec -T backend python run_instagram_snapshots.py 2>&1 | logger -t sellonomada-snapshots'
 ```
 
 - La salida queda en journald (`journalctl -t sellonomada-snapshots`).
 - Para enterarse si el job deja de correr, agregar al final un ping a un servicio de heartbeat (Healthchecks.io, Better Stack o Uptime Kuma), que avisa cuando no llega.
 - Con `docker compose exec` el job usa la misma imagen y las mismas variables que el backend, y no hace falta exponer ni proteger `/internal/instagram/snapshots`.
+- `run_instagram_snapshots.py` sale con código `1` si `failed > 0`.
 
 ### 7.6 Endurecimiento del servidor
 
@@ -1157,7 +1152,7 @@ Estimaciones orientativas para una persona.
 - [ ] HTTPS con certificado válido, redirección desde HTTP, y cabeceras de seguridad presentes (por ejemplo, con securityheaders.com).
 - [ ] 200 intentos de login fallidos desde una IP no impiden que otra persona inicie sesión.
 - [ ] Registro con confirmación, login, logout, recuperación de contraseña, Google e Instagram funcionan en el dominio real.
-- [ ] El job de snapshots corre todos los días, termina con `failed=0` y avisa si deja de correr.
+- [ ] El job de snapshots corre todos los días en el VPS (cron de [7.5](#75-job-de-snapshots)), con heartbeat si deja de correr.
 - [ ] Backups de la base y de Storage automáticos, con una restauración probada.
 - [ ] Errores reportados en Sentry y uptime monitoreado.
 - [ ] CI en verde: ruff, mypy, import-linter, tests unitarios y de integración, ESLint, `tsc` y build.

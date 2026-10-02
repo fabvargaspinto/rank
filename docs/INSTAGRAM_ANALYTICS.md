@@ -50,20 +50,21 @@ El callback vive en Next (`/auth/instagram/callback`). En Meta registrá exactam
 - `POST /instagram/deauthorize` — callback de Meta (signed_request)
 - `POST /instagram/data-deletion` — callback de Meta; responde `{url, confirmation_code}`
 - `GET /instagram/data-deletion/status` — estado de la solicitud de borrado
-- `POST /internal/instagram/snapshots` — job semanal (`X-Job-Token`); en producción preferí `docker compose exec`
+- `POST /internal/instagram/snapshots` — job (`X-Job-Token`); en producción preferí `docker compose exec` diario ([VPS_DEPLOY_REVIEW §7.5](./VPS_DEPLOY_REVIEW.md#75-job-de-snapshots))
 
 Permiso de Meta: `instagram_business_basic` (incluye `followers_count`).
 
-## Snapshots semanales
+## Snapshots (captura diaria, valor semanal)
 
-Una captura por cuenta y por semana ISO (lunes 00:00 UTC). Si el job corre dos veces la misma semana, se actualiza la misma fila.
+Una captura por cuenta y por semana ISO (lunes 00:00 UTC). Si el job corre dos veces la misma semana, se actualiza la misma fila. En producción conviene un cron **diario** para renovar tokens (ventana de 7 días antes del vencimiento de 60).
 
 ```bash
 cd backend
 uv run python run_instagram_snapshots.py
+# exit 1 si failed > 0
 ```
 
-O un cron semanal contra `POST /internal/instagram/snapshots` con `INSTAGRAM_SNAPSHOT_JOB_TOKEN`.
+En el VPS: `docker compose … exec -T backend python run_instagram_snapshots.py` (ver `VPS_DEPLOY_REVIEW.md` §7.5). El endpoint HTTP con `INSTAGRAM_SNAPSHOT_JOB_TOKEN` es opcional.
 
 ## Tests
 
