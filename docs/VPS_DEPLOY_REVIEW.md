@@ -357,8 +357,8 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 | [4.3](#43-borrar-la-cuenta-no-borra-los-datos-de-instagram) | Borrar la cuenta deja los datos de Instagram, y el job los sigue usando | Alta (datos personales) | S |
 | [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios) | Límites de Supabase Auth compartidos por todo el sitio | Alta (disponibilidad) | S |
 | [4.5](#45-periodo-de-prueba) | ~~Periodo de prueba / lista de testers~~ — eliminado | — | — |
-| [4.6](#46-rate-limiting-del-backend) | Rate limiting en memoria y con claves que no identifican al usuario | Baja | S |
-| [4.7](#47-cabeceras-de-seguridad-verificado) | Sin cabeceras de seguridad | Media | XS |
+| [4.6](#46-rate-limiting-del-backend) | ~~Rate limiting en memoria y con claves frágiles~~ — clave por `sub` + IP real | — | — |
+| [4.7](#47-cabeceras-de-seguridad-verificado) | ~~Sin cabeceras de seguridad~~ — headers + CSP Report-Only | — | — |
 | [4.8](#48-cambio-de-contraseña-con-cualquier-sesión) | Cambio de contraseña con cualquier sesión, sin cerrar las demás | Media | S |
 | [4.9](#49-mensajes-de-error-tomados-de-la-url) | El parámetro `?error=` de la URL se muestra como mensaje oficial | Baja | XS |
 | [4.10](#410-límite-de-body) | Límite de body basado solo en `Content-Length` | Baja | XS |
@@ -507,57 +507,16 @@ Consecuencias:
 
 Se eliminó `TRIAL_TESTER_EMAILS` / `trial_testers` del backend y del frontend. El registro y el aprovisionamiento ya no filtran por lista fija.
 
-### 4.6 Rate limiting del backend
+### ✅ 4.6 Rate limiting del backend
 
-- La clave es el hash del access token, y la IP remota cuando no hay token (`backend/api/rate_limit.py:8-18`). El token cambia en cada login y en cada renovación, así que el contador de un usuario se reinicia. Es más sólido usar el `sub` ya validado, por ejemplo guardándolo en `request.state` desde `get_current_user`.
-- Sin token, la "IP remota" es siempre la del contenedor de Next, que es el único cliente del backend: todos los visitantes anónimos compartirían un contador. Hoy no hay límites en rutas anónimas; si se agregan, Next tiene que reenviar la IP real y el backend confiar en ella solo desde la red interna.
-- El almacenamiento es en memoria: cada worker de uvicorn tiene su propio contador y todo se reinicia en cada deploy. Con 2 workers, "10/minute" significa en la práctica hasta 20. Para límites estrictos, Redis (`Limiter(..., storage_uri="redis://redis:6379")`).
-- Rutas sin límite: `POST /auth/session` (aprovisionar hace varias consultas y un RPC), `DELETE /me`, `DELETE /me/posts/{post_id}` y `GET /profiles/*`.
+- La clave es el `sub` del JWT (`request.state.auth_id` desde `get_current_user`); sin sesión, la IP de `X-Forwarded-For` (`backend/api/rate_limit.py`).
+- Next reenvía la IP del visitante en `frontend/lib/api/client.ts` (el backend no está expuesto a Internet en prod).
+- Límites en `POST /auth/session`, `DELETE /me`, `DELETE /me/posts/{id}` y `GET /profiles/*`.
+- Sigue en memoria por worker: con varios workers el cupo efectivo se multiplica. Redis queda como mejora si hace falta un límite estricto compartido.
 
-### 4.7 Cabeceras de seguridad [verificado]
+### ✅ 4.7 Cabeceras de seguridad [verificado]
 
-El servidor standalone responde `X-Powered-By: Next.js` y no envía CSP, HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` ni `Permissions-Policy`. `frontend/next.config.ts` no tiene `headers()` ni `poweredByHeader: false`.
-
-**Arreglo:**
-
-```ts
-import type { NextConfig } from "next";
-
-const securityHeaders = [
-    { key: "Strict-Transport-Security", value: "max-age=604800; includeSubDomains" },
-    { key: "X-Content-Type-Options", value: "nosniff" },
-    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-    { key: "X-Frame-Options", value: "DENY" },
-];
-
-const nextConfig: NextConfig = {
-    output: "standalone",
-    reactCompiler: true,
-    poweredByHeader: false,
-    experimental: {
-        serverActions: {
-            bodySizeLimit: "3mb",
-        },
-    },
-    async headers() {
-        return [{ source: "/:path*", headers: securityHeaders }];
-    },
-};
-
-export default nextConfig;
-```
-
-- **HSTS:** empezar con una semana, como arriba, y subirlo a uno o dos años cuando todo esté estable. `preload` solo si todos los subdominios sirven HTTPS.
-- **CSP:** empezar en modo `Content-Security-Policy-Report-Only` para no romper nada, y seguir la guía de `frontend/node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md`. El navegador no habla con Supabase (todo el auth pasa por el servidor), así que alcanza con permitir imágenes de Storage, del CDN de Instagram y los `blob:` de la vista previa del avatar:
-
-  ```
-  default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob: https://<proyecto>.supabase.co https://*.cdninstagram.com https://*.fbcdn.net;
-  connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
-  ```
-
-  Para sacar `'unsafe-inline'` de `script-src` hacen falta nonces, que la guía genera en `proxy.ts`. Casi todas las rutas ya son dinámicas, así que el costo es bajo.
+`frontend/next.config.ts` define `poweredByHeader: false`, HSTS (1 semana), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options` y `Content-Security-Policy-Report-Only` (imágenes de Storage + CDN de Instagram; `unsafe-inline` en scripts hasta migrar a nonces en `proxy.ts`).
 
 ### 4.8 Cambio de contraseña con cualquier sesión
 
@@ -1186,7 +1145,7 @@ Estimaciones orientativas para una persona.
 - [ ] Propiedad del avatar en la API, el dominio y la base; primero los tests ([3.4](#34-un-usuario-puede-usar-el-avatar-de-otro-y-borrarlo-verificado)).
 - [ ] Dockerfile del backend, `.dockerignore`, configuración validada en el `lifespan` y Turso obligatorio en producción ([3.6](#36-imagen-del-backend-healthcheck-y-callback-público-verificado), [5.1](#51-turso-cae-en-silencio-a-un-sqlite-efímero)).
 - [ ] `docker-compose.prod.yml`, Caddyfile, archivos de variables, rotación de logs y cron diario ([7](#7-el-vps)).
-- [ ] Cabeceras de seguridad y `poweredByHeader: false` ([4.7](#47-cabeceras-de-seguridad-verificado)).
+- [x] Cabeceras de seguridad y `poweredByHeader: false` ([4.7](#47-cabeceras-de-seguridad-verificado)).
 - [ ] Supabase de producción: Site URL, redirects, confirmación, SMTP, plantillas y política de contraseñas ([6.1](#61-supabase-de-producción)).
 - [ ] CI mínimo y corrección de los errores de ruff, mypy y ESLint ([8](#8-ci), [9](#9-calidad-de-código-y-limpieza)).
 - [ ] Iniciar el App Review de Meta, que corre en paralelo ([6.2](#62-meta-instagram)).
@@ -1210,7 +1169,7 @@ Estimaciones orientativas para una persona.
 
 ### Fase 3: mejoras continuas
 
-- [ ] Rate limiting por `sub` y con Redis si hace falta ([4.6](#46-rate-limiting-del-backend)).
+- [x] Rate limiting por `sub` + IP reenviada desde Next; Redis solo si hace falta cupo estricto entre workers ([4.6](#46-rate-limiting-del-backend)).
 - [ ] Trigger del perfil huérfano y revocar el `SELECT` sin uso ([4.11](#411-base-de-datos)).
 - [ ] Foto y usuario de Instagram actualizados por el job ([5.5](#55-la-foto-y-el-usuario-de-instagram-no-se-actualizan)).
 - [ ] Cursor normalizado, callback robusto y configuración cacheada ([5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte), [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura), [5.11](#511-configuración-del-backend-verificado)).

@@ -5,9 +5,10 @@ from functools import lru_cache
 from typing import Annotated, Any, Protocol
 
 import jwt
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from jwt import InvalidTokenError, PyJWKClient, PyJWKClientError, PyJWKSetError
 
+from api.rate_limit import set_rate_limit_auth_id
 from config.db_settings import DBSettings
 from core.auth.application.application_error import InvalidAuthCredentialsError
 
@@ -69,6 +70,7 @@ def extract_bearer_token(authorization: str | None) -> str:
 
 
 def get_current_user(
+    request: Request,
     authorization: Annotated[str | None, Header()] = None,
     jwt_settings: AuthJwtSettings = Depends(get_auth_jwt_settings),
     jwks_client: JwtKeySet = Depends(get_jwks_client),
@@ -83,6 +85,7 @@ def get_current_user(
     if not isinstance(email, str) or not email.strip():
         raise InvalidAuthCredentialsError(_INVALID_TOKEN)
 
+    set_rate_limit_auth_id(request, auth_id)
     return CurrentUser(auth_id=auth_id, email=email)
 
 

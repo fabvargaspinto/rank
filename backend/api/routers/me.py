@@ -161,9 +161,15 @@ def upload_avatar(
             "model": ErrorResponse,
             "description": "Usuario no encontrado",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Demasiadas solicitudes",
+        },
     },
 )
+@limiter.limit("5/minute")
 def delete_account(
+    request: Request,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     profile: Annotated[User, Depends(get_current_profile)],
     use_case: DeleteAccount = Depends(get_delete_account_use_case),
@@ -228,9 +234,15 @@ def create_post(
             "model": ErrorResponse,
             "description": "Publicación no encontrada",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Demasiadas solicitudes",
+        },
     },
 )
+@limiter.limit("30/minute")
 def delete_post(
+    request: Request,
     post_id: UUID,
     profile: Annotated[User, Depends(get_current_profile)],
     use_case: DeletePost = Depends(get_delete_post_use_case),

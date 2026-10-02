@@ -1,5 +1,6 @@
 import "server-only";
 
+import { headers as nextHeaders } from "next/headers";
 import type { FetchDataResponse } from "@/lib/api/types";
 
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -64,17 +65,28 @@ function errorMeta(data: unknown): { code?: string; field?: string } {
     };
 }
 
+async function forwardedClientIp(): Promise<string | undefined> {
+    const headerStore = await nextHeaders();
+    return (
+        headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        headerStore.get("x-real-ip")?.trim() ||
+        undefined
+    );
+}
+
 export async function fetchData<T = unknown>(
     path: string,
     options: RequestInit = {},
 ): Promise<FetchDataResponse<T>> {
     const url = path.startsWith("http") ? path : `${backendUrl()}${path}`;
     const requestId = crypto.randomUUID();
-    const { signal: callerSignal, headers, body, ...rest } = options;
+    const { signal: callerSignal, headers: requestHeaders, body, ...rest } =
+        options;
     const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
     const signal = callerSignal
         ? AbortSignal.any([callerSignal, timeout])
         : timeout;
+    const clientIp = await forwardedClientIp();
 
     try {
         const response = await fetch(url, {
@@ -86,7 +98,8 @@ export async function fetchData<T = unknown>(
                     ? {}
                     : { "Content-Type": "application/json" }),
                 "X-Request-ID": requestId,
-                ...headers,
+                ...(clientIp ? { "X-Forwarded-For": clientIp } : {}),
+                ...requestHeaders,
             },
         });
 

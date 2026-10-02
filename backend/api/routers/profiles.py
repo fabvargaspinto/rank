@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
 from api.dependencies.container import (
     get_posts_by_user_use_case,
@@ -9,6 +9,7 @@ from api.dependencies.container import (
 )
 from api.dependencies.supabase import get_supabase_url
 from api.mapping import to_post_page, to_post_response, to_user_response
+from api.rate_limit import limiter
 from api.schemas.auth import ErrorResponse
 from api.schemas.post import PostListResponse
 from api.schemas.user import PublicProfileResponse
@@ -32,9 +33,15 @@ router = APIRouter()
             "model": ErrorResponse,
             "description": "Usuario no encontrado",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Demasiadas solicitudes",
+        },
     },
 )
+@limiter.limit("60/minute")
 def read_profile(
+    request: Request,
     username: str,
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
     use_case: GetPublicProfile = Depends(get_public_profile_use_case),
@@ -58,9 +65,15 @@ def read_profile(
             "model": ErrorResponse,
             "description": "Usuario no encontrado",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Demasiadas solicitudes",
+        },
     },
 )
+@limiter.limit("60/minute")
 def list_posts(
+    request: Request,
     username: str,
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
     cursor: Annotated[str | None, Query()] = None,

@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
 from api.dependencies.auth import CurrentUser, get_current_user
 from api.dependencies.container import get_ensure_user_provisioned
+from api.rate_limit import limiter
 from api.schemas.auth import ErrorResponse, SessionResponse
 from core.auth.application.provision_identity import ProvisionIdentity
 
@@ -23,9 +24,15 @@ router = APIRouter()
             "model": ErrorResponse,
             "description": "El email ya está registrado",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Demasiadas solicitudes",
+        },
     },
 )
+@limiter.limit("20/minute")
 def provision_session(
+    request: Request,
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     provision_identity: ProvisionIdentity = Depends(get_ensure_user_provisioned),
 ) -> SessionResponse:
