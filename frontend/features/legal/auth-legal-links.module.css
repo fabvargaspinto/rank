@@ -1,0 +1,18 @@
+.links {
+    width: 100%;
+    margin: 0;
+    padding-block: var(--scale-6);
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
+    text-align: center;
+    text-wrap: pretty;
+}
+
+.links a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.links a:hover {
+    color: var(--muted-color);
+}

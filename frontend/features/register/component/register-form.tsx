@@ -42,7 +42,6 @@ export default function RegisterForm({ initialError = "" }: RegisterFormProps) {
                 name="passwordConfirmation"
                 placeholder="Password Confirmation"
                 autoComplete="new-password"
-            
             />
         </FormHero>
     );

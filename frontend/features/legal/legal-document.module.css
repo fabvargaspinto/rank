@@ -1,0 +1,82 @@
+.document {
+    width: 100%;
+    max-width: 40rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-outer-gap);
+    align-self: flex-start;
+    padding-block: var(--scale-8);
+}
+
+.brand a {
+    color: var(--muted-color);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+}
+
+.brand a:hover {
+    color: var(--accent-color);
+}
+
+.title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--core-text-color);
+    line-height: 1.2;
+}
+
+.updated {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    color: var(--muted-color);
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--component-outer-gap);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    color: var(--core-text-color);
+}
+
+.body h2 {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+}
+
+.body p,
+.body ul {
+    margin: 0;
+}
+
+.body ul {
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--scale-3);
+}
+
+.body a {
+    color: var(--accent-color);
+}
+
+.nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--scale-5);
+    padding-top: var(--scale-6);
+    border-top: 1px solid var(--color-black-4);
+    font-size: var(--font-size-xs);
+}
+
+.nav a {
+    color: var(--muted-color);
+    text-decoration: none;
+}
+
+.nav a:hover {
+    color: var(--accent-color);
+}

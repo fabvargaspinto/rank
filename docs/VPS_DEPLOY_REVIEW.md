@@ -645,9 +645,9 @@ La app solo llama `signInWithOAuth({ provider: "google" })` (`frontend/lib/googl
 - [ ] *Authorized redirect URI* en Google Cloud: `https://<proyecto>.supabase.co/auth/v1/callback` (callback de Supabase, no de la app).
 - [ ] Client ID y Secret en Supabase (`./scripts/configure-supabase-google-oauth.sh` o *Authentication → Providers → Google*). No van en el `.env` de la app ni en el compose.
 
-### 6.4 Páginas legales
+### ✅ 6.4 Páginas legales
 
-No hay política de privacidad ni términos: no existen esas rutas en `frontend/app`. Meta y Google los exigen para publicar, y la app procesa emails, fotos y datos de Instagram. Mínimo: `/privacidad` y `/terminos`, reservando antes esos nombres de usuario ([5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado)), enlazadas desde el registro y el pie de página. Tienen que explicar qué se guarda (email cifrado, perfil, publicaciones, token de Instagram cifrado e historial de seguidores), dónde (Supabase y Turso, con sus regiones), por cuánto tiempo y cómo borrarlo. En Argentina, conviene consultar si corresponde inscribir la base en el Registro Nacional de Bases de Datos de la AAIP (Ley 25.326).
+`/privacidad` y `/terminos` (nombres ya reservados en [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado)), con texto orientado a Chile (Ley 19.628), enlazadas al pie centrado de login/registro y en el sitemap. Conviene que un abogado revise el texto antes de App Review / consentimiento de Google.
 
 ---
 
