@@ -27,6 +27,11 @@ Ver `.env.example`. Canónicas:
 
 En el dashboard de Meta, registrá exactamente el mismo redirect URI.
 
+Callbacks que Meta llama (expuestos solo esas rutas vía nginx → backend):
+
+- Deauthorize callback: `https://<dominio>/instagram/deauthorize`
+- Data deletion request: `https://<dominio>/instagram/data-deletion`
+
 ## Desarrollo local
 
 Turso Cloud se usa si `TURSO_URL` es `libsql://` o `https://`. Sin cuenta de Turso:

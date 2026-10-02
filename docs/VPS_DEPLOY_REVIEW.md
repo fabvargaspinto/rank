@@ -606,7 +606,7 @@ El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-
 
 ## 6. Servicios externos
 
-### 6.1 Supabase de producción
+### ✅ 6.1 Supabase de producción
 
 `supabase/config.toml` solo aplica al stack local. El proyecto hosted se configura en el dashboard, o con la Management API.
 
@@ -628,9 +628,11 @@ El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-
 
 - [ ] App en modo **Live**, con *Advanced Access* aprobado en App Review para `instagram_business_basic`. Sin eso solo pueden conectarse las cuentas que tienen un rol en la app. App Review pide un video del flujo y puede tardar días, así que conviene empezarlo en paralelo con el resto.
 - [ ] Verificación del negocio, si Meta la pide para el acceso avanzado.
-- [ ] Redirect URI de producción exacta, idéntica a `INSTAGRAM_REDIRECT_URI` (la nueva ruta de Next si se aplica [4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión)).
+- [ ] Redirect URI de producción exacta: `https://<dominio>/auth/instagram/callback`, idéntica a `INSTAGRAM_REDIRECT_URI` ([4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión)).
 - [ ] URLs de política de privacidad y de términos ([6.4](#64-páginas-legales)).
-- [ ] **Callback de desautorización** y **callback de solicitud de borrado de datos**. Hoy no existen. Meta los llama con un `signed_request` firmado con el App Secret cuando el usuario quita la app o pide borrar sus datos: hay que verificar la firma, borrar la conexión y los snapshots, y en el de borrado responder `{ "url": ..., "confirmation_code": ... }`.
+- [x] **Callback de desautorización** y **callback de solicitud de borrado de datos** en código: `POST /instagram/deauthorize`, `POST /instagram/data-deletion` (verifican `signed_request`, borran conexión + snapshots; el de borrado responde `{url, confirmation_code}`) y `GET /instagram/data-deletion/status`. Nginx solo expone esas tres rutas al backend (`deploy/nginx/templates/default.conf.template`). En el dashboard de Meta hay que pegar:
+  - Deauthorize: `https://<dominio>/instagram/deauthorize`
+  - Data deletion: `https://<dominio>/instagram/data-deletion`
 - [ ] App de desarrollo separada de la de producción, o por lo menos tokens y testers que no se mezclen.
 
 ### 6.3 Google OAuth
@@ -815,11 +817,14 @@ www.<dominio> {
 - Reenvía el `Host` original y escribe `X-Forwarded-For`, `X-Forwarded-Proto` y `X-Forwarded-Host`, **reemplazando** lo que mande el cliente mientras no se configure `trusted_proxies`. Las Server Actions lo necesitan, porque comparan `Origin` con el host y fallan si el proxy no lo reenvía. Y [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios) depende de que la IP no se pueda falsificar.
 - El streaming de Next funciona sin configuración extra: Caddy envía de inmediato las respuestas sin `Content-Length`. Con nginx haría falta `proxy_buffering off` o el header `X-Accel-Buffering: no`, como indica `frontend/node_modules/next/dist/docs/01-app/02-guides/self-hosting.md`.
 
-**Si el callback de Instagram sigue en el backend** de forma temporal, Caddy tiene que sumarse a la red `app` y enrutar solo esa ruta. Todo lo demás, incluido `/internal/*`, sigue sin ser accesible:
+**Callbacks públicos hacia el backend.** Meta (desautorización / borrado de datos) y solo esas rutas. El resto del backend, incluido `/internal/*`, no se expone. Con nginx ya está en `deploy/nginx/templates/default.conf.template`. Equivalente en Caddy (sumado a la red `app`):
 
 ```
 <dominio> {
-    handle /instagram/oauth/callback {
+    handle /instagram/deauthorize {
+        reverse_proxy backend:8000
+    }
+    handle /instagram/data-deletion* {
         reverse_proxy backend:8000
     }
     handle {

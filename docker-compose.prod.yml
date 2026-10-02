@@ -24,6 +24,8 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
+      backend:
+        condition: service_healthy
     networks: [edge, app]
     logging: *logging
 
