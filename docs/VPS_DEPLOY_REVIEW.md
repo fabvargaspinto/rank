@@ -555,7 +555,7 @@ Trigger `auth_delete_profile`: al borrar `public.auth` se borra el `public.users
 | [5.7](#57-nombres-de-usuario-que-chocan-con-rutas-verificado) | ~~Nombres que chocan con rutas~~ — RESERVED + CHECK + test CI | — | — |
 | [5.8](#58-el-cursor-de-publicaciones-llega-crudo-a-postgres-verificado-en-parte) | ~~Cursor crudo a Postgres~~ — `decode` re-serializa la fecha | — | — |
 | [5.9](#59-el-callback-de-instagram-ante-errores-de-infraestructura) | ~~Callback ante errores de infra~~ — Next redirige; captura inicial best-effort | — | — |
-| [5.10](#510-el-login-oculta-el-email-sin-confirmar) | El login oculta "email sin confirmar" y "demasiados intentos" | Usuarios bloqueados sin saber por qué | XS |
+| [5.10](#510-el-login-oculta-el-email-sin-confirmar) | ~~Login oculta email sin confirmar~~ — códigos + reenvío | — | — |
 | [5.11](#511-configuración-del-backend-verificado) | Configuración con rutas relativas y leída en cada request | Errores difíciles de diagnosticar | XS |
 
 ### ✅ 5.1 Turso cae en silencio a un SQLite efímero
@@ -594,11 +594,9 @@ El job usa `fetch_profile` y guarda usuario y `profile_picture_url` en cada capt
 
 El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-a-la-sesión)) y siempre redirige al dashboard. La primera captura tras conectar es best-effort: si falla, se registra y la conexión queda igual.
 
-### 5.10 El login oculta el email sin confirmar
+### ✅ 5.10 El login oculta el email sin confirmar
 
-`loginCredentialAction` (`frontend/features/login/action/login-credential-action.ts:29-36`) convierte cualquier error en "Email o contraseña incorrectos", incluidos `email_not_confirmed` (las confirmaciones están activas) y el 429 de [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios). Quien no confirmó su email cree que la contraseña está mal.
-
-**Arreglo:** mirar `error.code`. Con `email_not_confirmed`, "Confirmá tu email" y la opción de reenviarlo (`supabase.auth.resend`); con un 429, "Demasiados intentos, probá en unos minutos"; con el resto, el mensaje genérico. Distinguir "sin confirmar" no revela qué cuentas existen, porque Supabase solo devuelve ese código cuando la contraseña es correcta.
+`loginCredentialAction` mira `error.code`: `email_not_confirmed` muestra "Confirmá tu email" y un botón para reenviar; un 429 muestra "Demasiados intentos…"; el resto sigue con el mensaje genérico.
 
 ### 5.11 Configuración del backend [verificado]
 

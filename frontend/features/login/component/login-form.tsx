@@ -29,7 +29,7 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
             action={formAction}
             googleAction={loginGoogleAction}
             pending={pending}
-            isError={state.isError || Boolean(initialError)}
+            isError={state.isError || Boolean(initialError && !state.message)}
             message={state.message || initialError}
         >
             <Input type="email" name="email" placeholder="Email" autoComplete="email" />
@@ -37,6 +37,18 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
             <p className={styles.forgot}>
                 <Link href="/forgot-password">Olvidé mi contraseña</Link>
             </p>
+            {state.code === "email_not_confirmed" ? (
+                <p className={styles.resend}>
+                    <button
+                        type="submit"
+                        name="intent"
+                        value="resend"
+                        disabled={pending}
+                    >
+                        Reenviar email de confirmación
+                    </button>
+                </p>
+            ) : null}
         </FormHero>
     );
 }

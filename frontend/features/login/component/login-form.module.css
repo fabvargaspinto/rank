@@ -13,3 +13,29 @@
 .forgot a:hover {
     color: var(--accent-color);
 }
+
+.resend {
+    width: 100%;
+    margin: 0;
+    text-align: left;
+    font-size: var(--font-size-xs);
+}
+
+.resend button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent-color);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.resend button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.resend button:hover:not(:disabled) {
+    color: var(--muted-color);
+}

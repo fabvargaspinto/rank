@@ -44,14 +44,22 @@ export default function FormHero({
         const submitter = (event.nativeEvent as SubmitEvent).submitter;
         if (
             submitter instanceof HTMLButtonElement &&
-            submitter.dataset.provider === "google"
+            submitter.hasAttribute("formaction")
         ) {
             return;
         }
 
         event.preventDefault();
         startTransition(() => {
-            action?.(new FormData(event.currentTarget));
+            const data = new FormData(event.currentTarget);
+            if (
+                submitter instanceof HTMLButtonElement &&
+                submitter.name &&
+                submitter.value
+            ) {
+                data.set(submitter.name, submitter.value);
+            }
+            action?.(data);
         });
     }
 
