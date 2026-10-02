@@ -608,18 +608,18 @@ El callback vive en Next ([4.1](#41-la-vinculación-de-instagram-no-está-atada-
 
 ### 6.1 Supabase de producción
 
-`supabase/config.toml` solo aplica al stack local. El proyecto hosted se configura en el dashboard, o con `supabase config push`, que sube `config.toml` al proyecto linkeado (revisar el diff antes de confirmar).
+`supabase/config.toml` solo aplica al stack local. El proyecto hosted se configura en el dashboard, o con la Management API.
+
+**Scripts:**
+- `./scripts/configure-supabase-prod-auth.sh` — Site URL, redirect URLs exactas, confirm email, política de contraseñas, secure password change y plantillas de confirmación/recuperación (`SITE_URL=https://…` + `SUPABASE_ACCESS_TOKEN`).
+- `./scripts/configure-resend-smtp.sh` — SMTP Resend + límite de emails.
 
 - [ ] Proyecto nuevo, con las migraciones aplicadas ([3.3](#33-no-hay-migraciones-y-schemasql-borra-la-base-verificado)).
 - [ ] **Plan.** El Free no incluye backups automáticos y pausa el proyecto después de una semana con poca actividad. Para producción conviene Pro (backups diarios de 7 días, sin pausa); si se arranca en Free, sí o sí con backups propios ([7.7](#77-backups-y-monitoreo)).
-- [ ] **Site URL** `https://<dominio>`. Las plantillas arman el enlace con `{{ .SiteURL }}` (`supabase/templates/confirmation.html:7` y `recovery.html:7`), así que con otro valor los emails llevan a otro sitio. En local es `http://127.0.0.1:3000` (`config.toml:151`).
-- [ ] **Redirect URLs** exactas del dominio real: `/auth/callback`, `/auth/confirm` y `/auth/confirm?next=/reset-password`. Las de `config.toml:155-164` son de localhost. Sin comodines.
-- [ ] **Confirm email** activado. Además de lo obvio, impide que alguien se registre con el email de un tester y ocupe su lugar: sin confirmación, Supabase entrega una sesión al instante y el backend aprovisiona porque el email está en la lista.
-- [ ] Plantillas de confirmación, recuperación e invitación cargadas en el dashboard. Los `content_path` de `config.toml:247-253` solo valen en local.
-- [ ] **SMTP con Resend** y límite de emails acorde ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)): `./scripts/configure-resend-smtp.sh` o SMTP Settings en el dashboard.
-- [ ] Política de contraseñas igual a la local (`config.toml:183-186`): mínimo 8, con minúsculas, mayúsculas y dígitos.
-- [x] **Secure password change** activado ([4.8](#48-cambio-de-contraseña-con-cualquier-sesión)).
-- [ ] **CAPTCHA** e **IP Address Forwarding** ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
+- [ ] **Site URL**, **Redirect URLs**, **Confirm email**, plantillas, política de contraseñas y **Secure password change** — `./scripts/configure-supabase-prod-auth.sh` (o el dashboard). Redirects: `/auth/callback`, `/auth/confirm`, `/auth/confirm?next=/reset-password` (exactas, sin comodines).
+- [ ] **SMTP con Resend** y límite de emails acorde ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)): `./scripts/configure-resend-smtp.sh`.
+- [x] **IP forwarding en la app** ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)): `createAuthClient` manda `sb-forwarded-for` con `SUPABASE_SECRET_KEY`. Falta activar *IP Address Forwarding* en el dashboard.
+- [ ] **CAPTCHA** (Turnstile/hCaptcha) en el dashboard y `captchaToken` en login/registro/recuperación ([4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios)).
 - [ ] **Claves JWT asimétricas** (ES256 o RS256). El backend solo acepta esos algoritmos (`backend/api/dependencies/auth.py:15`), y `getClaims()` valida el token localmente solo con claves asimétricas; con la clave HS256 heredada hace una llamada de red por request.
 - [ ] Google configurado con las credenciales del proyecto de Google de producción ([6.3](#63-google-oauth)).
 - [ ] Security Advisor y Performance Advisor sin alertas.
