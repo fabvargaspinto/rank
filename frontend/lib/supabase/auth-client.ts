@@ -4,7 +4,10 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
 import type { NextRequest } from "next/server";
-import { getSupabaseAuthConfig } from "@/lib/supabase/env";
+import {
+    getSupabaseAuthConfig,
+    sessionCookieOptions,
+} from "@/lib/supabase/env";
 
 function requireSupabaseSecretKey(): string {
     const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();
@@ -33,6 +36,7 @@ export async function createAuthClient() {
     const { url } = getSupabaseAuthConfig();
 
     return createServerClient(url, secretKey, {
+        cookieOptions: sessionCookieOptions,
         cookies: {
             getAll() {
                 return cookieStore.getAll();
@@ -75,6 +79,7 @@ export function createAuthProxyClient(
     const { url } = getSupabaseAuthConfig();
 
     return createServerClient(url, secretKey, {
+        cookieOptions: sessionCookieOptions,
         cookies: {
             getAll() {
                 return request.cookies.getAll();

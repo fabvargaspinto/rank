@@ -18,6 +18,9 @@ services:
       - .env
     environment:
       <<: *local-supabase-env
+      # Nunca usar TURSO_URL de producción del .env con Supabase local.
+      TURSO_URL: ${TURSO_DEVELOPMENT_URL:-file:./instagram.db}
+      TURSO_TOKEN: ${TURSO_DEVELOPMENT_TOKEN:-}
       WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - ./backend:/app

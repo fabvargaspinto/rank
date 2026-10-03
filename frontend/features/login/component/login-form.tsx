@@ -3,6 +3,9 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import FormHero from "@/components/ui/form-hero/form-hero";
+import HcaptchaField, {
+    hcaptchaSiteKeyFromEnv,
+} from "@/components/ui/hcaptcha/hcaptcha-field";
 import Input from "@/components/ui/input/input";
 import { emptyFetchResponse } from "@/lib/api/types";
 import { loginCredentialAction } from "../action/login-credential-action";
@@ -18,6 +21,7 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
         loginCredentialAction,
         emptyFetchResponse,
     );
+    const hcaptchaSiteKey = hcaptchaSiteKeyFromEnv();
 
     return (
         <FormHero
@@ -60,6 +64,12 @@ export default function LoginForm({ initialError = "" }: LoginFormProps) {
                         Reenviar email de confirmación
                     </button>
                 </p>
+            ) : null}
+            {hcaptchaSiteKey ? (
+                <HcaptchaField
+                    siteKey={hcaptchaSiteKey}
+                    resetSignal={`${pending}:${state.message}:${state.code ?? ""}`}
+                />
             ) : null}
         </FormHero>
     );

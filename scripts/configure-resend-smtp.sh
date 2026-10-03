@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 # Configura SMTP Resend + límite de emails en un proyecto Supabase hosted.
+#
+# Antes de correrlo:
+#   1. Verificá un dominio (o subdominio de envío, p. ej. mail.tudominio.com) en Resend:
+#      SPF + DKIM. Publicá DMARC con p=none al principio.
+#   2. Creá una API key de producción con “Sending access” limitado a ese dominio.
+#      No reutilices la RESEND_API_KEY del .env local (supabase/config.toml).
+#   3. Definí RESEND_FROM_EMAIL con una casilla de ese dominio (nunca beth.t@example.com).
+#
 # Uso:
 #   export SUPABASE_ACCESS_TOKEN=sbp_…   # https://supabase.com/dashboard/account/tokens
+#   export RESEND_API_KEY=re_…          # key de producción, no la de local
+#   export RESEND_FROM_EMAIL=noreply@mail.tudominio.com
 #   ./scripts/configure-resend-smtp.sh
-# Opcional: PROJECT_REF=xxxx (si no, se deduce de SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL)
+# Opcional: PROJECT_REF=xxxx  RESEND_SENDER_NAME=…  RATE_LIMIT_EMAIL_SENT=30
 
 set -euo pipefail
 
@@ -25,11 +35,28 @@ fi
 
 API_KEY="${RESEND_API_KEY:-${RESENDER_API_KEY:-}}"
 if [[ -z "$API_KEY" ]]; then
-  echo "Falta RESEND_API_KEY (o RESENDER_API_KEY) en el entorno / .env" >&2
+  echo "Falta RESEND_API_KEY (o RESENDER_API_KEY) en el entorno" >&2
   exit 1
 fi
 
-FROM_EMAIL="${RESEND_FROM_EMAIL:-beth.t@example.com}"
+FROM_EMAIL="${RESEND_FROM_EMAIL:-}"
+if [[ -z "$FROM_EMAIL" ]]; then
+  echo "Falta RESEND_FROM_EMAIL (casilla de tu dominio verificado en Resend)." >&2
+  echo "Ejemplo: RESEND_FROM_EMAIL=noreply@mail.tudominio.com" >&2
+  exit 1
+fi
+
+if [[ "$FROM_EMAIL" == "beth.t@example.com" ]]; then
+  echo "RESEND_FROM_EMAIL no puede ser beth.t@example.com en producción." >&2
+  echo "Verificá un dominio en Resend (SPF/DKIM) y usá una casilla de ese dominio." >&2
+  exit 1
+fi
+
+if [[ ! "$FROM_EMAIL" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]]; then
+  echo "RESEND_FROM_EMAIL no parece un email válido: $FROM_EMAIL" >&2
+  exit 1
+fi
+
 SENDER_NAME="${RESEND_SENDER_NAME:-Sellonomada}"
 EMAIL_LIMIT="${RATE_LIMIT_EMAIL_SENT:-30}"
 
@@ -48,6 +75,7 @@ fi
 echo "Proyecto: $REF"
 echo "Sender:   $FROM_EMAIL ($SENDER_NAME)"
 echo "Límite:   $EMAIL_LIMIT emails/hora"
+echo "Aviso:    la API key tiene que ser de producción (Sending access al dominio verificado)."
 
 PAYLOAD=$(
   FROM_EMAIL="$FROM_EMAIL" \
@@ -84,7 +112,4 @@ if [[ "$HTTP_CODE" != "200" ]]; then
 fi
 
 echo "OK: SMTP Resend aplicado en $REF (límite $EMAIL_LIMIT/h)."
-RECIPIENT="${EMAIL_RECIPIENT:-${EMAIL_DEVELOPMENT_RECIPIENT:-}}"
-if [[ -n "$RECIPIENT" ]]; then
-  echo "Sin dominio verificado, Resend solo entrega a: $RECIPIENT"
-fi
+echo "Confirmá en Resend que el dominio de $FROM_EMAIL está verificado (SPF/DKIM) y DMARC en p=none."

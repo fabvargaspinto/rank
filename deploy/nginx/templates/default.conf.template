@@ -78,6 +78,7 @@ server {
     }
 
     location / {
+        limit_req zone=app_post burst=20 nodelay;
         proxy_pass http://frontend_upstream;
     }
 }

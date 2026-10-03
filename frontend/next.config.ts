@@ -15,10 +15,11 @@ function supabaseStorageOrigin(): string {
 
 const contentSecurityPolicyReportOnly = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://js.hcaptcha.com https://*.hcaptcha.com",
+    "style-src 'self' 'unsafe-inline' https://*.hcaptcha.com",
     `img-src 'self' data: blob: ${supabaseStorageOrigin()} https://*.cdninstagram.com https://*.fbcdn.net`,
-    "connect-src 'self'",
+    "connect-src 'self' https://api.hcaptcha.com https://*.hcaptcha.com",
+    "frame-src https://newassets.hcaptcha.com https://*.hcaptcha.com",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -29,7 +30,7 @@ const contentSecurityPolicyReportOnly = [
 const securityHeaders = [
     {
         key: "Strict-Transport-Security",
-        value: "max-age=604800; includeSubDomains",
+        value: "max-age=31536000; includeSubDomains",
     },
     { key: "X-Content-Type-Options", value: "nosniff" },
     {

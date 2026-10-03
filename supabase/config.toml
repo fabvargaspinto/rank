@@ -211,11 +211,12 @@ token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
-# Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+# CAPTCHA local (opcional). En producción hosted usá:
+# ./scripts/configure-supabase-hcaptcha.sh
 # [auth.captcha]
 # enabled = true
 # provider = "hcaptcha"
-# secret = ""
+# secret = "env(HCAPTCHA_SECRET_KEY)"
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
@@ -234,8 +235,11 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Resend SMTP (local: supabase start lee RESEND_API_KEY del .env).
-# Sin dominio verificado usá beth.t@example.com; Resend solo entrega a EMAIL_RECIPIENT.
+# Resend SMTP solo para supabase start (local).
+# - RESEND_API_KEY del .env = key de desarrollo. No la uses en producción.
+# - beth.t@example.com solo entrega a EMAIL_RECIPIENT (cuenta Resend).
+# Producción hosted: dominio verificado + ./scripts/configure-resend-smtp.sh
+# con otra API key (Sending access al dominio) y RESEND_FROM_EMAIL propio.
 [auth.email.smtp]
 enabled = true
 host = "smtp.resend.com"

@@ -61,6 +61,19 @@ export function loginAuthErrorResponse(
         };
     }
 
+    if (
+        error.code === "captcha_failed" ||
+        error.message?.toLowerCase().includes("captcha")
+    ) {
+        return {
+            data: null,
+            isError: true,
+            message: "No se pudo verificar el anti-bot. Probá de nuevo.",
+            status: 400,
+            code: "captcha_failed",
+        };
+    }
+
     if (error.status === 429 || error.code === "over_request_rate_limit") {
         return {
             data: null,

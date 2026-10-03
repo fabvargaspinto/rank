@@ -8,8 +8,9 @@ x-logging: &logging
 
 services:
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.30.5-alpine
     restart: unless-stopped
+    mem_limit: 256m
     ports:
       - "80:80"
       - "443:443"
@@ -41,6 +42,7 @@ services:
   frontend:
     image: ghcr.io/fabvargaspinto/rank-frontend:${TAG:?definí TAG}
     restart: unless-stopped
+    mem_limit: 512m
     env_file: ./deploy/frontend.env
     depends_on:
       backend:
@@ -51,6 +53,7 @@ services:
   backend:
     image: ghcr.io/fabvargaspinto/rank-backend:${TAG:?definí TAG}
     restart: unless-stopped
+    mem_limit: 768m
     env_file: ./deploy/backend.env
     networks: [app]
     logging: *logging

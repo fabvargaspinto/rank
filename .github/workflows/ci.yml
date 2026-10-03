@@ -79,9 +79,27 @@ jobs:
             fi
           done
 
+  audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+
   images:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [backend, backend-integration, frontend]
+    needs: [backend, backend-integration, frontend, audit]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -109,3 +127,4 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_HCAPTCHA_SITE_KEY=${{ vars.NEXT_PUBLIC_HCAPTCHA_SITE_KEY }}

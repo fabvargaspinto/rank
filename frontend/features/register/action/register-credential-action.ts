@@ -7,6 +7,7 @@ import { postAuthPathForToken } from "@/lib/post-auth-path";
 import { requestOrigin } from "@/lib/request-origin";
 import { createAuthClient } from "@/lib/supabase/auth-client";
 import { emailRateLimitResponse } from "@/lib/supabase/auth-email";
+import { resolveCaptchaToken } from "@/lib/hcaptcha";
 import { invalidFormResponse, registerSchema } from "@/lib/validation/auth";
 
 const CHECK_EMAIL_MESSAGE = "Revisá tu email para confirmar la cuenta.";
@@ -27,6 +28,11 @@ export async function registerCredentialAction(
         return invalidFormResponse(parsed.error);
     }
 
+    const captcha = await resolveCaptchaToken(formData);
+    if (!captcha.ok) {
+        return captcha.response;
+    }
+
     const supabase = await createAuthClient();
     const origin = await requestOrigin();
     const { data, error } = await supabase.auth.signUp({
@@ -34,6 +40,7 @@ export async function registerCredentialAction(
         password: parsed.data.password,
         options: {
             emailRedirectTo: `${origin}/auth/confirm`,
+            ...(captcha.token ? { captchaToken: captcha.token } : {}),
         },
     });
 

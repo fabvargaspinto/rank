@@ -5,6 +5,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from core.user.application.application_error import InvalidAvatarFileError
 
 MAX_AVATAR_EDGE = 512
+MAX_AVATAR_PIXELS = 4096 * 4096
 WEBP_QUALITY = 80
 _ALLOWED_FORMATS = frozenset({"JPEG", "PNG", "WEBP"})
 
@@ -21,6 +22,9 @@ def recode_avatar(content: bytes, max_bytes: int) -> bytes:
                 raise InvalidAvatarFileError(
                     "La imagen debe ser JPEG, PNG o WebP"
                 )
+            width, height = opened.size
+            if width * height > MAX_AVATAR_PIXELS:
+                raise InvalidAvatarFileError("La imagen es demasiado grande")
             image: Image.Image = ImageOps.exif_transpose(opened) or opened
             if image.mode not in ("RGB", "RGBA"):
                 image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
@@ -32,7 +36,7 @@ def recode_avatar(content: bytes, max_bytes: int) -> bytes:
             image.save(output, format="WEBP", quality=WEBP_QUALITY)
     except InvalidAvatarFileError:
         raise
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
         raise InvalidAvatarFileError("La imagen es inválida") from exc
 
     encoded = output.getvalue()

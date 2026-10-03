@@ -10,6 +10,7 @@ import {
     emailRateLimitResponse,
     loginAuthErrorResponse,
 } from "@/lib/supabase/auth-email";
+import { resolveCaptchaToken } from "@/lib/hcaptcha";
 import {
     emailSchema,
     invalidFormResponse,
@@ -27,6 +28,11 @@ async function resendConfirmation(
         return invalidFormResponse(parsed.error);
     }
 
+    const captcha = await resolveCaptchaToken(formData);
+    if (!captcha.ok) {
+        return captcha.response;
+    }
+
     const supabase = await createAuthClient();
     const origin = await requestOrigin();
     const { error } = await supabase.auth.resend({
@@ -34,6 +40,7 @@ async function resendConfirmation(
         email: parsed.data,
         options: {
             emailRedirectTo: `${origin}/auth/confirm`,
+            ...(captcha.token ? { captchaToken: captcha.token } : {}),
         },
     });
 
@@ -78,10 +85,16 @@ export async function loginCredentialAction(
         return invalidFormResponse(parsed.error);
     }
 
+    const captcha = await resolveCaptchaToken(formData);
+    if (!captcha.ok) {
+        return captcha.response;
+    }
+
     const supabase = await createAuthClient();
     const { data, error } = await supabase.auth.signInWithPassword({
         email: parsed.data.email,
         password: parsed.data.password,
+        ...(captcha.token ? { options: { captchaToken: captcha.token } } : {}),
     });
 
     if (error || !data.session) {

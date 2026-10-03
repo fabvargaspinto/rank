@@ -2,6 +2,9 @@
 
 import { useActionState } from "react";
 import FormHero from "@/components/ui/form-hero/form-hero";
+import HcaptchaField, {
+    hcaptchaSiteKeyFromEnv,
+} from "@/components/ui/hcaptcha/hcaptcha-field";
 import Input from "@/components/ui/input/input";
 import { emptyFetchResponse } from "@/lib/api/types";
 import { registerCredentialAction } from "../action/register-credential-action";
@@ -16,6 +19,7 @@ export default function RegisterForm({ initialError = "" }: RegisterFormProps) {
         registerCredentialAction,
         emptyFetchResponse,
     );
+    const hcaptchaSiteKey = hcaptchaSiteKeyFromEnv();
 
     return (
         <FormHero
@@ -43,6 +47,12 @@ export default function RegisterForm({ initialError = "" }: RegisterFormProps) {
                 placeholder="Password Confirmation"
                 autoComplete="new-password"
             />
+            {hcaptchaSiteKey ? (
+                <HcaptchaField
+                    siteKey={hcaptchaSiteKey}
+                    resetSignal={`${pending}:${state.message}`}
+                />
+            ) : null}
         </FormHero>
     );
 }
