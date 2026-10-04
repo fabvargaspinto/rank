@@ -16,7 +16,7 @@ dependencies = [
     "slowapi>=0.1.10",
     "supabase>=2.31.0",
     "uuid6>=2025.0.1",
-    "uvicorn[standard]>=0.52.4",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
