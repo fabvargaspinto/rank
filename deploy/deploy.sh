@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Deploy con verificación y rollback.
 # Uso (en el VPS, desde /opt/sellonomada o la raíz del repo):
-#   ./deploy/deploy.sh <sha>
+#   ./deploy/deploy.sh <tag>   # SHA del push, o <sha>-YYYYMMDD del schedule semanal
 #
 # Requiere .env junto a docker-compose.prod.yml con TAG= y DOMAIN=.
 set -eu
@@ -9,7 +9,7 @@ set -eu
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 cd "${ROOT}"
 
-NEW_TAG="${1:?pasá el SHA a desplegar (ej. ./deploy/deploy.sh abcdef1)}"
+NEW_TAG="${1:?pasá el tag a desplegar (SHA de un push, o SHA-YYYYMMDD del rebuild semanal)}"
 ENV_FILE="${ROOT}/.env"
 COMPOSE="docker compose -f docker-compose.prod.yml"
 

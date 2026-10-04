@@ -20,7 +20,7 @@ Ver `.env.example`. Canónicas:
 - `INSTAGRAM_REDIRECT_URI` (aliases: `META_INSTAGRAM_REDIRECT_URI`, `META_CALLBACK_URL`) — callback de Next (`/auth/instagram/callback`); debe coincidir con Meta
 - `INSTAGRAM_TOKEN_ENCRYPTION_KEY` — 64 caracteres hex (32 bytes) para AES-GCM
 - `TURSO_URL` (alias: `TURSO_DATABASE_URL`) — `libsql://...` o `file:./instagram.db`
-- `TURSO_TOKEN` (alias: `TURSO_AUTH_TOKEN`)
+- `TURSO_TOKEN` (alias: `TURSO_AUTH_TOKEN`) — en cloud: token **de esa base** (`turso db tokens create <base>`), full-access porque `ensure_schema` corre CREATE/ALTER al arrancar; no uses un token de grupo/organización. Rotá con fecha en el gestor de secretos (o `TURSO_TOKEN_ROTATE_BY` en `deploy/backend.env`)
 - `INSTAGRAM_SNAPSHOT_JOB_TOKEN` — opcional; protege `POST /internal/instagram/snapshots`
 
 `INSTAGRAM_APP_SECRET` y los access tokens nunca salen al frontend.

@@ -946,7 +946,7 @@ En el repo ya están las plantillas y el `.gitignore` (`deploy/*.env`, excepció
 | `EMAIL_ENCRYPTION_KEY`, `EMAIL_HMAC_KEY`, `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | `openssl rand -hex 32` cada una; **nuevas** respecto a desarrollo ([4.12](#412-claves-de-cifrado)). También en gestor de contraseñas + copia offline |
 | `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET` | App de Meta de producción |
 | `INSTAGRAM_REDIRECT_URI` | `https://<dominio>/auth/instagram/callback` (exacto en Meta) |
-| `TURSO_URL`, `TURSO_TOKEN` | Base remota de producción; token con el menor privilegio posible |
+| `TURSO_URL`, `TURSO_TOKEN` | Base remota de producción. Por `ensure_schema` (CREATE/ALTER al arrancar) el token es full-access, pero **de esa base** (`turso db tokens create <base>`), no de grupo/org. Rotar periódicamente; opcional `TURSO_TOKEN_ROTATE_BY` en el env como recordatorio |
 | `INSTAGRAM_SNAPSHOT_JOB_TOKEN` | **Opcional** si solo usás `deploy/run-snapshots.sh` ([7.5](#75-job-de-snapshots-verificado)) |
 | `ENVIRONMENT` | No hace falta: va en la imagen (`production`) |
 

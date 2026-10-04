@@ -6,6 +6,11 @@ x-logging: &logging
     max-size: "10m"
     max-file: "5"
 
+x-hardening: &hardening
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  pids_limit: 256
+
 services:
   nginx:
     image: nginx:1.30.5-alpine
@@ -40,6 +45,7 @@ services:
     networks: [edge]
 
   frontend:
+    <<: *hardening
     image: ghcr.io/fabvargaspinto/rank-frontend:${TAG:?definí TAG}
     restart: unless-stopped
     mem_limit: 512m
@@ -51,10 +57,13 @@ services:
     logging: *logging
 
   backend:
+    <<: *hardening
     image: ghcr.io/fabvargaspinto/rank-backend:${TAG:?definí TAG}
     restart: unless-stopped
     mem_limit: 768m
     env_file: ./deploy/backend.env
+    read_only: true
+    tmpfs: [/tmp]
     networks: [app]
     logging: *logging
 
