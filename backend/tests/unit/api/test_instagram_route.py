@@ -268,7 +268,7 @@ def test_disconnect_and_job():
 
     assert denied.status_code == 401
     assert allowed.status_code == 200
-    assert allowed.json() == {"captured": 1, "failed": 0}
+    assert allowed.json() == {"captured": 1, "failed": 0, "needs_reconnect": 0}
     assert deleted.status_code == 204
     assert missing.status_code == 404
 

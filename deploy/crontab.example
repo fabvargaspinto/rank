@@ -1,0 +1,13 @@
+# Crontab del usuario de despliegue en el VPS (crontab -e).
+# Ajustá la ruta si el repo no vive en /opt/sellonomada.
+#
+# Certificados: salida a journald. Complementar con monitor de vencimiento TLS
+# (Uptime Kuma / Better Stack). Ver: journalctl -t sellonomada-certs
+15 3 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && ./deploy/renew-certs.sh 2>&1 | logger -t sellonomada-certs'
+
+# Snapshots Instagram: flock evita solaparse con una corrida manual;
+# el ping a Healthchecks.io solo corre si el job terminó bien (failed=0).
+# Creá el check en https://healthchecks.io y reemplazá <uuid>.
+# Ver: journalctl -t sellonomada-snapshots
+# Alternativa con systemd timer: Persistent=true recupera corridas perdidas por reboot.
+15 4 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && flock -n /tmp/sellonomada-snapshots.lock ./deploy/run-snapshots.sh 2>&1 | logger -t sellonomada-snapshots && curl -fsS -m 10 --retry 3 https://hc-ping.com/<uuid> >/dev/null'

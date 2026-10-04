@@ -16,6 +16,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Token de cuenta: solo export explícito (nunca del .env).
+TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
+
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -23,9 +26,9 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
 if [[ -z "$TOKEN" ]]; then
-  echo "Falta SUPABASE_ACCESS_TOKEN (https://supabase.com/dashboard/account/tokens)" >&2
+  echo "Falta SUPABASE_ACCESS_TOKEN exportado (https://supabase.com/dashboard/account/tokens)." >&2
+  echo "No lo guardes en .env: controla todos tus proyectos." >&2
   exit 1
 fi
 

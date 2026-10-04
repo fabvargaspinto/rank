@@ -40,6 +40,7 @@ class SnapshotJobResponse(BaseModel):
 
     captured: int
     failed: int
+    needs_reconnect: int = 0
 
 
 class CompleteInstagramOAuthRequest(BaseModel):

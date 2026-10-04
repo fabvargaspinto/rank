@@ -18,6 +18,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Token y secretos de Google: solo export explícito (nunca del .env).
+TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
+CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
+CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
+
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -25,16 +30,14 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
 if [[ -z "$TOKEN" ]]; then
-  echo "Falta SUPABASE_ACCESS_TOKEN (https://supabase.com/dashboard/account/tokens)" >&2
+  echo "Falta SUPABASE_ACCESS_TOKEN exportado (https://supabase.com/dashboard/account/tokens)." >&2
+  echo "No lo guardes en .env: controla todos tus proyectos." >&2
   exit 1
 fi
 
-CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
-CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
 if [[ -z "$CLIENT_ID" || -z "$CLIENT_SECRET" ]]; then
-  echo "Faltan GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET (solo para este script; no los usa la app)." >&2
+  echo "Exportá GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET (solo para este script; no van en .env ni en la app)." >&2
   exit 1
 fi
 

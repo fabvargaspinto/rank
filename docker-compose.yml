@@ -14,13 +14,18 @@ services:
       target: development
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    # Solo variables que usa el backend. No inyectar el .env entero
+    # (SUPABASE_ACCESS_TOKEN, Google OAuth, Resend, etc. no entran al contenedor).
     environment:
       <<: *local-supabase-env
       # Nunca usar TURSO_URL de producción del .env con Supabase local.
       TURSO_URL: ${TURSO_DEVELOPMENT_URL:-file:./instagram.db}
       TURSO_TOKEN: ${TURSO_DEVELOPMENT_TOKEN:-}
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID:-}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
+      INSTAGRAM_REDIRECT_URI: ${INSTAGRAM_REDIRECT_URI:-http://localhost:3000/auth/instagram/callback}
+      INSTAGRAM_TOKEN_ENCRYPTION_KEY: ${INSTAGRAM_TOKEN_ENCRYPTION_KEY:-}
+      INSTAGRAM_SNAPSHOT_JOB_TOKEN: ${INSTAGRAM_SNAPSHOT_JOB_TOKEN:-}
       WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - ./backend:/app

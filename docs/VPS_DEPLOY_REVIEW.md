@@ -313,7 +313,7 @@ El frontend **no usa** ese campo: los dos formularios suben la foto con `PUT /me
 |---|---|---|
 | `:14` y `:47` | `target: development` | `uvicorn --reload` y `pnpm dev`: lentos, con errores detallados y recarga de código |
 | `:15-16` y `:48-49` | Publica los puertos 8000 y 3000 | **Docker publica puertos salteándose UFW**: el backend queda accesible desde internet aunque el firewall diga lo contrario |
-| `:17-18` | `env_file: .env` | El backend recibe todas las variables del archivo; no pasar secretos ajenos (p. ej. Google OAuth va en Supabase, [6.3](#63-google-oauth)) |
+| ~~`:17-18` `env_file: .env`~~ | Solo `environment:` con vars del backend | Ya no se inyecta el `.env` entero; `SUPABASE_ACCESS_TOKEN` / Google OAuth no entran al contenedor ([6.3](#63-google-oauth)) |
 | `:53` | `NODE_TLS_REJECT_UNAUTHORIZED: "0"` | **Desactiva la verificación TLS de todas las conexiones salientes de Node**, incluidas las de Supabase Auth: alguien en el camino de red podría interceptar contraseñas y tokens |
 | — | Sin proxy reverso | Nadie termina HTTPS ni renueva certificados |
 | — | Sin job de snapshots | Ver [5.2](#52-nadie-ejecuta-el-job-de-snapshots) |
@@ -801,7 +801,14 @@ Archivos en el repo:
 | `deploy/renew-certs.sh` | `certbot renew` + `nginx -s reload` |
 
 - **HTTP (80):** `/.well-known/acme-challenge/` → webroot `certbot_www`; el resto redirige a HTTPS.
-- **TLS:** certificados en `/etc/letsencrypt` (volumen `certbot_certs`). Tras el primer `up`, ejecutar `DOMAIN=… EMAIL=… ./deploy/obtain-cert.sh` (borra el autofirmado temporal y emite para apex + `www`). Renovación: cron con `./deploy/renew-certs.sh` ([7.3](#73-docker-composeprodyml-verificado)).
+- **TLS:** certificados en `/etc/letsencrypt` (volumen `certbot_certs`). Tras el primer `up`, ejecutar `DOMAIN=… EMAIL=… ./deploy/obtain-cert.sh` (borra el autofirmado temporal y emite para apex + `www`).
+- **Renovación:** crontab del usuario de despliegue (Let's Encrypt ya no manda mails de vencimiento desde junio de 2025). Usá `bash -lc` con `pipefail` para que un exit ≠ 0 no se pierda al pipe a `logger`:
+
+```
+15 3 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && ./deploy/renew-certs.sh 2>&1 | logger -t sellonomada-certs'
+```
+
+  Logs: `journalctl -t sellonomada-certs`. Además, un monitor externo del vencimiento del certificado (Uptime Kuma o Better Stack) alerta si la renovación falla en silencio ([7.7](#77-backups-y-monitoreo)).
 - **www:** `www.${DOMAIN}` en 443 redirige al apex (`${DOMAIN}`).
 - **Proxy al frontend:** `proxy_buffering off` y `proxy_request_buffering off` (Server Actions / streaming).
 - **Cabeceras:** `Host`, `X-Forwarded-Host`, `X-Forwarded-Proto` y `X-Forwarded-For` con `$remote_addr` (reemplaza lo que mande el cliente). [4.4](#44-los-límites-de-supabase-auth-se-comparten-entre-todos-los-usuarios) depende de que la IP no se falsifique.
@@ -842,22 +849,24 @@ Solo los POST cuentan hacia el límite (10/min por IP): los GET a esas rutas lle
 
 Script en el repo: `deploy/run-snapshots.sh` (equivale a `docker compose … exec -T backend python run_instagram_snapshots.py` desde la raíz del proyecto). Requiere el `.env` del VPS con `TAG` ([7.3](#73-docker-composeprodyml-verificado), [7.9](#79-build-y-despliegue)).
 
-Crontab del usuario de despliegue, **una vez al día** ([5.2](#52-nadie-ejecuta-el-job-de-snapshots)). Usá `bash -lc` con `pipefail` para que un exit `1` (p. ej. `failed > 0`) no se pierda al pipe a `logger`:
+Crontab del usuario de despliegue, **una vez al día** ([5.2](#52-nadie-ejecuta-el-job-de-snapshots)). Plantilla: `deploy/crontab.example`. Usá `bash -lc` con `pipefail` para que un exit `1` (p. ej. `failed > 0`) no se pierda al pipe a `logger`; `flock -n` evita solaparse con una corrida manual; el ping a Healthchecks.io solo corre si el job terminó bien:
 
 ```
-15 4 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && ./deploy/run-snapshots.sh 2>&1 | logger -t sellonomada-snapshots'
+15 4 * * * bash -lc 'set -o pipefail; cd /opt/sellonomada && flock -n /tmp/sellonomada-snapshots.lock ./deploy/run-snapshots.sh 2>&1 | logger -t sellonomada-snapshots && curl -fsS -m 10 --retry 3 https://hc-ping.com/<uuid> >/dev/null'
 ```
 
 Comportamiento (`backend/run_instagram_snapshots.py` + `CaptureInstagramFollowers.execute_all`):
 
-- Imprime `captured=N failed=M` y sale `0` si `failed == 0` (incluso con cero cuentas conectadas).
-- Sale `1` si alguna cuenta falló; los demás siguen procesándose ([5.3](#53-un-error-de-infraestructura-corta-el-job-completo)).
+- Imprime `captured=N failed=M needs_reconnect=K` y sale `0` si `failed == 0` (incluso con cero cuentas conectadas).
+- Sale `1` solo ante fallos de infraestructura; los demás siguen procesándose ([5.3](#53-un-error-de-infraestructura-corta-el-job-completo)).
+- Token revocado o vencido: se marca la conexión (`token_expires_at = now`), cuenta en `needs_reconnect` (no en `failed`) y las corridas siguientes la saltean sin llamar a Meta.
 - Renovación de tokens en ventana de 7 días antes del vencimiento ([INSTAGRAM_ANALYTICS.md](./INSTAGRAM_ANALYTICS.md)).
 
 Operación:
 
 - Logs en journald: `journalctl -t sellonomada-snapshots`.
-- Heartbeat opcional: al final del cron, un `curl` silencioso a Healthchecks.io / Better Stack / Uptime Kuma si el script terminó bien (alerta si el cron deja de correr).
+- Heartbeat: el `curl` a Healthchecks.io del cron de arriba; alerta si el job deja de correr o sale ≠ 0.
+- Alternativa systemd timer: `Persistent=true` recupera corridas perdidas por un reinicio.
 - Con `exec` no hace falta `INSTAGRAM_SNAPSHOT_JOB_TOKEN` ni exponer `POST /internal/instagram/snapshots` (sigue disponible para pruebas locales).
 - Tests: `backend/tests/unit/test_run_instagram_snapshots.py`.
 
@@ -913,6 +922,7 @@ Checklist **operativa** (no hay scripts de backup en el repo). Lo que ya aporta 
 **Monitoreo**
 
 - **Uptime:** sondear `https://<dominio>/robots.txt` (solo frontend) y una URL de perfil público (frontend → backend → Supabase/Turso según la página). No uses `/health` desde fuera: nginx no lo publica.
+- **Certificado TLS:** monitor de vencimiento en Uptime Kuma o Better Stack (alerta con ~14 días de margen). Complementa el cron de [7.4](#74-nginx-verificado); Let's Encrypt ya no avisa por email.
 - **Heartbeat del job:** si el cron de [7.5](#75-job-de-snapshots-verificado) deja de correr, aviso vía Healthchecks.io / Better Stack / Uptime Kuma.
 - **Errores (pendiente de código):** hoy no hay Sentry. Cuando se agregue: `sentry-sdk[fastapi]` en el backend y `@sentry/nextjs` en el frontend, con `send_default_pii=False` y sin tokens/emails en el contexto.
 - **Logs:** `docker compose -f docker-compose.prod.yml logs -f backend` (JSON + `request_id`); frontend/nginx igual. Rotación ya en [7.3](#73-docker-composeprodyml-verificado) / [7.6](#76-endurecimiento-del-servidor).

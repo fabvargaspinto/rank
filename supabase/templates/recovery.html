@@ -2,9 +2,10 @@
 <html lang="es">
   <body>
     <h2>Recuperá tu contraseña</h2>
-    <p>Elegí una contraseña nueva para tu cuenta de Sello Nómada.</p>
+    <p>Abrí el enlace y tocá Continuar para elegir una contraseña nueva.</p>
     <p>
       <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Elegir una contraseña nueva</a>
     </p>
+    <p>Si el enlace no funciona, usá este código de 6 dígitos: <strong>{{ .Token }}</strong></p>
   </body>
 </html>

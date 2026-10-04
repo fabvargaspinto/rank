@@ -26,6 +26,7 @@ _REFRESH_WINDOW = timedelta(days=7)
 class CaptureJobResult:
     captured: int
     failed: int
+    needs_reconnect: int = 0
 
 
 class CaptureInstagramFollowers:
@@ -52,17 +53,47 @@ class CaptureInstagramFollowers:
     def execute_all(self) -> CaptureJobResult:
         captured = 0
         failed = 0
+        needs_reconnect = 0
+        now = self._clock()
         for stored in self._connections.list_all():
+            owner = stored.connection.owner_user_id.value
+            if stored.connection.token_is_expired(now):
+                logger.warning(
+                    "instagram_snapshot_needs_reconnect",
+                    extra={"owner_user_id": owner},
+                )
+                needs_reconnect += 1
+                continue
             try:
                 self._capture(stored)
                 captured += 1
+            except InstagramTokenExpiredError:
+                self._mark_requires_reconnect(stored)
+                logger.warning(
+                    "instagram_snapshot_needs_reconnect",
+                    extra={"owner_user_id": owner},
+                )
+                needs_reconnect += 1
             except Exception:
                 logger.exception(
                     "instagram_snapshot_failed",
-                    extra={"owner_user_id": stored.connection.owner_user_id.value},
+                    extra={"owner_user_id": owner},
                 )
                 failed += 1
-        return CaptureJobResult(captured=captured, failed=failed)
+        return CaptureJobResult(
+            captured=captured,
+            failed=failed,
+            needs_reconnect=needs_reconnect,
+        )
+
+    def _mark_requires_reconnect(self, stored: StoredInstagramConnection) -> None:
+        marked = stored.connection.with_token_expiry(self._clock())
+        self._connections.save(
+            StoredInstagramConnection(
+                connection=marked,
+                access_token_encrypted=stored.access_token_encrypted,
+            )
+        )
 
     def _capture(self, stored: StoredInstagramConnection) -> FollowerSnapshot:
         now = self._clock()
@@ -81,6 +112,8 @@ class CaptureInstagramFollowers:
                     access_token,
                     associated_data=connection.id.value,
                 )
+            except InstagramTokenExpiredError:
+                raise
             except InstagramGraphError:
                 logger.warning(
                     "instagram_token_refresh_failed",

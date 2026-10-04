@@ -196,7 +196,11 @@ def run_instagram_snapshots(
     if not _job_token_matches(x_job_token, settings.instagram_snapshot_job_token):
         raise InstagramSnapshotJobUnauthorizedError("Token de job inválido")
     result = use_case.execute_all()
-    return SnapshotJobResponse(captured=result.captured, failed=result.failed)
+    return SnapshotJobResponse(
+        captured=result.captured,
+        failed=result.failed,
+        needs_reconnect=result.needs_reconnect,
+    )
 
 
 @router.post("/instagram/deauthorize", status_code=status.HTTP_200_OK)

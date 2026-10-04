@@ -7,7 +7,10 @@ from urllib.parse import urlencode
 import httpx
 
 from config.instagram_settings import InstagramSettings
-from core.instagram.application.application_error import InstagramGraphError
+from core.instagram.application.application_error import (
+    InstagramGraphError,
+    InstagramTokenExpiredError,
+)
 from core.instagram.domain.instagram_account import InstagramAccount
 from core.instagram.domain.instagram_graph import (
     CompletedInstagramLogin,
@@ -23,6 +26,8 @@ _TOKEN_URL = "https://api.instagram.com/oauth/access_token"
 _GRAPH_URL = "https://graph.instagram.com"
 _SCOPES = "instagram_business_basic"
 _SHORT_LIVED_SECONDS = 3600
+_AUTH_ERROR_CODES = frozenset({102, 190})
+_AUTH_ERROR_SUBCODES = frozenset({458, 459, 460, 463, 464, 467})
 
 
 class MetaInstagramClient(InstagramGraph):
@@ -162,21 +167,36 @@ class MetaInstagramClient(InstagramGraph):
         return self._read_json(response)
 
     def _read_json(self, response: httpx.Response) -> dict[str, object]:
-        if response.status_code >= 400:
-            raise InstagramGraphError("Instagram no está disponible")
         try:
             payload = response.json()
         except ValueError as exc:
             raise InstagramGraphError("Instagram no está disponible") from exc
         if not isinstance(payload, dict):
             raise InstagramGraphError("Instagram no está disponible")
-        if payload.get("error"):
-            raise InstagramGraphError("Instagram no está disponible")
+        error = payload.get("error")
+        if error is not None or response.status_code >= 400:
+            raise _error_from_payload(error)
         return payload
 
 
 def _strip_code(code: str) -> str:
     return code.strip().split("#", 1)[0]
+
+
+def _error_from_payload(error: object) -> InstagramGraphError | InstagramTokenExpiredError:
+    if _is_auth_error(error):
+        return InstagramTokenExpiredError("El acceso a Instagram expiró")
+    return InstagramGraphError("Instagram no está disponible")
+
+
+def _is_auth_error(error: object) -> bool:
+    if not isinstance(error, dict):
+        return False
+    code = error.get("code")
+    if isinstance(code, int) and code in _AUTH_ERROR_CODES:
+        return True
+    subcode = error.get("error_subcode")
+    return isinstance(subcode, int) and subcode in _AUTH_ERROR_SUBCODES
 
 
 def _extract_access_token(payload: dict[str, object]) -> str | None:

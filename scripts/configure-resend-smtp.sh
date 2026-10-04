@@ -20,6 +20,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Token y API key de prod: solo export explícito (no la RESEND_* del .env local).
+TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
+API_KEY="${RESEND_API_KEY:-${RESENDER_API_KEY:-}}"
+
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -27,15 +31,14 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-TOKEN="${SUPABASE_ACCESS_TOKEN:-}"
 if [[ -z "$TOKEN" ]]; then
-  echo "Falta SUPABASE_ACCESS_TOKEN (https://supabase.com/dashboard/account/tokens)" >&2
+  echo "Falta SUPABASE_ACCESS_TOKEN exportado (https://supabase.com/dashboard/account/tokens)." >&2
+  echo "No lo guardes en .env: controla todos tus proyectos." >&2
   exit 1
 fi
 
-API_KEY="${RESEND_API_KEY:-${RESENDER_API_KEY:-}}"
 if [[ -z "$API_KEY" ]]; then
-  echo "Falta RESEND_API_KEY (o RESENDER_API_KEY) en el entorno" >&2
+  echo "Exportá RESEND_API_KEY de producción (no uses la del .env local)." >&2
   exit 1
 fi
 

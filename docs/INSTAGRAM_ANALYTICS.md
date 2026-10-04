@@ -66,7 +66,8 @@ Una captura por cuenta y por semana ISO (lunes 00:00 UTC). Si el job corre dos v
 ```bash
 cd backend
 uv run python run_instagram_snapshots.py
-# exit 1 si failed > 0
+# imprime captured=N failed=M needs_reconnect=K
+# exit 1 solo si failed > 0 (infra); tokens revocados van a needs_reconnect
 ```
 
 En el VPS: `./deploy/run-snapshots.sh` (cron diario; ver `VPS_DEPLOY_REVIEW.md` §7.5). El endpoint HTTP con `INSTAGRAM_SNAPSHOT_JOB_TOKEN` es opcional.

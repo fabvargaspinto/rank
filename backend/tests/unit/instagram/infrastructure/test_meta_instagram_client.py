@@ -123,3 +123,31 @@ def test_complete_login_fails_when_long_lived_exchange_fails():
         raise AssertionError("expected InstagramGraphError")
     except InstagramGraphError:
         pass
+
+
+def test_fetch_profile_raises_token_expired_on_oauth_code_190():
+    from core.instagram.application.application_error import InstagramTokenExpiredError
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            400,
+            json={
+                "error": {
+                    "message": "Invalid OAuth access token",
+                    "type": "OAuthException",
+                    "code": 190,
+                    "error_subcode": 467,
+                }
+            },
+        )
+
+    client = MetaInstagramClient(
+        _settings(),
+        http=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    try:
+        client.fetch_profile(TOKEN)
+        raise AssertionError("expected InstagramTokenExpiredError")
+    except InstagramTokenExpiredError:
+        pass

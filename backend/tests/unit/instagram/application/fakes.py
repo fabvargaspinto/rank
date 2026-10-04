@@ -1,6 +1,9 @@
 from datetime import UTC, datetime
 
-from core.instagram.application.application_error import InstagramGraphError
+from core.instagram.application.application_error import (
+    InstagramGraphError,
+    InstagramTokenExpiredError,
+)
 from core.instagram.domain.instagram_account import InstagramAccount
 from core.instagram.domain.instagram_graph import (
     CompletedInstagramLogin,
@@ -26,6 +29,7 @@ class FakeInstagramGraph(InstagramGraph):
         self.fail_login = False
         self.fail_followers = False
         self.fail_refresh = False
+        self.fail_auth = False
         self.refreshed_token = "ig-refreshed-token"
         self.refreshed_expires_at = datetime(2027, 1, 1, tzinfo=UTC)
         self.complete_login_calls: list[str] = []
@@ -51,6 +55,8 @@ class FakeInstagramGraph(InstagramGraph):
 
     def fetch_profile(self, access_token: str) -> InstagramProfile:
         self.fetch_profile_tokens.append(access_token)
+        if self.fail_auth:
+            raise InstagramTokenExpiredError("El acceso a Instagram expiró")
         if self.fail_followers:
             raise InstagramGraphError("Instagram no está disponible")
         return InstagramProfile(
@@ -64,6 +70,8 @@ class FakeInstagramGraph(InstagramGraph):
 
     def refresh_access_token(self, access_token: str) -> InstagramAccessToken:
         self.refresh_tokens.append(access_token)
+        if self.fail_auth:
+            raise InstagramTokenExpiredError("El acceso a Instagram expiró")
         if self.fail_refresh:
             raise InstagramGraphError("Instagram no está disponible")
         return InstagramAccessToken(self.refreshed_token, self.refreshed_expires_at)

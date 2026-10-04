@@ -118,6 +118,7 @@ class TestCaptureInstagramFollowers:
 
         assert result.captured == 2
         assert result.failed == 0
+        assert result.needs_reconnect == 0
         assert len(snapshots.snapshots) == 2
 
     def test_execute_all_continues_when_one_account_fails(self):
@@ -129,6 +130,28 @@ class TestCaptureInstagramFollowers:
 
         assert result.captured == 0
         assert result.failed == 1
+        assert result.needs_reconnect == 0
+
+    def test_execute_all_marks_revoked_token_as_needs_reconnect(self):
+        graph, connections, snapshots, _, capture, complete, start = _wired(NOW)
+        complete.execute(OWNER_ID, start.execute(OWNER_ID).removeprefix(AUTH_URL), "code")
+        graph.fail_auth = True
+        graph.fetch_profile_tokens.clear()
+
+        result = capture.execute_all()
+
+        assert result.captured == 0
+        assert result.failed == 0
+        assert result.needs_reconnect == 1
+        stored = connections.get_by_owner(OWNER_ID)
+        assert stored is not None
+        assert stored.connection.token_is_expired(NOW)
+        assert graph.fetch_profile_tokens == [ACCESS_TOKEN]
+
+        again = capture.execute_all()
+        assert again.needs_reconnect == 1
+        assert again.failed == 0
+        assert graph.fetch_profile_tokens == [ACCESS_TOKEN]
 
     def test_execute_all_continues_when_token_decrypt_fails(self):
         from core.instagram.infrastructure.error_infrastructure import TokenDecryptError
@@ -179,6 +202,7 @@ class TestCaptureInstagramFollowers:
 
         assert result.captured == 1
         assert result.failed == 1
+        assert result.needs_reconnect == 0
         assert any(
             snap.instagram_account_id.value == "17841411111111111"
             for snap in snapshots.snapshots
